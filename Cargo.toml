@@ -1,0 +1,23 @@
+[package]
+name = "fbapp-vibe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace", "fs"] }
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "macros"] }
+askama = "0.12"
+askama_axum = "0.4"
+serde = { version = "1", features = ["derive"] }
+dotenvy = "0.15"
+envy = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1"
+anyhow = "1"
+
+[lints.clippy]
+unwrap_used = "deny"

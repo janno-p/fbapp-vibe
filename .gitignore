@@ -1,0 +1,17 @@
+# Rust
+/target
+Cargo.lock
+
+# Environment
+.env
+.env.local
+
+# Tailwind compiled output
+/assets/css/main.css
+
+# SQLx offline cache (commit this if you want offline CI builds)
+# .sqlx/
+
+# OS
+.DS_Store
+Thumbs.db

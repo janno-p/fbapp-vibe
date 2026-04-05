@@ -1,0 +1,2 @@
+-- Initial migration placeholder.
+-- Feature migrations are added in subsequent numbered files.
