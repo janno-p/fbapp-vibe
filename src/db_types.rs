@@ -1,3 +1,6 @@
+// DB enum mirrors are defined for all types up front; not all are used yet.
+#![allow(dead_code)]
+
 /// Rust mirror of the `match_outcome` Postgres enum.
 #[derive(Debug, Clone, PartialEq, sqlx::Type)]
 #[sqlx(type_name = "match_outcome", rename_all = "lowercase")]

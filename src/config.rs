@@ -10,6 +10,7 @@ pub struct Config {
     pub google_client_id: String,
     pub google_client_secret: String,
     pub google_redirect_url: String,
+    #[allow(dead_code)]
     pub session_secret: String,
     pub tls_cert_path: Option<String>,
     pub tls_key_path: Option<String>,

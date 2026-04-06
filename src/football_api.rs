@@ -1,3 +1,6 @@
+// Response types are defined for the full API contract; not all are used yet.
+#![allow(dead_code)]
+
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 

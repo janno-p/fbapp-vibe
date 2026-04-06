@@ -10,6 +10,7 @@ pub type OAuthClient = BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
+    #[allow(dead_code)]
     pub config: Config,
     pub oauth_client: OAuthClient,
     pub football_api: FootballApiClient,

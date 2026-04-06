@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct User {
     pub id: i64,
+    #[allow(dead_code)]
     pub google_id: String,
     pub email: String,
     pub name: String,
