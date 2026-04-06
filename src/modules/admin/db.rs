@@ -136,6 +136,12 @@ pub async fn seed_tournament_data(
             other => (None, api_stage_to_round(other)),
         };
 
+        // Skip matches with stages we don't model (e.g. 3RD_PLACE play-off).
+        if group_id.is_none() && round.is_none() {
+            tracing::warn!(stage = %m.stage, match_id = m.id, "skipping match with unrecognised stage");
+            continue;
+        }
+
         let home_team_id = m.home_team.id.and_then(|id| team_id_map.get(&id)).copied();
         let away_team_id = m.away_team.id.and_then(|id| team_id_map.get(&id)).copied();
 
@@ -157,6 +163,7 @@ pub async fn seed_tournament_data(
 
 fn api_stage_to_round(stage: &str) -> Option<KnockoutRound> {
     match stage {
+        "ROUND_OF_32" => Some(KnockoutRound::R32),
         "LAST_16" | "ROUND_OF_16" => Some(KnockoutRound::R16),
         "QUARTER_FINALS" => Some(KnockoutRound::Qf),
         "SEMI_FINALS" => Some(KnockoutRound::Sf),

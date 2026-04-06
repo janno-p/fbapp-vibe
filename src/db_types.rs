@@ -14,6 +14,8 @@ pub enum MatchOutcome {
 #[derive(Debug, Clone, PartialEq, sqlx::Type)]
 #[sqlx(type_name = "knockout_round")]
 pub enum KnockoutRound {
+    #[sqlx(rename = "r32")]
+    R32,
     #[sqlx(rename = "r16")]
     R16,
     #[sqlx(rename = "qf")]
