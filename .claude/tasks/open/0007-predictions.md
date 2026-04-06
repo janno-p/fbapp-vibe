@@ -18,7 +18,7 @@ Let authenticated users submit and edit their tournament predictions before the 
 
 - [ ] Predictions page is only accessible when there is an active tournament
 - [ ] **Group stage tab**: displays all group stage matches; user selects home / draw / away for each; saves on submit
-- [ ] **Knockout tab**: for each round (R16 → QF → SF → Final → Winner), user selects the expected advancing teams from the full team list; correct number of teams enforced per round (16 / 8 / 4 / 2 / 1)
+- [ ] **Knockout tab**: for each round (R32 → R16 → QF → SF → Final → Winner), user selects the expected advancing teams from the full team list; correct number of teams enforced per round (32 / 16 / 8 / 4 / 2 / 1)
 - [ ] **Top scorer tab**: user selects exactly 3 players from the full player list
 - [ ] All three forms support partial save (user does not need to fill everything in one go)
 - [ ] Existing predictions are pre-filled when the page loads
@@ -46,6 +46,7 @@ Let authenticated users submit and edit their tournament predictions before the 
 
 | Round | `knockout_round` value | Teams to predict |
 |---|---|---|
+| Round of 32 | `r32` | 32 |
 | Round of 16 | `r16` | 16 |
 | Quarter-finals | `qf` | 8 |
 | Semi-finals | `sf` | 4 |

@@ -41,11 +41,12 @@ Implement a background task that polls the football API for match results, updat
 | Prediction type | Condition | Points |
 |---|---|---|
 | Group stage | `predicted_outcome = match.outcome` | 1 |
-| R16 knockout | team appeared in R16 | 2 per team |
-| QF knockout | team appeared in QF | 3 per team |
-| SF knockout | team appeared in SF | 4 per team |
-| Final knockout | team appeared in Final | 5 per team |
-| Winner | team won the tournament | 6 |
+| R32 knockout | team appeared in R32 | 2 per team |
+| R16 knockout | team appeared in R16 | 3 per team |
+| QF knockout | team appeared in QF | 4 per team |
+| SF knockout | team appeared in SF | 6 per team |
+| Final knockout | team appeared in Final | 8 per team |
+| Winner | team won the tournament | 10 |
 | Top scorer | any of 3 picks is top scorer | 5 + goals scored |
 
 ### ADR constraints
@@ -70,7 +71,7 @@ This task has the highest unit test value in the codebase — scoring rules are 
 - Unit tests for every scoring rule in `src/polling/scorer.rs` — implement scoring as pure functions that take plain data types (not DB rows):
   - Correct / incorrect group stage prediction → 1 pt / 0 pt
   - Each knockout round correct / incorrect → correct point value per round
-  - Winner correct → 6 pt
+  - Winner correct → 10 pt
   - Top scorer: pick matches → 5 + goals; pick doesn't match → 0; tie between players handled correctly
 - Unit test for idempotency: calling the scorer on an already-scored prediction returns the same value (not double-counted)
 - Unit test for tied top scorer: two players with equal goals, user picked one of them → award granted

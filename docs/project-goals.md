@@ -24,7 +24,7 @@ Users make the following predictions before the tournament starts:
 | Category | What is predicted | Notes |
 |---|---|---|
 | Group stage | Winner of each match | Home / draw / away |
-| Knockout rounds | Which teams advance in each round | R16, QF, SF, Final, Winner |
+| Knockout rounds | Which teams advance in each round | R32, R16, QF, SF, Final, Winner |
 | Top scorer | 3 player candidates | Points awarded if any is the actual top scorer |
 
 ## Scoring
@@ -32,11 +32,12 @@ Users make the following predictions before the tournament starts:
 | Prediction | Points |
 |---|---|
 | Correct group stage match result | 1 pt |
-| Correct Round of 16 qualifier | 2 pt per team |
-| Correct Quarter-final qualifier | 3 pt per team |
-| Correct Semi-final qualifier | 4 pt per team |
-| Correct Finalist | 5 pt per team |
-| Correct Tournament winner | 6 pt |
+| Correct Round of 32 qualifier | 2 pt per team |
+| Correct Round of 16 qualifier | 3 pt per team |
+| Correct Quarter-final qualifier | 4 pt per team |
+| Correct Semi-final qualifier | 6 pt per team |
+| Correct Finalist | 8 pt per team |
+| Correct Tournament winner | 10 pt |
 | Top scorer in your 3 picks | 5 pt + goals scored by that player |
 
 ## In-Tournament Display

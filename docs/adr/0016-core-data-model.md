@@ -29,9 +29,9 @@ A tournament has two distinct phases with different prediction types:
 - 1 point per correct prediction
 
 **Knockout stage**
-- Rounds: R16 → Quarter-finals → Semi-finals → Final → Winner
+- Rounds: R32 → R16 → Quarter-finals → Semi-finals → Final → Winner
 - Users predict which teams advance to each round (not match-by-match opponents)
-- Points increase per round: 2 / 3 / 4 / 5 / 5
+- Points increase per round: 2 / 3 / 4 / 6 / 8 / 10
 
 **Top scorer**
 - User selects 3 players as candidates
