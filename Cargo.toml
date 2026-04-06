@@ -28,6 +28,7 @@ axum-server = { version = "0.8", features = ["tls-rustls"] }
 rustls = { version = "0.23", features = ["aws_lc_rs"] }
 async-trait = "0.1"
 time = "0.3"
+uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
 axum-test = "20"

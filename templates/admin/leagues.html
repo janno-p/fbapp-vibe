@@ -1,0 +1,51 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Admin — Leagues{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Admin</h1>
+    <a href="/admin" class="text-sm text-gray-600 hover:text-gray-900">← Tournaments</a>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-10">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Leagues</h2>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-lg p-5 mb-8">
+      <h3 class="text-base font-semibold text-gray-900 mb-4">Create league</h3>
+      <form method="post" action="/admin/leagues" class="flex gap-3">
+        <input type="text" name="name" placeholder="League name" required
+               class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <button type="submit"
+                class="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+          Create
+        </button>
+      </form>
+    </div>
+
+    {% if leagues.is_empty() %}
+    <p class="text-gray-500">No leagues created yet.</p>
+    {% else %}
+    <div class="space-y-3">
+      {% for league in leagues %}
+      <div class="bg-white border border-gray-200 rounded-lg p-5 flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-gray-900">{{ league.name }}</h3>
+          <p class="text-sm text-gray-500 mt-0.5">
+            {{ league.member_count }} {{ league.member_count|pluralize("member", "members") }}
+          </p>
+        </div>
+        <div class="text-sm text-gray-500 font-mono">
+          <a href="/leagues/join/{{ league.invite_token }}"
+             class="text-indigo-600 hover:text-indigo-800">/leagues/join/{{ league.invite_token }}</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

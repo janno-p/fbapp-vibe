@@ -1,7 +1,7 @@
 ---
 id: 0006
 title: Leagues
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0016]
 refs: []
@@ -58,6 +58,11 @@ Allow admins to create named leagues and generate invite links, and allow users 
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+New `src/modules/leagues/` module with:
+- Admin routes: `GET /admin/leagues` (list + create form), `POST /admin/leagues`
+- User route: `GET /leagues/join/{token}` — joins league if authenticated; stores `post_login_redirect` in session and redirects to login if not
+- Auth callback updated to redirect to `post_login_redirect` after OAuth if set
+- Dashboard updated to fetch and display the user's leagues
+- 3 `#[sqlx::test]` tests covering valid join, idempotent join, and 404 on unknown token
 
 Follow-up tasks: _none_

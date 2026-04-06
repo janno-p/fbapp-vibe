@@ -8,6 +8,7 @@ pub fn router(state: AppState) -> Router {
         .route("/health", get(health))
         .merge(modules::auth::router())
         .merge(modules::admin::router())
+        .merge(modules::leagues::router())
         .nest_service("/assets", ServeDir::new("assets"))
         .layer(TraceLayer::new_for_http())
         .with_state(state)

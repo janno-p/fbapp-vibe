@@ -29,10 +29,24 @@
         <p class="text-gray-500 text-sm">{{ user.email }}</p>
       </div>
     </div>
-    <p class="text-gray-600">You are signed in. Add your features here.</p>
+    <div class="mt-2">
+      {% if leagues.is_empty() %}
+      <p class="text-gray-500 text-sm">You haven't joined any leagues yet. Use an invite link to join one.</p>
+      {% else %}
+      <h3 class="text-base font-semibold text-gray-900 mb-3">Your leagues</h3>
+      <div class="space-y-2">
+        {% for league in leagues %}
+        <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
+          <span class="font-medium text-gray-900">{{ league.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
     {% if user.is_admin %}
-    <div class="mt-6">
+    <div class="mt-6 flex gap-4">
       <a href="/admin" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Admin panel →</a>
+      <a href="/admin/leagues" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Manage leagues →</a>
     </div>
     {% endif %}
   </main>

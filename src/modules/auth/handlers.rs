@@ -10,7 +10,7 @@ use oauth2::{
 use serde::Deserialize;
 use tower_sessions::Session;
 
-use crate::{error::AppError, state::AppState};
+use crate::{error::AppError, modules::leagues, state::AppState};
 
 use super::{
     db,
@@ -28,6 +28,7 @@ struct HomeTemplate;
 #[template(path = "dashboard/index.html")]
 struct DashboardTemplate {
     user: User,
+    leagues: Vec<leagues::models::League>,
 }
 
 // ── Query params ─────────────────────────────────────────────────────────────
@@ -50,9 +51,13 @@ pub async fn home(auth_session: AuthSession) -> Response {
 }
 
 /// GET /dashboard
-pub async fn dashboard(auth_session: AuthSession) -> Result<impl IntoResponse, AppError> {
+pub async fn dashboard(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
-    Ok(DashboardTemplate { user })
+    let leagues = leagues::list_user_leagues(&state.pool, user.id).await?;
+    Ok(DashboardTemplate { user, leagues })
 }
 
 /// GET /auth/login
@@ -148,7 +153,13 @@ pub async fn callback(
         .await
         .map_err(|e| AppError::Unexpected(anyhow::anyhow!("login failed: {e}")))?;
 
-    Ok(Redirect::to("/dashboard"))
+    let next = session
+        .remove::<String>("post_login_redirect")
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?
+        .unwrap_or_else(|| "/dashboard".to_string());
+
+    Ok(Redirect::to(&next))
 }
 
 /// POST /auth/logout
