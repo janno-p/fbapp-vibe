@@ -54,6 +54,13 @@ Let authenticated users submit and edit their tournament predictions before the 
 
 Enforce these counts at the handler level before any DB write.
 
+### Tests
+
+- Unit tests for the round team-count enforcement: pure function that validates the submitted team list length per `knockout_round` value — test all valid counts and at least one invalid count per round.
+- `#[sqlx::test]` for prediction lock enforcement: insert a tournament with `predictions_locked_at` in the past, attempt a prediction write, assert it returns `AppError::Unauthorized`.
+- `#[sqlx::test]` for group stage upsert: submit a prediction, change it, assert only one row exists with the updated value.
+- No tests for template rendering.
+
 ### Implementation notes
 
 - Use HTMX for form submissions so each tab saves independently without a full page reload

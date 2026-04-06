@@ -47,6 +47,12 @@ Give admins the ability to register a tournament from the football API, activate
 
 Check `auth_session.user.is_admin` at the handler level (or via a middleware applied to the admin router). Return `AppError::Unauthorized` if false.
 
+### Tests
+
+- `#[sqlx::test]` integration test for the seed operation: seed a minimal fixture (1 tournament, 2 teams, 1 group, 1 match), re-run the seed with updated data, assert row count stays the same and values are updated (idempotency check).
+- `#[sqlx::test]` for the admin auth guard: verify a non-admin user receives 403 on any `/admin` route.
+- No unit tests for handlers — logic is thin glue between API client and DB.
+
 ### Implementation notes
 
 - Seeding order matters due to FK constraints: tournament → teams → groups → group_memberships → players → matches

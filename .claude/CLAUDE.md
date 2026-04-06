@@ -62,6 +62,35 @@ SQL files in `migrations/` are versioned (`0001_...sql`, `0002_...sql`). Migrati
 
 Optional dev TLS via `mkcert`. Set `TLS_CERT_PATH` and `TLS_KEY_PATH` in `.env`; if both are present the server binds with Rustls, otherwise plain HTTP.
 
+## Testing
+
+### What to test
+
+| Code type | Test type | Where |
+|---|---|---|
+| Business logic (scoring, rules, calculations) | Unit test | `#[cfg(test)]` mod in the same file |
+| Error response mappings (`AppError`) | Unit test | `#[cfg(test)]` mod in `error.rs` |
+| DB queries with non-trivial logic (upserts, concurrency) | Integration test | `tests/` or `#[sqlx::test]` in `db.rs` |
+| Trivial handlers, framework wiring | Skip | Not worth the setup cost |
+
+### What not to test
+
+- Functions that just call a framework API and return the result
+- Config loading (`envy` behaviour is not our code)
+- Template rendering (compile-time checked by Askama)
+
+### Patterns
+
+**Unit tests** — use `#[cfg(test)]` inline in the source file. For async tests use `#[tokio::test]`. No mocking; if a function needs mocking to test, extract the pure logic first.
+
+**Integration tests (DB)** — use the `#[sqlx::test]` macro. It creates an isolated test database per test and rolls back automatically. Requires `TEST_DATABASE_URL` in the environment (same host as `DATABASE_URL`, different DB name).
+
+**Scoring logic** (task 0008 onwards) — implement scoring as pure functions in `src/polling/scorer.rs` that take plain data types, not DB rows. Test those functions exhaustively without any DB or async setup.
+
+### Requirement
+
+Every task that introduces business logic or a non-trivial data transformation **must** include tests as part of its acceptance criteria. The task is not complete until `cargo test` passes.
+
 ## Architecture Decision Records
 
 All architectural decisions are documented as ADRs in `docs/adr/`. When making decisions about tech choices, patterns, or constraints, write an ADR first.

@@ -63,6 +63,19 @@ For `winner` round: the winner is the team with `outcome = 'home'` or `outcome =
 
 Query `players` ordered by `goals_scored DESC LIMIT 1` for the tournament. If tied, all tied players count as top scorer (any user who picked any of the tied players gets the reward).
 
+### Tests
+
+This task has the highest unit test value in the codebase — scoring rules are pure logic with no I/O.
+
+- Unit tests for every scoring rule in `src/polling/scorer.rs` — implement scoring as pure functions that take plain data types (not DB rows):
+  - Correct / incorrect group stage prediction → 1 pt / 0 pt
+  - Each knockout round correct / incorrect → correct point value per round
+  - Winner correct → 6 pt
+  - Top scorer: pick matches → 5 + goals; pick doesn't match → 0; tie between players handled correctly
+- Unit test for idempotency: calling the scorer on an already-scored prediction returns the same value (not double-counted)
+- Unit test for tied top scorer: two players with equal goals, user picked one of them → award granted
+- `#[sqlx::test]` for the full scoring pipeline: insert a match result, run the scorer, assert `points_awarded` rows are updated correctly
+
 ### Implementation notes
 
 - Use `tokio::time::interval` for the poll loop; adjust interval dynamically based on match schedule

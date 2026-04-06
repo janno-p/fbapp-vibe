@@ -42,6 +42,13 @@ Allow admins to create named leagues and generate invite links, and allow users 
 - **ADR-0009**: `AppError::NotFound` for unknown invite token
 - **ADR-0016**: `invite_token` is a random opaque string; use `uuid::Uuid::new_v4().to_string()` or similar
 
+### Tests
+
+- `#[sqlx::test]` for join via valid token: creates a league, joins it, asserts `league_members` row exists.
+- `#[sqlx::test]` for idempotent join: joining the same league twice does not error and produces one row.
+- `#[sqlx::test]` for invalid token: joining with an unknown token returns `AppError::NotFound`.
+- No unit tests for handlers — logic is thin.
+
 ### Implementation notes
 
 - `invite_token` generation: `uuid` crate (already likely a dependency via sqlx) or `rand` + base62 encoding. Either is fine; UUID v4 is simplest.

@@ -41,6 +41,14 @@ List the specific rules from referenced ADRs that apply to this task:
 - **ADR-0005**: Use `sqlx::query!` / `sqlx::query_as!` macros for compile-time query checking
 - _(add or remove constraints as relevant)_
 
+### Tests
+
+Describe what must be tested and at what level (unit / integration / none + reason):
+
+- _e.g. unit test scoring rules as pure functions in `scorer.rs`_
+- _e.g. `#[sqlx::test]` for the upsert in `db.rs`_
+- _e.g. no tests — handler is a trivial redirect_
+
 ### Implementation notes
 
 Any additional context, gotchas, design decisions, or references the implementer should know:

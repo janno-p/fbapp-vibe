@@ -87,6 +87,14 @@ ORDER BY ABS(EXTRACT(EPOCH FROM (scheduled_at - NOW())))
 LIMIT 1;
 ```
 
+### Tests
+
+- Unit tests for future prospect calculation — implement as a pure function taking a list of predictions and their current state, returning max achievable points. Test: all correct, all wrong, mixed, all unplayed.
+- Unit test for scenario modeling: applying a hypothetical result to a prediction set produces the expected leaderboard delta without mutating any input.
+- `#[sqlx::test]` for leaderboard query: insert two users in a league with known `points_awarded` values, assert leaderboard ranks them correctly.
+- `#[sqlx::test]` for league access guard: user not in league receives 403.
+- No tests for template rendering or HTMX wiring.
+
 ### Implementation notes
 
 - HTMX auto-refresh: add `hx-get` + `hx-trigger="every 60s"` on the leaderboard fragment; only active during a live match (gate this with a server-side flag in the template)

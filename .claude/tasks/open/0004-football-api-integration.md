@@ -43,13 +43,19 @@ If the free tier does not cover the required endpoints at acceptable detail, eva
 - `src/state.rs` — add client to `AppState`
 - `src/config.rs` — add `FOOTBALL_API_KEY` to `Config`
 - `.env.example` — document new env var
-- `docs/adr/0017-football-api.md` — new ADR
+- `docs/adr/0018-football-api.md` — new ADR
 
 ### ADR constraints
 
 - **ADR-0008**: New config value must be added to the `Config` struct loaded from env
 - **ADR-0009**: Client errors should map to `AppError`; network failures are 500s
 - **ADR-0016**: `external_id` fields on teams/matches/players must come from the API's stable identifiers
+
+### Tests
+
+- Integration test (behind `#[ignore]`) that instantiates the real client with `FOOTBALL_API_KEY` from env and fetches one competition — verifies the response deserialises without panicking. Skipped in CI when key is absent.
+- Unit tests for any rate-limit enforcement logic (e.g. token bucket / semaphore permit counting) if extracted as a pure function.
+- No tests for trivial struct definitions or serde derives.
 
 ### Implementation notes
 
