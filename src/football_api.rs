@@ -87,8 +87,8 @@ pub struct Team {
     pub id: i64,
     pub name: String,
     #[serde(rename = "shortName")]
-    pub short_name: String,
-    pub tla: String,
+    pub short_name: Option<String>,
+    pub tla: Option<String>,
     pub crest: Option<String>,
     #[serde(default)]
     pub squad: Vec<Player>,
@@ -240,7 +240,13 @@ impl FootballApiClient {
             anyhow::bail!("football API request to {path} failed with {status}: {body}");
         }
 
-        response.json::<T>().await.map_err(Into::into)
+        let body = response.text().await?;
+        serde_json::from_str::<T>(&body).map_err(|e| {
+            anyhow::anyhow!(
+                "failed to deserialise response from {path}: {e}\nbody (first 500 chars): {}",
+                &body[..body.len().min(500)]
+            )
+        })
     }
 
     pub async fn list_competitions(&self) -> anyhow::Result<Vec<Competition>> {

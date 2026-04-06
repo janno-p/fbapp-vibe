@@ -179,7 +179,7 @@ async fn upsert_team(pool: &PgPool, tournament_id: i64, team: &ApiTeam) -> anyho
         tournament_id,
         team.id.to_string(),
         team.name,
-        team.short_name,
+        team.short_name.as_deref().unwrap_or(&team.name),
         team.crest.as_deref()
     )
     .fetch_one(pool)
@@ -290,8 +290,8 @@ mod tests {
         ApiTeam {
             id,
             name: name.to_string(),
-            short_name: name[..3.min(name.len())].to_string(),
-            tla: name[..3.min(name.len())].to_uppercase(),
+            short_name: Some(name[..3.min(name.len())].to_string()),
+            tla: Some(name[..3.min(name.len())].to_uppercase()),
             crest: None,
             squad: vec![],
         }
