@@ -7,7 +7,6 @@ use axum::{
 use oauth2::{
     AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse,
 };
-use reqwest::redirect::Policy as RedirectPolicy;
 use serde::Deserialize;
 use tower_sessions::Session;
 
@@ -107,9 +106,10 @@ pub async fn callback(
         .map_err(|e| AppError::Unexpected(e.into()))?
         .ok_or_else(|| AppError::BadRequest("missing pkce verifier".to_string()))?;
 
-    // Exchange authorisation code for access token
-    let http_client = reqwest::Client::builder()
-        .redirect(RedirectPolicy::none())
+    // Exchange authorisation code for access token.
+    // Must use oauth2's bundled reqwest client — it implements AsyncHttpClient for that version.
+    let http_client = oauth2::reqwest::Client::builder()
+        .redirect(oauth2::reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| AppError::Unexpected(e.into()))?;
 

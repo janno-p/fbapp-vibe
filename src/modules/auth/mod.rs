@@ -23,7 +23,6 @@ impl AuthBackend {
     }
 }
 
-#[async_trait::async_trait]
 impl axum_login::AuthnBackend for AuthBackend {
     type User = User;
     type Credentials = models::Credentials;
