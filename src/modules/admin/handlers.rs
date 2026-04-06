@@ -1,4 +1,5 @@
 use askama::Template;
+use askama_web::WebTemplate;
 use axum::{
     extract::{Path, State},
     response::{IntoResponse, Redirect},
@@ -15,13 +16,13 @@ use super::{
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
     tournaments: Vec<Tournament>,
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "admin/competitions.html")]
 struct CompetitionsTemplate {
     competitions: Vec<Competition>,
@@ -45,7 +46,7 @@ pub async fn list_competitions(
         .football_api
         .list_competitions()
         .await
-        .map_err(|e| AppError::Unexpected(e))?;
+        .map_err(AppError::Unexpected)?;
     Ok(CompetitionsTemplate { competitions })
 }
 
@@ -128,17 +129,17 @@ async fn seed(state: &AppState, tournament_id: i64, code: &str) -> Result<(), Ap
         .football_api
         .get_teams(code)
         .await
-        .map_err(|e| AppError::Unexpected(e))?;
+        .map_err(AppError::Unexpected)?;
 
     let matches = state
         .football_api
         .get_matches(code)
         .await
-        .map_err(|e| AppError::Unexpected(e))?;
+        .map_err(AppError::Unexpected)?;
 
     db::seed_tournament_data(&state.pool, tournament_id, &teams, &matches)
         .await
-        .map_err(|e| AppError::Unexpected(e))?;
+        .map_err(AppError::Unexpected)?;
 
     tracing::info!(
         tournament_id,

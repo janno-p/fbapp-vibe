@@ -1,4 +1,5 @@
 use askama::Template;
+use askama_web::WebTemplate;
 use axum::{
     extract::{Query, State},
     response::{IntoResponse, Redirect, Response},
@@ -20,11 +21,11 @@ use super::{
 
 // ── Templates ────────────────────────────────────────────────────────────────
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "home/index.html")]
 struct HomeTemplate;
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "dashboard/index.html")]
 struct DashboardTemplate {
     user: User,

@@ -3,22 +3,17 @@ use std::net::SocketAddr;
 use axum_login::AuthManagerLayerBuilder;
 use axum_server::tls_rustls::RustlsConfig;
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
-use state::OAuthClient;
 use tower_sessions::{cookie::SameSite, Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-mod config;
-mod db_types;
-mod error;
-mod football_api;
-mod modules;
-mod routes;
-mod state;
-
-use config::Config;
-use modules::auth::AuthBackend;
-use state::AppState;
+use fbapp_vibe::{
+    config::Config,
+    football_api,
+    modules::auth::AuthBackend,
+    routes,
+    state::{AppState, OAuthClient},
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

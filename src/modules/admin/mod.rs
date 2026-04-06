@@ -1,5 +1,4 @@
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::request::Parts,
     routing::{get, post},
@@ -21,7 +20,6 @@ pub mod models;
 #[allow(dead_code)]
 pub struct AdminUser(pub User);
 
-#[async_trait]
 impl FromRequestParts<AppState> for AdminUser {
     type Rejection = AppError;
 
