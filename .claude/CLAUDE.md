@@ -32,15 +32,26 @@ Server-rendered Rust web app: **Axum** + **Askama** templates + **HTMX** + **Tai
 
 ### Module structure
 
-Each feature lives under `src/modules/<name>/` and exposes a single `router() -> Router<AppState>` consumed by `routes.rs`. Register new modules in `src/modules/mod.rs`.
+Two distinct kinds of modules, with different homes:
+
+**Route modules** live under `src/modules/<name>/` and must expose a `router() -> Router<AppState>`. Register them in `src/modules/mod.rs` and merge into the top-level router in `routes.rs`.
+
+Inside a route module:
+- `mod.rs` — public API: `router()`, framework glue (e.g. `AuthBackend`), re-exports
+- `handlers.rs` — Axum handler functions
+- `models.rs` — domain types
+- `db.rs` — SQLx queries
+
+**Non-route modules** (API clients, background jobs, shared libraries) live directly under `src/` as a single file (`src/foo.rs`) or a directory with children (`src/foo/mod.rs`) only when they have submodules. Declare them in `main.rs` with `mod foo;`. Do not place them under `src/modules/`.
+
+| Module type | Location | Example |
+|---|---|---|
+| HTTP feature with routes | `src/modules/<name>/` | `auth`, `admin`, `predictions` |
+| External API client | `src/football_api.rs` | football-data.org client |
+| Background job | `src/polling.rs` or `src/polling/` | result polling task |
+| Infrastructure | `src/config.rs`, `src/error.rs` | config, error types |
 
 Currently: **`auth`** — Google OAuth login/callback/logout, session management, home and dashboard pages.
-
-Inside a module:
-- `mod.rs` — public API: `router()`, `AuthBackend` (axum-login impl), re-exports
-- `handlers.rs` — Axum handler functions
-- `models.rs` — domain types (`User`, `Credentials`)
-- `db.rs` — SQLx queries
 
 ### Auth flow
 
