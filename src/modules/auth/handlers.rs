@@ -73,6 +73,7 @@ pub async fn login(
         .add_scope(Scope::new("email".to_string()))
         .add_scope(Scope::new("profile".to_string()))
         .set_pkce_challenge(pkce_challenge)
+        //.add_extra_param("prompt".to_string(), "login".to_string())
         .url();
 
     session
