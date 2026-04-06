@@ -74,10 +74,10 @@ All architectural decisions are documented as ADRs in `docs/adr/`. When making d
 
 ## Task Management
 
-Work items are tracked as individual markdown files under `tasks/`, organised by status directory:
+Work items are tracked as individual markdown files under `.claude/tasks/`, organised by status directory:
 
 ```
-tasks/
+.claude/tasks/
 ├── TEMPLATE.md      # canonical template — read before creating a task
 ├── open/            # ready to be picked up
 ├── in-progress/     # currently being worked on
@@ -90,6 +90,6 @@ tasks/
 
 **Starting a task:** read the task file — it contains the goal, acceptance criteria, relevant file paths, ADR constraints, and implementation notes. Everything needed to implement without clarifying questions.
 
-**Completing a task:** fill in the `## Outcome` section (what was built, deviations from spec, follow-up tasks), then move the file to `tasks/done/`.
+**Completing a task:** fill in the `## Outcome` section (what was built, deviations from spec, follow-up tasks), then move the file to `.claude/tasks/done/`.
 
-**Creating a task:** copy `tasks/TEMPLATE.md`, fill in all sections including ADR references, and write acceptance criteria before starting implementation. Tasks are spec-first — no retroactive creation.
+**Creating a task:** copy `.claude/tasks/TEMPLATE.md`, fill in all sections including ADR references, and write acceptance criteria before starting implementation. Tasks are spec-first — no retroactive creation.
