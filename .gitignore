@@ -6,6 +6,9 @@ Cargo.lock
 .env
 .env.local
 
+# Node
+node_modules/
+
 # Tailwind compiled output
 /assets/css/main.css
 

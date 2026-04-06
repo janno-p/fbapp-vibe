@@ -20,7 +20,7 @@ Before you begin, make sure the following are installed:
 
 - **Rust** — [rustup.rs](https://rustup.rs)
 - **Docker** — for running PostgreSQL locally
-- **Node.js** — for the Tailwind CSS CLI (`npx`)
+- **Node.js** — for Tailwind CSS (`npm install` installs `tailwindcss` and `@tailwindcss/cli`)
 - **sqlx-cli** — `cargo install sqlx-cli --no-default-features --features rustls,postgres`
 - **cargo-watch** *(optional, for development)* — `cargo install cargo-watch`
 
@@ -108,7 +108,13 @@ TLS_KEY_PATH=certs/localhost-key.pem
 
 When both variables are set, the server starts on `https://localhost:3000`. If they are unset, it falls back to plain HTTP.
 
-### 7. Build Tailwind CSS
+### 7. Install Node dependencies
+
+```bash
+npm install
+```
+
+### 8. Build Tailwind CSS
 
 ```bash
 make css
@@ -116,7 +122,7 @@ make css
 
 This compiles `assets/css/input.css` → `assets/css/main.css`.
 
-### 8. Start the application
+### 9. Start the application
 
 ```bash
 cargo run

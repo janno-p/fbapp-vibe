@@ -1,0 +1,20 @@
+{
+  "name": "fbapp-vibe",
+  "version": "1.0.0",
+  "description": "A server-rendered web application built with Rust, Axum, HTMX, and Askama. Authentication is handled via Google OAuth.",
+  "main": "tailwind.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "tailwindcss": "^4.2.2"
+  }
+}
