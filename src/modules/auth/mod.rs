@@ -43,7 +43,7 @@ impl axum_login::AuthnBackend for AuthBackend {
     ) -> Result<Option<Self::User>, Self::Error> {
         sqlx::query_as!(
             User,
-            "SELECT id, google_id, email, name, avatar_url FROM users WHERE id = $1",
+            "SELECT id, google_id, email, name, avatar_url, is_admin FROM users WHERE id = $1",
             user_id
         )
         .fetch_optional(&self.pool)

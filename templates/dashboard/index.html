@@ -30,6 +30,11 @@
       </div>
     </div>
     <p class="text-gray-600">You are signed in. Add your features here.</p>
+    {% if user.is_admin %}
+    <div class="mt-6">
+      <a href="/admin" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Admin panel →</a>
+    </div>
+    {% endif %}
   </main>
 </div>
 {% endblock %}

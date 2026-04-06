@@ -9,6 +9,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 mod config;
+mod db_types;
 mod error;
 mod football_api;
 mod modules;

@@ -1,0 +1,43 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Admin — Register Tournament{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Admin</h1>
+    <a href="/admin" class="text-sm text-gray-600 hover:text-gray-900">← Tournaments</a>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-10">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Register Tournament</h2>
+    <p class="text-sm text-gray-500 mb-6">Select a competition from the list below. This will register it and seed all team, player, and fixture data.</p>
+
+    {% if competitions.is_empty() %}
+    <p class="text-gray-500">No competitions available from the API.</p>
+    {% else %}
+    <div class="space-y-3">
+      {% for c in competitions %}
+      <div class="bg-white border border-gray-200 rounded-lg px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="font-medium text-gray-900">{{ c.name }}</span>
+          <span class="ml-2 text-xs text-gray-400 font-mono">{{ c.code }}</span>
+          <span class="ml-2 text-xs text-gray-500">{{ c.season_year() }}</span>
+        </div>
+        <form method="post" action="/admin/tournaments">
+          <input type="hidden" name="code" value="{{ c.code }}">
+          <input type="hidden" name="external_id" value="{{ c.id }}">
+          <input type="hidden" name="name" value="{{ c.name }}">
+          <input type="hidden" name="season" value="{{ c.season_year() }}">
+          <button type="submit"
+                  class="bg-indigo-600 text-white text-sm font-medium px-4 py-1.5 rounded hover:bg-indigo-700 transition-colors cursor-pointer">
+            Register &amp; Seed
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

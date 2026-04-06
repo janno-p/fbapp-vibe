@@ -1,13 +1,13 @@
 ---
 id: 0005
 title: Tournament management (admin)
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0016]
 refs: [0004]
 created: 2026-04-06
-started: ~
-completed: ~
+started: 2026-04-06
+completed: 2026-04-06
 ---
 
 ## Goal
@@ -63,6 +63,8 @@ Check `auth_session.user.is_admin` at the handler level (or via a middleware app
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+`src/modules/admin/` module with full CRUD for tournament management. `AdminUser` extractor enforces admin-only access. Seeding derives groups and group memberships from match data (no separate standings call), handles TBD knockout slots via nullable `home_team_id`/`away_team_id` (migration 0009). `AppError::NotFound` added to the error enum. `User.is_admin` added across auth models and queries. Shared DB enum types (`MatchOutcome`, `KnockoutRound`) in `src/db_types.rs`. Seed idempotency verified by `#[sqlx::test]`.
+
+Also added: `sqlx` `time` feature for TIMESTAMPTZ columns; `Season::year()` and `Competition::season_year()` helpers.
 
 Follow-up tasks: _none_

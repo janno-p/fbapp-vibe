@@ -4,6 +4,8 @@ use std::time::{Duration, Instant};
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
+use crate::db_types::MatchOutcome;
+
 const BASE_URL: &str = "https://api.football-data.org/v4";
 
 /// Minimum interval between API requests: 7 s (free tier allows 10 req/min = 6 s min, +1 s buffer).
@@ -39,10 +41,35 @@ impl RateLimiter {
 // ── Response types ────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+pub struct Season {
+    pub id: i64,
+    /// Format: "YYYY-MM-DD"
+    #[serde(rename = "startDate")]
+    pub start_date: String,
+}
+
+impl Season {
+    pub fn year(&self) -> &str {
+        &self.start_date[..4.min(self.start_date.len())]
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Competition {
     pub id: i64,
     pub name: String,
     pub code: String,
+    #[serde(rename = "currentSeason")]
+    pub current_season: Option<Season>,
+}
+
+impl Competition {
+    pub fn season_year(&self) -> &str {
+        self.current_season
+            .as_ref()
+            .map(|s| s.year())
+            .unwrap_or("Unknown")
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,6 +111,16 @@ pub enum MatchWinner {
     HomeTeam,
     AwayTeam,
     Draw,
+}
+
+impl MatchWinner {
+    pub fn to_outcome(&self) -> MatchOutcome {
+        match self {
+            MatchWinner::HomeTeam => MatchOutcome::Home,
+            MatchWinner::AwayTeam => MatchOutcome::Away,
+            MatchWinner::Draw => MatchOutcome::Draw,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]

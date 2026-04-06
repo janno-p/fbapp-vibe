@@ -7,6 +7,7 @@ pub struct User {
     pub email: String,
     pub name: String,
     pub avatar_url: Option<String>,
+    pub is_admin: bool,
 }
 
 impl axum_login::AuthUser for User {

@@ -18,7 +18,7 @@ pub async fn find_or_create_user(
             SET email      = EXCLUDED.email,
                 name       = EXCLUDED.name,
                 avatar_url = EXCLUDED.avatar_url
-        RETURNING id, google_id, email, name, avatar_url
+        RETURNING id, google_id, email, name, avatar_url, is_admin
         "#,
         google_id,
         email,
