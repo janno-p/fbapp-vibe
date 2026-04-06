@@ -13,6 +13,7 @@ pub struct Config {
     pub session_secret: String,
     pub tls_cert_path: Option<String>,
     pub tls_key_path: Option<String>,
+    pub football_api_key: String,
 }
 
 fn default_host() -> String {

@@ -1,13 +1,13 @@
 ---
 id: 0004
 title: Football API integration
-status: open
+status: done
 type: chore
-adrs: [0016]
+adrs: [0016, 0018]
 refs: []
 created: 2026-04-06
-started: ~
-completed: ~
+started: 2026-04-06
+completed: 2026-04-06
 ---
 
 ## Goal
@@ -66,6 +66,8 @@ If the free tier does not cover the required endpoints at acceptable detail, eva
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+`FootballApiClient` implemented in `src/football_api/mod.rs` with four methods: `list_competitions`, `get_teams` (includes squad/players), `get_matches`, `get_scorers`. Client is stored in `AppState` and constructed from `FOOTBALL_API_KEY` config. Rate limiter enforces 7-second minimum interval between requests via a tokio `Mutex<Option<Instant>>`. Three unit tests cover rate limiter behaviour; one integration test is `#[ignore]`d and requires a real API key.
+
+ADR-0018 documents the API choice, rate limiting approach, and field mapping between API response and DB columns.
 
 Follow-up tasks: _none_

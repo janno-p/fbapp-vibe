@@ -10,6 +10,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 mod config;
 mod error;
+mod football_api;
 mod modules;
 mod routes;
 mod state;
@@ -50,8 +51,12 @@ async fn main() -> anyhow::Result<()> {
     // OAuth client
     let oauth_client = build_oauth_client(&config)?;
 
+    // Football API client
+    let football_api = football_api::FootballApiClient::new(config.football_api_key.clone())
+        .map_err(|e| anyhow::anyhow!("failed to build football API client: {e}"))?;
+
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;
-    let state = AppState::new(pool, config, oauth_client);
+    let state = AppState::new(pool, config, oauth_client, football_api);
     let app = routes::router(state).layer(auth_layer);
 
     tracing::info!("listening on {}", if tls.is_some() { format!("https://{addr}") } else { format!("http://{addr}") });
