@@ -163,7 +163,7 @@ pub async fn seed_tournament_data(
 
 fn api_stage_to_round(stage: &str) -> Option<KnockoutRound> {
     match stage {
-        "ROUND_OF_32" => Some(KnockoutRound::R32),
+        "ROUND_OF_32" | "LAST_32" => Some(KnockoutRound::R32),
         "LAST_16" | "ROUND_OF_16" => Some(KnockoutRound::R16),
         "QUARTER_FINALS" => Some(KnockoutRound::Qf),
         "SEMI_FINALS" => Some(KnockoutRound::Sf),
