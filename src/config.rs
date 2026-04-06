@@ -7,6 +7,12 @@ pub struct Config {
     pub host: String,
     #[serde(default = "default_port")]
     pub port: u16,
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub google_redirect_url: String,
+    pub session_secret: String,
+    pub tls_cert_path: Option<String>,
+    pub tls_key_path: Option<String>,
 }
 
 fn default_host() -> String {

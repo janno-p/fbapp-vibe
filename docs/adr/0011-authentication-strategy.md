@@ -2,7 +2,7 @@
 
 ## Status
 
-✅ Accepted
+⛔ Superseded by [ADR-0015](0015-google-oauth-authentication.md)
 
 ## Date
 
