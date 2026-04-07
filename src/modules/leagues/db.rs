@@ -2,7 +2,7 @@ use sqlx::PgPool;
 
 use crate::error::AppError;
 
-use super::models::{League, LeagueWithCount};
+use super::models::{League, LeagueMember, LeagueOverview, LeagueWithCount};
 
 pub async fn create_league(
     pool: &PgPool,
@@ -96,6 +96,70 @@ pub async fn list_user_leagues(pool: &PgPool, user_id: i64) -> anyhow::Result<Ve
     .fetch_all(pool)
     .await?;
     Ok(leagues)
+}
+
+pub async fn is_member(pool: &PgPool, league_id: i64, user_id: i64) -> anyhow::Result<bool> {
+    let exists = sqlx::query_scalar!(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM league_members
+            WHERE league_id = $1 AND user_id = $2
+        ) as "exists!"
+        "#,
+        league_id,
+        user_id,
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(exists)
+}
+
+pub async fn get_league_overview(
+    pool: &PgPool,
+    league_id: i64,
+) -> anyhow::Result<Option<LeagueOverview>> {
+    let league = sqlx::query!(
+        r#"
+        SELECT id, name, invite_token, created_by, created_at
+        FROM leagues
+        WHERE id = $1
+        "#,
+        league_id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    let Some(league) = league else {
+        return Ok(None);
+    };
+
+    let members = sqlx::query!(
+        r#"
+        SELECT u.name, lm.joined_at
+        FROM league_members lm
+        JOIN users u ON u.id = lm.user_id
+        WHERE lm.league_id = $1
+        ORDER BY lm.joined_at ASC
+        "#,
+        league_id
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|r| LeagueMember {
+        name: r.name,
+        joined_at: r.joined_at,
+    })
+    .collect();
+
+    Ok(Some(LeagueOverview {
+        id: league.id,
+        name: league.name,
+        created_by: league.created_by,
+        created_at: league.created_at,
+        invite_token: Some(league.invite_token),
+        members,
+    }))
 }
 
 pub async fn get_league_by_token_or_404(pool: &PgPool, token: &str) -> Result<League, AppError> {

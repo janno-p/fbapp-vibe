@@ -11,7 +11,7 @@ use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state:
 
 use super::{
     db,
-    models::{CreateLeagueForm, LeagueWithCount},
+    models::{CreateLeagueForm, LeagueOverview, LeagueWithCount},
     AdminUser,
 };
 
@@ -21,6 +21,13 @@ use super::{
 #[template(path = "admin/leagues.html")]
 struct AdminLeaguesTemplate {
     leagues: Vec<LeagueWithCount>,
+    nav: NavContext,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "leagues/overview.html")]
+struct LeagueOverviewTemplate {
+    overview: LeagueOverview,
     nav: NavContext,
 }
 
@@ -48,6 +55,34 @@ pub async fn admin_create_league(
 }
 
 // ── User handlers ─────────────────────────────────────────────────────────────
+
+/// GET /leagues/{id}
+pub async fn league_overview(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    Path(league_id): Path<i64>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+
+    if !db::is_member(&state.pool, league_id, user.id).await? {
+        return Err(AppError::Forbidden);
+    }
+
+    let (overview_opt, nav) = tokio::try_join!(
+        db::get_league_overview(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "leagues"),
+    )?;
+    let mut overview = overview_opt.ok_or(AppError::NotFound)?;
+
+    // Only expose the invite token to the league creator or admins.
+    if user.id != overview.created_by && !user.is_admin {
+        overview.invite_token = None;
+    }
+
+    Ok(LeagueOverviewTemplate { overview, nav })
+}
+
+
 
 /// GET /leagues/join/{token}
 ///

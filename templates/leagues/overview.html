@@ -1,0 +1,52 @@
+{% extends "layout/nav_base.html" %}
+
+{% block title %}{{ overview.name }} — Kickoff{% endblock %}
+
+{% block main %}
+  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8 space-y-8">
+
+    {# ── Header ───────────────────────────────────────────────────────────── #}
+    <div>
+      <h1 class="font-display font-bold text-3xl tracking-tight text-ink-50 leading-tight">
+        {{ overview.name }}
+      </h1>
+      <p class="text-ink-500 text-xs mt-2">
+        {{ overview.members.len() }} member{% if overview.members.len() != 1 %}s{% endif %}
+        · Created {{ overview.formatted_created_at() }}
+      </p>
+    </div>
+
+    {# ── Standings link ───────────────────────────────────────────────────── #}
+    {% if let Some(lid) = nav.standings_league_id %}
+    <a href="/leagues/{{ overview.id }}/standings"
+       class="inline-flex items-center gap-2 bg-goal-600 hover:bg-goal-500 text-ink-50 font-display font-semibold text-sm rounded-xl px-5 py-3 transition-colors">
+      View Standings →
+    </a>
+    {% endif %}
+
+    {# ── Members ──────────────────────────────────────────────────────────── #}
+    <section>
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Members</h2>
+      <div class="space-y-2">
+        {% for member in overview.members %}
+        <div class="flex items-center justify-between bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-4">
+          <span class="font-medium text-ink-100">{{ member.name }}</span>
+          <span class="text-xs text-ink-600">Joined {{ member.formatted_joined_at() }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ── Invite link (creator / admin only) ───────────────────────────────── #}
+    {% if let Some(token) = overview.invite_token %}
+    <section class="pt-6 border-t border-pitch-800">
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Invite Link</h2>
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-4">
+        <p class="text-xs text-ink-500 mb-2">Share this link to invite people to your league.</p>
+        <code class="text-sm text-goal-400 break-all">/leagues/join/{{ token }}</code>
+      </div>
+    </section>
+    {% endif %}
+
+  </main>
+{% endblock %}

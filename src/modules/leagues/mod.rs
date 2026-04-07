@@ -15,5 +15,6 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/admin/leagues", get(handlers::admin_list_leagues))
         .route("/admin/leagues", post(handlers::admin_create_league))
+        .route("/leagues/{id}", get(handlers::league_overview))
         .route("/leagues/join/{token}", get(handlers::join_league))
 }

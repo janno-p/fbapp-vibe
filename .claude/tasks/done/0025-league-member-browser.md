@@ -1,13 +1,13 @@
 ---
 id: 0025
 title: League member browser and league metadata page
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
 created: 2026-04-07
-started: ~
-completed: ~
+started: 2026-04-08
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -49,4 +49,11 @@ League members have no way to see who else is in their league, when the league w
 
 ## Outcome
 
-_Fill in after completion._
+Added `GET /leagues/{id}` league overview page.
+
+- `LeagueMember` and `LeagueOverview` models added to `leagues/models.rs` with `formatted_joined_at()` / `formatted_created_at()` helpers
+- `is_member` and `get_league_overview` queries added to `leagues/db.rs`
+- `league_overview` handler in `leagues/handlers.rs`: 401 if unauthenticated, 403 if not a member, 404 if league not found; invite token stripped unless viewer is creator or admin
+- Route registered: `GET /leagues/{id}`
+- Template `templates/leagues/overview.html`: shows name, member count, creation date, member list with join dates, standings link (when nav has an active tournament), invite link section for creator/admin only
+- `|length` Askama filter not available in this project — used `.len()` method call instead
