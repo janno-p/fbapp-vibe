@@ -1,13 +1,13 @@
 ---
 id: 0022
 title: Display player goal tallies in predictions and standings
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
 created: 2026-04-07
-started: ~
-completed: ~
+started: 2026-04-07
+completed: 2026-04-07
 ---
 
 ## Goal
@@ -49,4 +49,7 @@ The `players` table has a `goals_scored` column that is updated by the polling l
 
 ## Outcome
 
-_Fill in after completion._
+- Added `goals_scored: i32` to `PlayerInfo` struct
+- Updated `get_players_with_team()` query to SELECT `p.goals_scored` and sort by `goals_scored DESC, name ASC`
+- Added a small indigo badge (`Xg`) next to each player name in the top scorer picker
+- `cargo check` passes; sqlx macro validates schema match at compile time

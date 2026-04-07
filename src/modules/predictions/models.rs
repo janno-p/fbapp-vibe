@@ -47,6 +47,7 @@ pub struct PlayerInfo {
     pub id: i64,
     pub name: String,
     pub team_name: String,
+    pub goals_scored: i32,
 }
 
 pub struct KnockoutRoundState {

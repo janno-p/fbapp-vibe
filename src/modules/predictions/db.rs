@@ -105,11 +105,11 @@ pub async fn get_players_with_team(
     let players = sqlx::query_as!(
         PlayerInfo,
         r#"
-        SELECT p.id, p.name, t.name AS team_name
+        SELECT p.id, p.name, t.name AS team_name, p.goals_scored
         FROM players p
         JOIN teams t ON p.team_id = t.id
         WHERE p.tournament_id = $1
-        ORDER BY t.name, p.name
+        ORDER BY p.goals_scored DESC, p.name ASC
         "#,
         tournament_id
     )

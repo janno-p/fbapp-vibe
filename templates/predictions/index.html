@@ -137,10 +137,11 @@
                    {% if self.is_top_scorer(p.id) %}checked{% endif %}
                    {% if predictions_locked %}disabled{% endif %}
                    onchange="enforceMaxThree(this)">
-            <span>
+            <span class="flex-1 min-w-0">
               <span class="font-medium">{{ p.name }}</span>
               <span class="text-gray-400 text-xs ml-1">{{ p.team_name }}</span>
             </span>
+            <span class="text-xs font-medium text-indigo-600 bg-indigo-50 rounded px-1.5 py-0.5 shrink-0">{{ p.goals_scored }}g</span>
           </label>
           {% endfor %}
         </div>
