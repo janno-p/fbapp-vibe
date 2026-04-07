@@ -21,3 +21,6 @@ certs/
 # OS
 .DS_Store
 Thumbs.db
+
+# HTMX distribution files
+/assets/js/htmx.js

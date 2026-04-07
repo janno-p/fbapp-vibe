@@ -23,3 +23,6 @@ migrate:
 ## Compile Tailwind CSS once
 css:
 	npx @tailwindcss/cli -i assets/css/input.css -o assets/css/main.css
+
+js:
+	cp node_modules/htmx.org/dist/htmx.min.js assets/js/htmx.js
