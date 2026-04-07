@@ -17,7 +17,6 @@ pub mod models;
 
 /// Extractor that resolves to the authenticated user and fails with 401 if the
 /// user is not logged in or does not have admin rights.
-#[allow(dead_code)]
 pub struct AdminUser(pub User);
 
 impl FromRequestParts<AppState> for AdminUser {

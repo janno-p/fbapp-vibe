@@ -20,12 +20,12 @@ fn test_config() -> Config {
         google_client_id: "test-client-id".to_string(),
         google_client_secret: "test-client-secret".to_string(),
         google_redirect_url: "http://localhost:3000/auth/callback".to_string(),
-        session_secret: "test-session-secret".to_string(),
         tls_cert_path: None,
         tls_key_path: None,
         football_api_key: "test-key".to_string(),
         poll_interval_secs: 120,
         poll_interval_live_secs: 30,
+        session_duration_hours: 24,
     }
 }
 

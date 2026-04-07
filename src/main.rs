@@ -38,7 +38,9 @@ async fn main() -> anyhow::Result<()> {
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(tls.is_some())
         .with_same_site(SameSite::Lax)
-        .with_expiry(Expiry::OnInactivity(time::Duration::hours(1)));
+        .with_expiry(Expiry::OnInactivity(time::Duration::hours(
+            config.session_duration_hours as i64,
+        )));
 
     // Auth layer
     let auth_backend = AuthBackend::new(pool.clone());

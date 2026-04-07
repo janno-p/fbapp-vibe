@@ -85,38 +85,42 @@ pub async fn seed_tournament(
 }
 
 pub async fn activate_tournament(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::activate_tournament(&state.pool, id).await?;
+    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament activated");
     Ok(Redirect::to("/admin"))
 }
 
 pub async fn deactivate_tournament(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::deactivate_tournament(&state.pool, id).await?;
+    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament deactivated");
     Ok(Redirect::to("/admin"))
 }
 
 pub async fn lock_tournament(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::lock_tournament(&state.pool, id).await?;
+    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament locked");
     Ok(Redirect::to("/admin"))
 }
 
 pub async fn unlock_tournament(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::unlock_tournament(&state.pool, id).await?;
+    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament unlocked");
     Ok(Redirect::to("/admin"))
 }
 

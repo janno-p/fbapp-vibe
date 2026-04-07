@@ -15,6 +15,8 @@ use crate::{
     state::AppState,
 };
 
+const TOP_SCORER_PICKS: usize = 3;
+
 use super::{
     db,
     models::{
@@ -109,7 +111,7 @@ pub async fn save_knockout(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
     let round = KnockoutRound::from_slug(&round_slug)
-        .ok_or_else(|| AppError::BadRequest(format!("unknown round: {round_slug}")))?;
+        .ok_or(AppError::BadRequest("invalid knockout round".to_string()))?;
 
     if form.team_ids.len() != round.expected_team_count() {
         return Err(AppError::BadRequest(format!(
@@ -143,9 +145,9 @@ pub async fn save_top_scorer(
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
-    if form.player_ids.len() != 3 {
+    if form.player_ids.len() != TOP_SCORER_PICKS {
         return Err(AppError::BadRequest(format!(
-            "top scorer requires exactly 3 players, got {}",
+            "top scorer requires exactly {TOP_SCORER_PICKS} players, got {}",
             form.player_ids.len()
         )));
     }

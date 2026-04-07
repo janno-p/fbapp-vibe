@@ -1,7 +1,7 @@
 ---
 id: 0017
 title: Code housekeeping — dead fields, magic constants, session config, admin logging
-status: open
+status: done
 type: chore
 adrs: []
 refs: []
@@ -51,6 +51,12 @@ No new tests needed — these are mechanical cleanups. Existing test suite must 
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+- `src/config.rs`: removed `session_secret` (was `#[allow(dead_code)]`, never read); added `session_duration_hours` (default 24)
+- `src/main.rs`: session expiry now reads `config.session_duration_hours` instead of hardcoded 1
+- `.env.example`: removed `SESSION_SECRET`; added optional tuning vars as comments
+- `src/modules/predictions/handlers.rs`: added `const TOP_SCORER_PICKS: usize = 3`; used in validation and error message; replaced `"unknown round: {round_slug}"` with `"invalid knockout round"` (ADR-0009)
+- `src/modules/admin/handlers.rs`: `activate`, `deactivate`, `lock`, `unlock` handlers now log `tracing::info!(tournament_id, user_id, "...")` after the DB call; changed `_admin` to `admin` to access `admin.0.id`
+- `src/modules/admin/mod.rs`: removed `#[allow(dead_code)]` from `AdminUser`
+- `tests/admin_routes.rs`: updated `test_config()` to remove `session_secret`, add `session_duration_hours`
 
 Follow-up tasks: _none_
