@@ -305,7 +305,7 @@ async fn assert_predictions_open(
         .predictions_locked_at
         .is_some_and(|t| t <= time::OffsetDateTime::now_utc())
     {
-        return Err(AppError::Unauthorized);
+        return Err(AppError::Forbidden);
     }
     Ok(())
 }
@@ -595,8 +595,8 @@ mod tests {
                 .await;
 
         assert!(
-            matches!(result, Err(AppError::Unauthorized)),
-            "expected Unauthorized for locked tournament, got {result:?}"
+            matches!(result, Err(AppError::Forbidden)),
+            "expected Forbidden for locked tournament, got {result:?}"
         );
     }
 

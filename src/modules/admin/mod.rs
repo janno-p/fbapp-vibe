@@ -31,7 +31,7 @@ impl FromRequestParts<AppState> for AdminUser {
             .map_err(|_| AppError::Unauthorized)?;
         let user = auth_session.user.ok_or(AppError::Unauthorized)?;
         if !user.is_admin {
-            return Err(AppError::Unauthorized);
+            return Err(AppError::Forbidden);
         }
         Ok(AdminUser(user))
     }
