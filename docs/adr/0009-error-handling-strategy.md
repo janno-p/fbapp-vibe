@@ -32,62 +32,54 @@ The established Rust ecosystem tools for these concerns:
 
 We will use **`thiserror`** for defining typed domain errors and **`anyhow`** for internal error propagation, combined with a top-level **`AppError`** type that implements Axum's `IntoResponse` 🚨.
 
-## The Three-Layer Pattern
+## The Pattern in Practice
 
-### Layer 1 — Module errors with `thiserror` 🧩
+### `AppError` — the single HTTP error boundary 🌐
 
-Each module defines a typed error enum for errors that cross its public boundary:
-
-```rust
-// src/modules/users/models.rs
-#[derive(Debug, thiserror::Error)]
-pub enum UserError {
-    #[error("user not found: {id}")]
-    NotFound { id: i64 },
-    #[error("email already in use: {email}")]
-    EmailConflict { email: String },
-}
-```
-
-### Layer 2 — Internal propagation with `anyhow` 🔄
-
-Inside handlers and DB functions, `anyhow::Result` is used for ergonomic `?` propagation without declaring every intermediate error type:
-
-```rust
-// src/modules/users/db.rs
-pub async fn find_user(pool: &PgPool, id: i64) -> anyhow::Result<User> {
-    sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
-        .fetch_optional(pool)
-        .await?
-        .ok_or_else(|| UserError::NotFound { id }.into())
-}
-```
-
-### Layer 3 — HTTP response via `AppError` 🌐
-
-A single `AppError` type in `src/error.rs` implements `IntoResponse`, mapping domain errors to HTTP status codes and JSON error bodies:
+A single `AppError` enum in `src/error.rs` implements `IntoResponse`, mapping all errors to HTTP status codes. Handlers return `Result<impl IntoResponse, AppError>` and use `?` throughout:
 
 ```rust
 // src/error.rs
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error(transparent)]
-    User(#[from] UserError),
+    #[error("unauthorized")]
+    Unauthorized,
+    #[error("not found")]
+    NotFound,
+    #[error("bad request: {0}")]
+    BadRequest(String),
     #[error(transparent)]
     Unexpected(#[from] anyhow::Error),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, message) = match self {
-            AppError::User(UserError::NotFound { .. }) => (StatusCode::NOT_FOUND, self.to_string()),
-            AppError::User(UserError::EmailConflict { .. }) => (StatusCode::CONFLICT, self.to_string()),
-            AppError::Unexpected(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
+        let status = match &self {
+            AppError::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppError::NotFound     => StatusCode::NOT_FOUND,
+            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::Unexpected(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
-        (status, message).into_response()
+        (status, self.to_string()).into_response()
     }
 }
 ```
+
+### Internal propagation with `anyhow` 🔄
+
+DB functions return `anyhow::Result<T>` — errors propagate with `?` and convert to `AppError::Unexpected` at the handler boundary via the `From` impl. Domain-level errors (not found, unauthorized) are returned as `AppError` variants directly, not via intermediate module error types.
+
+```rust
+// src/modules/predictions/db.rs
+pub async fn get_active_tournament(pool: &PgPool) -> anyhow::Result<Option<Tournament>> { ... }
+
+// src/modules/predictions/handlers.rs
+let tournament = db::get_active_tournament(&state.pool)
+    .await?                          // anyhow::Error → AppError::Unexpected via From
+    .ok_or(AppError::NotFound)?;     // domain error returned directly
+```
+
+> **Note on module-specific error enums**: The original decision anticipated per-module typed error enums using `thiserror`. In practice, `AppError`'s variants (`Unauthorized`, `NotFound`, `BadRequest`, `Unexpected`) cover all cases without requiring intermediate module error types. The simpler approach is retained until a module has errors that require finer-grained HTTP mapping.
 
 Axum handlers return `Result<impl IntoResponse, AppError>`, using `?` freely throughout.
 

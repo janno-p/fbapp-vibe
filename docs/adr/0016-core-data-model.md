@@ -31,7 +31,7 @@ A tournament has two distinct phases with different prediction types:
 **Knockout stage**
 - Rounds: R32 → R16 → Quarter-finals → Semi-finals → Final → Winner
 - Users predict which teams advance to each round (not match-by-match opponents)
-- Points increase per round: 2 / 3 / 4 / 6 / 8 / 10
+- Points increase per round: 2 / 3 / 4 / 6 / 8 / 10 (R32 counts 2 pts per team)
 
 **Top scorer**
 - User selects 3 players as candidates
@@ -127,7 +127,7 @@ CREATE TABLE players (
 -- ── Matches ──────────────────────────────────────────────────
 
 CREATE TYPE match_outcome AS ENUM ('home', 'draw', 'away');
-CREATE TYPE knockout_round AS ENUM ('r16', 'qf', 'sf', 'final', 'winner');
+CREATE TYPE knockout_round AS ENUM ('r32', 'r16', 'qf', 'sf', 'final', 'winner');
 
 CREATE TABLE matches (
     id              BIGSERIAL PRIMARY KEY,
@@ -135,8 +135,8 @@ CREATE TABLE matches (
     external_id     TEXT NOT NULL,
     group_id        BIGINT REFERENCES groups(id),   -- NULL for knockout
     round           knockout_round,                  -- NULL for group stage
-    home_team_id    BIGINT NOT NULL REFERENCES teams(id),
-    away_team_id    BIGINT NOT NULL REFERENCES teams(id),
+    home_team_id    BIGINT REFERENCES teams(id),        -- NULL for knockout matches before draw
+    away_team_id    BIGINT REFERENCES teams(id),        -- NULL for knockout matches before draw
     scheduled_at    TIMESTAMPTZ NOT NULL,
     home_score      INT,                             -- NULL until played
     away_score      INT,

@@ -23,7 +23,7 @@ The two strongest candidates evaluated were **Axum** and **Actix-web**. Other fr
 | Middleware reuse 🧩 | Any `tower`-compatible crate | Actix-specific middleware only |
 | Ergonomics 🤝 | Clean extractor-based handlers | Similar, slightly more ceremony |
 | Error handling 🚨 | `IntoResponse` trait, natural `?` usage | `ResponseError` trait, more verbose |
-| Maturity 📅 | Since 2021, stable at v0.7 | Since 2017, stable at v4 |
+| Maturity 📅 | Since 2021, stable at v0.8 | Since 2017, stable at v4 |
 | Maintainer 👷 | Tokio team (official project) | Community-maintained |
 | Testing 🧪 | `tower::ServiceExt::oneshot`, no port needed | `actix_web::test` helpers |
 
@@ -63,5 +63,5 @@ We will use **Axum** 🌐 as the web backend framework.
 - 🧩 Middleware is sourced from the `tower` and `tower-http` crates wherever possible before writing custom middleware.
 - ⚙️ The async runtime is `tokio` (already implied by Axum's dependency).
 - 🗄️ Shared application state is passed via Axum's `State` extractor, backed by `Arc`.
-- 🧪 Integration tests use `tower::ServiceExt::oneshot` to call handlers without binding a real network port.
+- 🧪 Integration tests use `axum-test`'s `TestServer` to call handlers without binding a real network port.
 - 📋 Future ADRs will document choices for specific cross-cutting concerns (database access, authentication, observability) that build on top of this framework selection.

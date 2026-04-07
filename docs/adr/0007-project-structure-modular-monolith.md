@@ -42,10 +42,14 @@ fbapp-vibe/
 ├── assets/
 │   └── css/
 │       └── main.css          # Tailwind CSS compiled output
+├── tests/                    # HTTP-level integration tests (axum-test)
 ├── src/
 │   ├── main.rs               # Entry point: config loading, server binding, startup
+│   ├── lib.rs                # Crate root: re-exports all modules (enables tests/ to import)
 │   ├── config.rs             # App configuration loaded from environment variables
+│   ├── db_types.rs           # Shared DB enums used across modules (MatchOutcome, KnockoutRound)
 │   ├── error.rs              # Global AppError type + IntoResponse implementation
+│   ├── extractors.rs         # Shared Axum extractors (e.g. QsForm<T>)
 │   ├── state.rs              # AppState struct (PgPool, config, etc.) passed via Axum State
 │   ├── routes.rs             # Aggregates routers from all modules into one Router
 │   └── modules/

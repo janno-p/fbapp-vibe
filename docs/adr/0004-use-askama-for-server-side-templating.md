@@ -20,7 +20,7 @@ The candidates evaluated:
 | Validation ✅ | Compile-time | Runtime | Runtime | Compile-time |
 | Performance ⚡ | Fastest (zero-cost) | Fast | Fast | Fastest (zero-cost) |
 | Hot reload 🔥 | No (recompile needed) | Yes | Yes | No (recompile needed) |
-| Axum integration 🔌 | `askama_axum` crate | Manual `impl IntoResponse` | Manual `impl IntoResponse` | Native `impl IntoResponse` |
+| Axum integration 🔌 | `askama_web` crate | Manual `impl IntoResponse` | Manual `impl IntoResponse` | Native `impl IntoResponse` |
 | Designer-friendly 🎨 | Yes | Yes | Yes | No — pure Rust code |
 | Ecosystem popularity 📦 | Highest in Axum community | Moderate | Moderate | Niche |
 
@@ -41,7 +41,7 @@ We will use **Askama** 📄 for server-side HTML templating.
 
 2. ⚡ **Zero-cost rendering**: Templates are compiled to Rust code, not interpreted at runtime. There is no parsing or reflection overhead per request; rendering performance is equivalent to hand-written string formatting.
 
-3. 🔌 **First-class Axum integration**: The `askama_axum` crate provides an `IntoResponse` implementation for Askama templates out of the box. Handlers return a typed template struct directly, with no boilerplate.
+3. 🔌 **First-class Axum integration**: The `askama_web` crate (with the `axum-0.8` feature) provides an `IntoResponse` implementation for Askama templates out of the box. Handlers return a typed template struct directly, with no boilerplate.
 
 4. 🎨 **Jinja2-like syntax in `.html` files**: Templates live in separate `.html` files with familiar Jinja2-style syntax (`{% for %}`, `{% if %}`, `{{ variable }}`). This keeps HTML readable and separable from Rust logic, and is approachable for anyone familiar with Jinja2, Django templates, or Nunjucks.
 
@@ -58,8 +58,8 @@ We will use **Askama** 📄 for server-side HTML templating.
 ## Consequences
 
 - 📄 All HTML rendering uses Askama templates stored under the `templates/` directory.
-- 🔌 The `askama` and `askama_axum` crates are added as dependencies.
-- 🏗️ Template structs are defined in Rust and annotated with `#[derive(Template)]` and `#[template(path = "...")]`.
+- 🔌 The `askama` and `askama_web` crates are added as dependencies (`askama_web` with the `axum-0.8` feature).
+- 🏗️ Template structs are defined in Rust and annotated with `#[derive(Template, WebTemplate)]` and `#[template(path = "...")]`.
 - 🔄 HTMX partial responses are implemented as dedicated partial templates or Askama blocks rendered independently from the full-page layout.
 - 🛠️ `cargo-watch` is the recommended development tool to trigger automatic recompilation on template changes.
 - 🎨 The `templates/` directory structure mirrors the application's route hierarchy for discoverability.

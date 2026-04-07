@@ -51,7 +51,11 @@ Inside a route module:
 | Background job | `src/polling.rs` or `src/polling/` | result polling task |
 | Infrastructure | `src/config.rs`, `src/error.rs` | config, error types |
 
-Currently: **`auth`** — Google OAuth login/callback/logout, session management, home and dashboard pages.
+Currently implemented modules:
+- **`auth`** — Google OAuth login/callback/logout, session management, home and dashboard pages
+- **`admin`** — tournament registration, activation, locking, seeding from football API, league management
+- **`leagues`** — league creation, invite-token join flow, membership
+- **`predictions`** — group stage, knockout, and top scorer prediction forms with lock enforcement
 
 ### Auth flow
 

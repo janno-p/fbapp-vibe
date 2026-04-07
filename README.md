@@ -53,6 +53,7 @@ Open `.env` and fill in the values:
 
 ```bash
 DATABASE_URL=postgres://fbapp:fbapp@localhost:5432/fbapp
+TEST_DATABASE_URL=postgres://fbapp:fbapp@localhost:5432/fbapp_test
 HOST=127.0.0.1
 PORT=3000
 
@@ -61,6 +62,8 @@ GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URL=http://localhost:3000/auth/callback
 SESSION_SECRET=<generate-a-random-value-see-below>
 ```
+
+`TEST_DATABASE_URL` must point to a separate database on the same host. `cargo test` uses `sqlx::test` which creates and tears down an isolated database per test.
 
 To generate a secure `SESSION_SECRET`:
 
@@ -82,7 +85,7 @@ This starts a PostgreSQL instance on port `5432` with the credentials from `dock
 make migrate
 ```
 
-This creates the `users` and `tower_sessions` tables.
+This runs all pending migrations, creating the full schema (users, sessions, tournaments, teams, groups, matches, players, leagues, predictions).
 
 ### 6. Enable HTTPS (optional but recommended)
 
@@ -133,6 +136,9 @@ The application starts at [http://localhost:3000](http://localhost:3000).
 - `GET /` — public landing page with Google sign-in
 - `GET /dashboard` — authenticated landing page
 - `GET /health` — health check endpoint
+- `GET /predictions` — tournament predictions page (authenticated)
+- `GET /admin` — admin dashboard (admin users only)
+- `GET /leagues/join/:token` — league invite link
 
 ---
 
@@ -166,16 +172,23 @@ fbapp-vibe/
 │   ├── layout/          # Base layout
 │   └── {module}/        # Per-feature templates
 ├── assets/css/          # Tailwind CSS
+├── tests/               # Integration tests (HTTP-level, use axum-test)
 ├── src/
 │   ├── main.rs          # Entry point — startup, server bind, layer wiring
+│   ├── lib.rs           # Crate root — re-exports modules for integration tests
 │   ├── config.rs        # Configuration loaded from environment variables
 │   ├── error.rs         # Global AppError type
 │   ├── state.rs         # Shared AppState (database pool, config, OAuth client)
 │   ├── routes.rs        # Top-level router assembly
+│   ├── db_types.rs      # Shared database enums (MatchOutcome, KnockoutRound)
+│   ├── extractors.rs    # Custom Axum extractors (QsForm)
 │   └── modules/         # Feature modules (each exposes a single router())
-│       └── auth/        # Google OAuth, session management, landing pages
+│       ├── auth/        # Google OAuth, session management, landing pages
+│       ├── admin/       # Tournament management, seeding, league admin
+│       ├── leagues/     # League creation, invite links, membership
+│       └── predictions/ # Tournament predictions (group, knockout, top scorer)
 ├── docs/adr/            # Architecture Decision Records
-└── tasks/               # Task files for AI-assisted development
+└── .claude/tasks/       # Task files for AI-assisted development
 ```
 
 ## Architecture Decisions
