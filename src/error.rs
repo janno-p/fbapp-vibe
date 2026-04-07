@@ -7,6 +7,8 @@ use axum::{
 pub enum AppError {
     #[error("unauthorized")]
     Unauthorized,
+    #[error("forbidden")]
+    Forbidden,
     #[error("not found")]
     NotFound,
     #[error("bad request: {0}")]
@@ -19,6 +21,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, message) = match &self {
             AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized".to_string()),
+            AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden".to_string()),
             AppError::NotFound => (StatusCode::NOT_FOUND, "not found".to_string()),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             AppError::Unexpected(_) => (
@@ -51,6 +54,13 @@ mod tests {
         let response = AppError::Unauthorized.into_response();
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
         assert_eq!(body_string(response).await, "unauthorized");
+    }
+
+    #[tokio::test]
+    async fn forbidden_returns_403() {
+        let response = AppError::Forbidden.into_response();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert_eq!(body_string(response).await, "forbidden");
     }
 
     #[tokio::test]

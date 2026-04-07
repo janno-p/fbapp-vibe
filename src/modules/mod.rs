@@ -5,3 +5,4 @@ pub mod admin;
 pub mod auth;
 pub mod leagues;
 pub mod predictions;
+pub mod standings;

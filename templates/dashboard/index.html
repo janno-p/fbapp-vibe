@@ -36,8 +36,10 @@
       <h3 class="text-base font-semibold text-gray-900 mb-3">Your leagues</h3>
       <div class="space-y-2">
         {% for league in leagues %}
-        <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
+        <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between">
           <span class="font-medium text-gray-900">{{ league.name }}</span>
+          <a href="/leagues/{{ league.id }}/standings"
+             class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Standings →</a>
         </div>
         {% endfor %}
       </div>

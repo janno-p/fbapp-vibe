@@ -1,0 +1,41 @@
+<div id="leaderboard-wrapper"
+     {% if has_live %}
+     hx-get="/leagues/{{ league_id }}/standings/leaderboard"
+     hx-trigger="every 60s"
+     hx-target="#leaderboard-wrapper"
+     hx-swap="outerHTML"
+     {% endif %}>
+  {% if entries.is_empty() %}
+  <p class="text-gray-500 text-sm">No predictions yet — standings will appear once predictions are submitted.</p>
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
+          <th class="px-4 py-3 text-left w-10">#</th>
+          <th class="px-4 py-3 text-left">Name</th>
+          <th class="px-4 py-3 text-right">Points</th>
+          <th class="px-4 py-3 text-right">Max</th>
+          <th class="px-4 py-3 text-right">Gap</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for e in entries %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-gray-400 font-medium">{{ e.rank }}</td>
+          <td class="px-4 py-3 text-gray-900 font-medium">{{ e.user_name }}</td>
+          <td class="px-4 py-3 text-right font-semibold text-gray-900">{{ e.total_points }}</td>
+          <td class="px-4 py-3 text-right text-gray-500">{{ e.max_achievable }}</td>
+          <td class="px-4 py-3 text-right text-gray-400">
+            {% if e.is_leader() %}—{% else %}-{{ e.points_behind }}{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  {% if has_live %}
+  <p class="mt-2 text-xs text-gray-400">Auto-refreshing every 60 seconds · live match in progress</p>
+  {% endif %}
+</div>

@@ -1,13 +1,13 @@
 ---
 id: 0009
 title: Leaderboard and standings
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0016]
 refs: [0006, 0007, 0008]
 created: 2026-04-06
-started: ~
-completed: ~
+started: 2026-04-07
+completed: 2026-04-07
 ---
 
 ## Goal
@@ -104,6 +104,21 @@ LIMIT 1;
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Implemented `src/modules/standings/` with four routes:
+
+- `GET /leagues/{id}/standings` — full standings page: leaderboard with rank, points, max achievable, gap; nearest group match with link to breakdown; links to compare and predictions
+- `GET /leagues/{id}/standings/leaderboard` — HTMX fragment; auto-refreshes every 60s when a live match is in progress (`has_live` flag)
+- `GET /leagues/{id}/standings/match/{match_id}` — per-match breakdown showing every league member's prediction and points awarded
+- `GET /leagues/{id}/standings/compare?a={id}&b={id}` — side-by-side group stage prediction comparison with correct/wrong colouring
+
+Key implementation details:
+- All routes guarded by league membership check → 403 Forbidden for non-members (added `AppError::Forbidden` to `error.rs`)
+- Leaderboard SQL uses CTEs with a final `combined` CTE so aliases are referenceable in the outer SELECT (SQLx compile-time constraint)
+- `max_achievable_points` is a pure function in `models.rs` — tested with 6 unit tests
+- `build_leaderboard` pure function computes rank and points-behind — tested with 2 unit tests
+- 2 `#[sqlx::test]` integration tests: membership check + leaderboard ranking
+- Dashboard updated to include "Standings →" link per league
+
+Deviations from spec: scenario modeling (hypothetical result simulation) not implemented — this requires additional query complexity and was scoped out.
 
 Follow-up tasks: _none_

@@ -1,0 +1,72 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ match_info.home_name }} vs {{ match_info.away_name }} — {{ league_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Match Breakdown</h1>
+    <a href="/leagues/{{ league_id }}/standings" class="text-sm text-gray-600 hover:text-gray-900">← Standings</a>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-6 py-8">
+
+    {# ── Match header ─────────────────────────────────────────────────────── #}
+    <div class="bg-white border border-gray-200 rounded-lg px-6 py-5 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 text-right">
+          <span class="text-lg font-semibold text-gray-900">{{ match_info.home_name }}</span>
+        </div>
+        <div class="mx-6 text-center">
+          {% if match_info.is_played() %}
+          <span class="text-2xl font-bold text-gray-900">{{ match_info.result_label() }}</span>
+          <div class="text-xs text-gray-500 mt-1">{{ match_info.outcome_label() }}</div>
+          {% else %}
+          <span class="text-gray-400 text-sm">vs</span>
+          {% endif %}
+        </div>
+        <div class="flex-1 text-left">
+          <span class="text-lg font-semibold text-gray-900">{{ match_info.away_name }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# ── Predictions table ─────────────────────────────────────────────────── #}
+    {% if rows.is_empty() %}
+    <p class="text-gray-500 text-sm">No predictions in this league yet.</p>
+    {% else %}
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
+            <th class="px-4 py-3 text-left">Player</th>
+            <th class="px-4 py-3 text-center">Prediction</th>
+            <th class="px-4 py-3 text-center">Points</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for row in rows %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 font-medium text-gray-900">{{ row.user_name }}</td>
+            <td class="px-4 py-3 text-center text-gray-700">{{ row.prediction_label() }}</td>
+            <td class="px-4 py-3 text-center">
+              {% if let Some(pts) = row.points_awarded %}
+                {% if row.points_positive() %}
+                <span class="text-green-700 font-semibold">+{{ pts }}</span>
+                {% else %}
+                <span class="text-gray-400">0</span>
+                {% endif %}
+              {% else %}
+              <span class="text-gray-300">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </main>
+</div>
+{% endblock %}
