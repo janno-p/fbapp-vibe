@@ -44,21 +44,24 @@
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Group {{ group.name }}</h3>
             <div class="space-y-2">
               {% for m in group.matches %}
-              <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-4">
-                <span class="flex-1 text-sm text-right text-gray-900 font-medium">
-                  {{ m.home_name() }}
-                </span>
-                <select name="match_{{ m.id }}"
-                        class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        {% if predictions_locked %}disabled{% endif %}>
-                  <option value="">—</option>
-                  <option value="home" {% if m.is_home_selected() %}selected{% endif %}>Home</option>
-                  <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
-                  <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
-                </select>
-                <span class="flex-1 text-sm text-left text-gray-900 font-medium">
-                  {{ m.away_name() }}
-                </span>
+              <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                <div class="flex items-center gap-4">
+                  <span class="flex-1 text-sm text-right text-gray-900 font-medium">
+                    {{ m.home_name() }}
+                  </span>
+                  <select name="match_{{ m.id }}"
+                          class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          {% if predictions_locked %}disabled{% endif %}>
+                    <option value="">—</option>
+                    <option value="home" {% if m.is_home_selected() %}selected{% endif %}>Home</option>
+                    <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
+                    <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
+                  </select>
+                  <span class="flex-1 text-sm text-left text-gray-900 font-medium">
+                    {{ m.away_name() }}
+                  </span>
+                </div>
+                <div class="text-xs text-gray-400 text-center mt-1">{{ m.formatted_kickoff() }}</div>
               </div>
               {% endfor %}
             </div>

@@ -1,13 +1,13 @@
 ---
 id: 0021
 title: Human-friendly match schedule with timezone display
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
 created: 2026-04-07
-started: ~
-completed: ~
+started: 2026-04-07
+completed: 2026-04-07
 ---
 
 ## Goal
@@ -49,4 +49,7 @@ Match kick-off times are stored as `scheduled_at TIMESTAMPTZ` in the DB and fetc
 
 ## Outcome
 
-_Fill in after completion._
+- Added `formatted_kickoff()` to `MatchRow` (predictions) and `MatchInfo` (standings) using `time` crate format `"[day] [month repr:short] [hour]:[minute] UTC"`
+- Group stage match cards in `/predictions` now show the kickoff time below the team names (e.g. `"15 Jun 18:00 UTC"`)
+- Standings match breakdown shows kickoff time under "vs" for unplayed matches
+- No DB or query changes needed — `scheduled_at` was already fetched in both modules

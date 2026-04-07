@@ -78,6 +78,12 @@ impl MatchInfo {
             None => "—",
         }
     }
+
+    pub fn formatted_kickoff(&self) -> String {
+        let fmt = time::format_description::parse("[day] [month repr:short] [hour]:[minute] UTC")
+            .expect("static format is valid");
+        self.scheduled_at.format(&fmt).unwrap_or_else(|_| "TBD".to_string())
+    }
 }
 
 /// One league member's prediction row for a group stage match breakdown.
