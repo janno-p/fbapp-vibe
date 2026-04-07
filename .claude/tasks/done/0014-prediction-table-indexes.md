@@ -1,7 +1,7 @@
 ---
 id: 0014
 title: Add indexes to prediction tables
-status: open
+status: done
 type: chore
 adrs: []
 refs: [0007]
@@ -57,6 +57,13 @@ Check whether `group_stage_predictions` and `knockout_predictions` already have 
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `migrations/0011_prediction_indexes.sql` with four indexes:
+
+- `group_stage_predictions (match_id)` — scoring UPDATE and per-match breakdown query
+- `knockout_predictions (tournament_id, round)` — scoring UPDATE by tournament+round
+- `top_scorer_predictions (tournament_id)` — scoring UPDATE and leaderboard CTE by tournament
+- `league_members (user_id)` — listing a user's leagues
+
+Skipped redundant indexes on `(user_id, ...)` prefixes since the existing UNIQUE constraints already provide those. All `#[sqlx::test]` tests apply migrations including the new file and continue to pass.
 
 Follow-up tasks: _none_
