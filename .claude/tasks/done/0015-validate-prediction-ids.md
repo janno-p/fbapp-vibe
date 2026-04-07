@@ -53,6 +53,6 @@ Use `sqlx::query_scalar!` and pass the id slice as `&team_ids[..]` with `i64` ty
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `COUNT(*) ... WHERE tournament_id = $1 AND id = ANY($2::bigint[])` validation inside the transaction in both `save_knockout_round_predictions` and `save_top_scorer_predictions`, after `assert_predictions_open`. Returns `AppError::BadRequest` if any submitted ID doesn't belong to the tournament. Two `#[sqlx::test]` tests cover the rejection case for each function using a team/player from a second inactive tournament.
 
 Follow-up tasks: _none_

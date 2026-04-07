@@ -236,6 +236,22 @@ pub async fn save_knockout_round_predictions(
     let mut tx = pool.begin().await.map_err(|e| AppError::Unexpected(e.into()))?;
     assert_predictions_open(&mut tx, tournament_id).await?;
 
+    let valid_count = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM teams WHERE tournament_id = $1 AND id = ANY($2::bigint[])",
+        tournament_id,
+        team_ids as &[i64],
+    )
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| AppError::Unexpected(e.into()))?
+    .unwrap_or(0);
+
+    if valid_count as usize != team_ids.len() {
+        return Err(AppError::BadRequest(
+            "one or more team IDs are not valid for this tournament".to_string(),
+        ));
+    }
+
     sqlx::query!(
         r#"
         DELETE FROM knockout_predictions
@@ -278,6 +294,22 @@ pub async fn save_top_scorer_predictions(
 ) -> Result<(), AppError> {
     let mut tx = pool.begin().await.map_err(|e| AppError::Unexpected(e.into()))?;
     assert_predictions_open(&mut tx, tournament_id).await?;
+
+    let valid_count = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM players WHERE tournament_id = $1 AND id = ANY($2::bigint[])",
+        tournament_id,
+        player_ids as &[i64],
+    )
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| AppError::Unexpected(e.into()))?
+    .unwrap_or(0);
+
+    if valid_count as usize != player_ids.len() {
+        return Err(AppError::BadRequest(
+            "one or more player IDs are not valid for this tournament".to_string(),
+        ));
+    }
 
     sqlx::query!(
         "DELETE FROM top_scorer_predictions WHERE user_id = $1 AND tournament_id = $2",
@@ -343,6 +375,21 @@ mod tests {
         .expect("insert user")
     }
 
+    /// Creates a second, inactive tournament (different external_id so it doesn't
+    /// conflict with the active one created by `make_tournament`).
+    async fn make_other_tournament(pool: &PgPool) -> i64 {
+        sqlx::query_scalar!(
+            r#"
+            INSERT INTO tournaments (external_id, name, season, is_active)
+            VALUES ('TEST-OTHER', 'Other Cup', '2025', FALSE)
+            RETURNING id
+            "#,
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert other tournament")
+    }
+
     async fn make_team(pool: &PgPool, tournament_id: i64, ext_id: &str) -> i64 {
         sqlx::query_scalar!(
             r#"
@@ -356,6 +403,22 @@ mod tests {
         .fetch_one(pool)
         .await
         .expect("insert team")
+    }
+
+    async fn make_player(pool: &PgPool, tournament_id: i64, team_id: i64, ext_id: &str) -> i64 {
+        sqlx::query_scalar!(
+            r#"
+            INSERT INTO players (tournament_id, team_id, external_id, name)
+            VALUES ($1, $2, $3, $3)
+            RETURNING id
+            "#,
+            tournament_id,
+            team_id,
+            ext_id,
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert player")
     }
 
     async fn make_group_match(
@@ -447,5 +510,51 @@ mod tests {
         .expect("fetch outcome");
 
         assert_eq!(outcome, MatchOutcome::Away, "second save must update the value");
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn knockout_rejects_team_from_wrong_tournament(pool: PgPool) {
+        let t_a = make_tournament(&pool, false).await;
+        let t_b = make_other_tournament(&pool).await;
+        let u_id = make_user(&pool).await;
+        let team_b = make_team(&pool, t_b, "TeamB").await;
+
+        let result = save_knockout_round_predictions(
+            &pool,
+            t_a,
+            u_id,
+            &KnockoutRound::Qf,
+            &[team_b],
+        )
+        .await;
+
+        assert!(
+            matches!(result, Err(AppError::BadRequest(_))),
+            "expected BadRequest for team from wrong tournament, got {result:?}"
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn top_scorer_rejects_player_from_wrong_tournament(pool: PgPool) {
+        let t_a = make_tournament(&pool, false).await;
+        let t_b = make_other_tournament(&pool).await;
+        let u_id = make_user(&pool).await;
+        let team_b = make_team(&pool, t_b, "TeamB").await;
+        let player_b = make_player(&pool, t_b, team_b, "P1").await;
+        let player_b2 = make_player(&pool, t_b, team_b, "P2").await;
+        let player_b3 = make_player(&pool, t_b, team_b, "P3").await;
+
+        let result = save_top_scorer_predictions(
+            &pool,
+            t_a,
+            u_id,
+            &[player_b, player_b2, player_b3],
+        )
+        .await;
+
+        assert!(
+            matches!(result, Err(AppError::BadRequest(_))),
+            "expected BadRequest for players from wrong tournament, got {result:?}"
+        );
     }
 }
