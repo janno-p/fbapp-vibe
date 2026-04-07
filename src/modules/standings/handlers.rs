@@ -11,8 +11,8 @@ use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state:
 use super::{
     db,
     models::{
-        build_leaderboard, CompareGroupRow, LeaderboardEntry, LeagueMember, MatchBreakdownRow,
-        MatchInfo, NearestMatch,
+        build_leaderboard, group_fixtures, CompareGroupRow, FixtureGroup, LeaderboardEntry,
+        LeagueMember, MatchBreakdownRow, MatchInfo, NearestMatch,
     },
 };
 
@@ -57,6 +57,16 @@ struct CompareTemplate {
     user_a: Option<LeagueMember>,
     user_b: Option<LeagueMember>,
     group_rows: Vec<CompareGroupRow>,
+    nav: NavContext,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "standings/fixtures.html")]
+struct FixturesTemplate {
+    league_id: i64,
+    league_name: String,
+    groups: Vec<FixtureGroup>,
+    no_tournament: bool,
     nav: NavContext,
 }
 
@@ -217,6 +227,38 @@ pub async fn compare_page(
         user_a,
         user_b,
         group_rows,
+        nav,
+    })
+}
+
+/// GET /leagues/{id}/fixtures
+pub async fn fixture_list(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    Path(league_id): Path<i64>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+    require_member(&state, league_id, user.id).await?;
+
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
+
+    let (groups, no_tournament) = match db::get_active_tournament_id(&state.pool).await? {
+        None => (vec![], true),
+        Some(t_id) => {
+            let rows = db::get_all_fixtures(&state.pool, t_id).await?;
+            (group_fixtures(rows), false)
+        }
+    };
+
+    Ok(FixturesTemplate {
+        league_id,
+        league_name,
+        groups,
+        no_tournament,
         nav,
     })
 }

@@ -204,6 +204,70 @@ impl CompareGroupRow {
     }
 }
 
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+pub struct FixtureRow {
+    pub id: i64,
+    pub home_name: String,
+    pub away_name: String,
+    pub scheduled_at: time::OffsetDateTime,
+    pub home_score: Option<i32>,
+    pub away_score: Option<i32>,
+    pub outcome: Option<MatchOutcome>,
+    pub group_name: Option<String>,
+    pub round: Option<KnockoutRound>,
+}
+
+impl FixtureRow {
+    pub fn is_played(&self) -> bool {
+        self.outcome.is_some()
+    }
+
+    pub fn result_label(&self) -> String {
+        match (self.home_score, self.away_score) {
+            (Some(h), Some(a)) => format!("{h} – {a}"),
+            _ => "TBD".to_string(),
+        }
+    }
+
+    pub fn formatted_kickoff(&self) -> String {
+        let fmt = time::format_description::parse("[day] [month repr:short] [hour]:[minute] UTC")
+            .expect("static format is valid");
+        self.scheduled_at
+            .format(&fmt)
+            .unwrap_or_else(|_| "TBD".to_string())
+    }
+}
+
+pub struct FixtureGroup {
+    pub label: String,
+    pub matches: Vec<FixtureRow>,
+}
+
+/// Groups a pre-sorted flat list of fixture rows into labelled sections.
+///
+/// Input must already be sorted: group stage first (by group name ASC),
+/// then knockout stage in round order. Consecutive rows with the same
+/// stage label are collapsed into one group.
+pub fn group_fixtures(rows: Vec<FixtureRow>) -> Vec<FixtureGroup> {
+    let mut groups: Vec<FixtureGroup> = Vec::new();
+    for row in rows {
+        let label = if let Some(ref g) = row.group_name {
+            format!("Group {g}")
+        } else if let Some(ref r) = row.round {
+            r.label().to_string()
+        } else {
+            "Other".to_string()
+        };
+        if groups.last().map(|g: &FixtureGroup| g.label == label).unwrap_or(false) {
+            groups.last_mut().unwrap().matches.push(row);
+        } else {
+            groups.push(FixtureGroup { label, matches: vec![row] });
+        }
+    }
+    groups
+}
+
 // ── Future prospects (pure) ───────────────────────────────────────────────────
 
 /// Returns the maximum points a user can still achieve.

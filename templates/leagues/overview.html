@@ -16,12 +16,18 @@
       </p>
     </div>
 
-    {# ── Standings link ───────────────────────────────────────────────────── #}
-    {% if let Some(lid) = nav.standings_league_id %}
-    <a href="/leagues/{{ overview.id }}/standings"
-       class="inline-flex items-center gap-2 bg-goal-600 hover:bg-goal-500 text-ink-50 font-display font-semibold text-sm rounded-xl px-5 py-3 transition-colors">
-      View Standings →
-    </a>
+    {# ── Quick links ──────────────────────────────────────────────────────── #}
+    {% if let Some(_lid) = nav.standings_league_id %}
+    <div class="flex flex-wrap gap-3">
+      <a href="/leagues/{{ overview.id }}/standings"
+         class="inline-flex items-center gap-2 bg-goal-600 hover:bg-goal-500 text-ink-50 font-display font-semibold text-sm rounded-xl px-5 py-3 transition-colors">
+        View Standings →
+      </a>
+      <a href="/leagues/{{ overview.id }}/fixtures"
+         class="inline-flex items-center gap-2 bg-pitch-800 hover:bg-pitch-700 border border-pitch-600 text-ink-200 font-display font-semibold text-sm rounded-xl px-5 py-3 transition-colors">
+        Fixtures
+      </a>
+    </div>
     {% endif %}
 
     {# ── Members ──────────────────────────────────────────────────────────── #}

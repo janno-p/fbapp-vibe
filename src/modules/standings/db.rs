@@ -1,9 +1,10 @@
 use sqlx::PgPool;
 
-use crate::db_types::MatchOutcome;
+use crate::db_types::{KnockoutRound, MatchOutcome};
 
 use super::models::{
-    CompareGroupRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchInfo, NearestMatch,
+    CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchInfo,
+    NearestMatch,
 };
 
 // ── Access guard ──────────────────────────────────────────────────────────────
@@ -359,6 +360,62 @@ pub async fn get_compare_group_rows(
             a_points: r.a_points,
             b_prediction: r.b_prediction,
             b_points: r.b_points,
+        })
+        .collect())
+}
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+pub async fn get_all_fixtures(
+    pool: &PgPool,
+    tournament_id: i64,
+) -> anyhow::Result<Vec<FixtureRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT m.id,
+               COALESCE(ht.name, 'TBD') AS "home_name!: String",
+               COALESCE(at.name, 'TBD') AS "away_name!: String",
+               m.scheduled_at,
+               m.home_score,
+               m.away_score,
+               m.outcome    AS "outcome?: MatchOutcome",
+               g.name       AS "group_name?: String",
+               m.round      AS "round?: KnockoutRound"
+        FROM matches m
+        LEFT JOIN teams ht ON ht.id = m.home_team_id
+        LEFT JOIN teams at ON at.id = m.away_team_id
+        LEFT JOIN groups g  ON g.id  = m.group_id
+        WHERE m.tournament_id = $1
+        ORDER BY
+            CASE WHEN m.group_id IS NOT NULL THEN 0 ELSE 1 END,
+            g.name ASC NULLS LAST,
+            CASE m.round
+                WHEN 'r32'   THEN 1
+                WHEN 'r16'   THEN 2
+                WHEN 'qf'    THEN 3
+                WHEN 'sf'    THEN 4
+                WHEN 'final' THEN 5
+                ELSE 6
+            END,
+            m.scheduled_at ASC
+        "#,
+        tournament_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| FixtureRow {
+            id: r.id,
+            home_name: r.home_name,
+            away_name: r.away_name,
+            scheduled_at: r.scheduled_at,
+            home_score: r.home_score,
+            away_score: r.away_score,
+            outcome: r.outcome,
+            group_name: r.group_name,
+            round: r.round,
         })
         .collect())
 }
