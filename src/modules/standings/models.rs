@@ -24,7 +24,11 @@ pub struct LeaderboardEntry {
 }
 
 /// Assigns ranks (1-based) and computes `points_behind` relative to the leader.
-/// Input must already be sorted by `total_points DESC`.
+///
+/// Input must already be sorted by:
+///   1. `total_points DESC`
+///   2. `max_achievable DESC` (tie-break: higher ceiling first)
+///   3. `user_name ASC` (final deterministic tie-break)
 pub fn build_leaderboard(rows: Vec<LeaderboardRawRow>) -> Vec<LeaderboardEntry> {
     let leader = rows.first().map(|r| r.total_points).unwrap_or(0);
     rows.into_iter()
@@ -299,5 +303,50 @@ mod tests {
     #[test]
     fn build_leaderboard_empty_vec() {
         assert!(build_leaderboard(vec![]).is_empty());
+    }
+
+    #[test]
+    fn tiebreak_higher_max_achievable_ranks_first() {
+        let rows = vec![
+            LeaderboardRawRow {
+                user_id: 1,
+                user_name: "Alice".to_string(),
+                total_points: 10,
+                max_achievable: 20,
+            },
+            LeaderboardRawRow {
+                user_id: 2,
+                user_name: "Bob".to_string(),
+                total_points: 10,
+                max_achievable: 15,
+            },
+        ];
+        let entries = build_leaderboard(rows);
+        assert_eq!(entries[0].user_id, 1, "Alice has higher ceiling, should rank first");
+        assert_eq!(entries[1].user_id, 2);
+    }
+
+    #[test]
+    fn tiebreak_equal_points_and_ceiling_sorts_alphabetically() {
+        // Input is pre-sorted by SQL: same points, same ceiling → alphabetical ASC.
+        // Alice (id=2) comes before Zara (id=1) because the DB sorted them that way.
+        // build_leaderboard must preserve that order.
+        let rows = vec![
+            LeaderboardRawRow {
+                user_id: 2,
+                user_name: "Alice".to_string(),
+                total_points: 10,
+                max_achievable: 20,
+            },
+            LeaderboardRawRow {
+                user_id: 1,
+                user_name: "Zara".to_string(),
+                total_points: 10,
+                max_achievable: 20,
+            },
+        ];
+        let entries = build_leaderboard(rows);
+        assert_eq!(entries[0].user_id, 2, "Alice should be rank 1");
+        assert_eq!(entries[1].user_id, 1, "Zara should be rank 2");
     }
 }
