@@ -51,10 +51,7 @@ pub async fn list_leagues_with_counts(pool: &PgPool) -> anyhow::Result<Vec<Leagu
         .collect())
 }
 
-pub async fn find_league_by_token(
-    pool: &PgPool,
-    token: &str,
-) -> anyhow::Result<Option<League>> {
+pub async fn find_league_by_token(pool: &PgPool, token: &str) -> anyhow::Result<Option<League>> {
     let league = sqlx::query_as!(
         League,
         r#"
@@ -156,8 +153,12 @@ mod tests {
             .await
             .expect("create league");
 
-        join_league(&pool, league.id, user_id).await.expect("first join");
-        join_league(&pool, league.id, user_id).await.expect("second join");
+        join_league(&pool, league.id, user_id)
+            .await
+            .expect("first join");
+        join_league(&pool, league.id, user_id)
+            .await
+            .expect("second join");
 
         let count: i64 = sqlx::query_scalar!(
             "SELECT COUNT(*) FROM league_members WHERE league_id = $1",

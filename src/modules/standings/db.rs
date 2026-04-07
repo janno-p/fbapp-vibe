@@ -23,11 +23,9 @@ pub async fn is_member(pool: &PgPool, league_id: i64, user_id: i64) -> anyhow::R
 // ── League meta ───────────────────────────────────────────────────────────────
 
 pub async fn get_active_tournament_id(pool: &PgPool) -> anyhow::Result<Option<i64>> {
-    let id = sqlx::query_scalar!(
-        "SELECT id FROM tournaments WHERE is_active = TRUE LIMIT 1"
-    )
-    .fetch_optional(pool)
-    .await?;
+    let id = sqlx::query_scalar!("SELECT id FROM tournaments WHERE is_active = TRUE LIMIT 1")
+        .fetch_optional(pool)
+        .await?;
     Ok(id)
 }
 
@@ -56,7 +54,10 @@ pub async fn get_league_members(
     .await?;
     Ok(rows
         .into_iter()
-        .map(|r| LeagueMember { id: r.id, name: r.name })
+        .map(|r| LeagueMember {
+            id: r.id,
+            name: r.name,
+        })
         .collect())
 }
 

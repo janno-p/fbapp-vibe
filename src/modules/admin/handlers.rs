@@ -55,13 +55,8 @@ pub async fn register_tournament(
     State(state): State<AppState>,
     Form(form): Form<RegisterTournamentForm>,
 ) -> Result<impl IntoResponse, AppError> {
-    let tournament_id = db::create_tournament(
-        &state.pool,
-        &form.external_id,
-        &form.name,
-        &form.season,
-    )
-    .await?;
+    let tournament_id =
+        db::create_tournament(&state.pool, &form.external_id, &form.name, &form.season).await?;
 
     seed(&state, tournament_id, &form.code).await?;
 
@@ -90,7 +85,11 @@ pub async fn activate_tournament(
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::activate_tournament(&state.pool, id).await?;
-    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament activated");
+    tracing::info!(
+        tournament_id = id,
+        user_id = admin.0.id,
+        "tournament activated"
+    );
     Ok(Redirect::to("/admin"))
 }
 
@@ -100,7 +99,11 @@ pub async fn deactivate_tournament(
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::deactivate_tournament(&state.pool, id).await?;
-    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament deactivated");
+    tracing::info!(
+        tournament_id = id,
+        user_id = admin.0.id,
+        "tournament deactivated"
+    );
     Ok(Redirect::to("/admin"))
 }
 
@@ -110,7 +113,11 @@ pub async fn lock_tournament(
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::lock_tournament(&state.pool, id).await?;
-    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament locked");
+    tracing::info!(
+        tournament_id = id,
+        user_id = admin.0.id,
+        "tournament locked"
+    );
     Ok(Redirect::to("/admin"))
 }
 
@@ -120,7 +127,11 @@ pub async fn unlock_tournament(
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     db::unlock_tournament(&state.pool, id).await?;
-    tracing::info!(tournament_id = id, user_id = admin.0.id, "tournament unlocked");
+    tracing::info!(
+        tournament_id = id,
+        user_id = admin.0.id,
+        "tournament unlocked"
+    );
     Ok(Redirect::to("/admin"))
 }
 

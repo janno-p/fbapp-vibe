@@ -78,25 +78,16 @@ async fn poll(state: &AppState) -> anyhow::Result<bool> {
             continue;
         }
 
-        let team_ids =
-            db::get_teams_in_knockout_round(&state.pool, tournament.id, round).await?;
+        let team_ids = db::get_teams_in_knockout_round(&state.pool, tournament.id, round).await?;
 
         if !team_ids.is_empty() {
             let points = scorer::knockout_points_per_team(round);
-            db::score_knockout_predictions(
-                &state.pool,
-                tournament.id,
-                round,
-                &team_ids,
-                points,
-            )
-            .await?;
+            db::score_knockout_predictions(&state.pool, tournament.id, round, &team_ids, points)
+                .await?;
         }
 
         if *round == KnockoutRound::Final {
-            if let Some(winner_id) =
-                db::get_final_winner(&state.pool, tournament.id).await?
-            {
+            if let Some(winner_id) = db::get_final_winner(&state.pool, tournament.id).await? {
                 db::score_winner_predictions(&state.pool, tournament.id, winner_id).await?;
             }
         }

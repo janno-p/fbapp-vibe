@@ -82,10 +82,7 @@ pub async fn join_league(
 /// redirects. Rejects absolute URLs, protocol-relative URLs, and values
 /// containing newlines (which could enable header injection).
 fn is_safe_redirect(url: &str) -> bool {
-    url.starts_with('/')
-        && !url.starts_with("//")
-        && !url.contains("://")
-        && !url.contains('\n')
+    url.starts_with('/') && !url.starts_with("//") && !url.contains("://") && !url.contains('\n')
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

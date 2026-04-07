@@ -2,7 +2,11 @@ use crate::db_types::{KnockoutRound, MatchOutcome};
 
 /// Points awarded for a correct group stage match prediction.
 pub fn group_stage_points(predicted: &MatchOutcome, actual: &MatchOutcome) -> i32 {
-    if predicted == actual { 1 } else { 0 }
+    if predicted == actual {
+        1
+    } else {
+        0
+    }
 }
 
 /// Points awarded per team for a correctly predicted knockout round advancement.
@@ -33,22 +37,43 @@ mod tests {
 
     #[test]
     fn group_stage_correct_prediction_scores_one() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home), 1);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw), 1);
-        assert_eq!(group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away), 1);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home),
+            1
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw),
+            1
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away),
+            1
+        );
     }
 
     #[test]
     fn group_stage_wrong_prediction_scores_zero() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away), 0);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home), 0);
-        assert_eq!(group_stage_points(&MatchOutcome::Away, &MatchOutcome::Draw), 0);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away),
+            0
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home),
+            0
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Away, &MatchOutcome::Draw),
+            0
+        );
     }
 
     #[test]
     fn group_stage_scorer_is_idempotent() {
         let score = group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home);
-        assert_eq!(score, group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home));
+        assert_eq!(
+            score,
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home)
+        );
     }
 
     // ── Knockout ──────────────────────────────────────────────────────────────

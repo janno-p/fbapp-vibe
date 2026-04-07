@@ -13,7 +13,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/predictions", get(handlers::predictions_page))
         .route("/predictions/group", post(handlers::save_group))
-        .route("/predictions/knockout/{round}", post(handlers::save_knockout))
+        .route(
+            "/predictions/knockout/{round}",
+            post(handlers::save_knockout),
+        )
         .route("/predictions/top-scorer", post(handlers::save_top_scorer))
 }
 

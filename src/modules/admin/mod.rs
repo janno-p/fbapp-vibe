@@ -42,9 +42,24 @@ pub fn router() -> Router<AppState> {
         .route("/admin", get(handlers::dashboard))
         .route("/admin/competitions", get(handlers::list_competitions))
         .route("/admin/tournaments", post(handlers::register_tournament))
-        .route("/admin/tournaments/{id}/seed", post(handlers::seed_tournament))
-        .route("/admin/tournaments/{id}/activate", post(handlers::activate_tournament))
-        .route("/admin/tournaments/{id}/deactivate", post(handlers::deactivate_tournament))
-        .route("/admin/tournaments/{id}/lock", post(handlers::lock_tournament))
-        .route("/admin/tournaments/{id}/unlock", post(handlers::unlock_tournament))
+        .route(
+            "/admin/tournaments/{id}/seed",
+            post(handlers::seed_tournament),
+        )
+        .route(
+            "/admin/tournaments/{id}/activate",
+            post(handlers::activate_tournament),
+        )
+        .route(
+            "/admin/tournaments/{id}/deactivate",
+            post(handlers::deactivate_tournament),
+        )
+        .route(
+            "/admin/tournaments/{id}/lock",
+            post(handlers::lock_tournament),
+        )
+        .route(
+            "/admin/tournaments/{id}/unlock",
+            post(handlers::unlock_tournament),
+        )
 }

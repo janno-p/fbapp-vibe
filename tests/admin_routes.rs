@@ -71,41 +71,62 @@ async fn admin_dashboard_requires_auth(pool: PgPool) {
 #[sqlx::test(migrations = "./migrations")]
 async fn admin_competitions_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.get("/admin/competitions").await.assert_status_unauthorized();
+    server
+        .get("/admin/competitions")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn register_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn seed_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments/1/seed").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments/1/seed")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn activate_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments/1/activate").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments/1/activate")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn deactivate_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments/1/deactivate").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments/1/deactivate")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn lock_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments/1/lock").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments/1/lock")
+        .await
+        .assert_status_unauthorized();
 }
 
 #[sqlx::test(migrations = "./migrations")]
 async fn unlock_tournament_requires_auth(pool: PgPool) {
     let server = build_test_server(pool).await;
-    server.post("/admin/tournaments/1/unlock").await.assert_status_unauthorized();
+    server
+        .post("/admin/tournaments/1/unlock")
+        .await
+        .assert_status_unauthorized();
 }

@@ -1,7 +1,4 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::state::AppState;
 
@@ -11,10 +8,7 @@ pub mod models;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/leagues/{id}/standings",
-            get(handlers::standings_page),
-        )
+        .route("/leagues/{id}/standings", get(handlers::standings_page))
         .route(
             "/leagues/{id}/standings/leaderboard",
             get(handlers::leaderboard_fragment),

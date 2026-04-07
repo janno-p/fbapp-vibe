@@ -5,7 +5,8 @@ use crate::config::Config;
 use crate::football_api::FootballApiClient;
 
 /// OAuth client type after auth URL and token URL have been configured.
-pub type OAuthClient = BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+pub type OAuthClient =
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 #[derive(Clone)]
 pub struct AppState {

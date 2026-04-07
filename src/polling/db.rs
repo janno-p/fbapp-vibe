@@ -10,12 +10,14 @@ pub struct ActiveTournament {
 }
 
 pub async fn get_active_tournament(pool: &PgPool) -> anyhow::Result<Option<ActiveTournament>> {
-    let row = sqlx::query!(
-        "SELECT id, external_id FROM tournaments WHERE is_active = TRUE LIMIT 1"
-    )
-    .fetch_optional(pool)
-    .await?;
-    Ok(row.map(|r| ActiveTournament { id: r.id, external_id: r.external_id }))
+    let row =
+        sqlx::query!("SELECT id, external_id FROM tournaments WHERE is_active = TRUE LIMIT 1")
+            .fetch_optional(pool)
+            .await?;
+    Ok(row.map(|r| ActiveTournament {
+        id: r.id,
+        external_id: r.external_id,
+    }))
 }
 
 /// Returns true if there is at least one match that started within the last
@@ -111,10 +113,7 @@ pub async fn get_teams_in_knockout_round(
 
 /// Returns the winning team ID from the Final match, or None if the Final is
 /// not yet complete or ended in a draw (which shouldn't happen in a real final).
-pub async fn get_final_winner(
-    pool: &PgPool,
-    tournament_id: i64,
-) -> anyhow::Result<Option<i64>> {
+pub async fn get_final_winner(pool: &PgPool, tournament_id: i64) -> anyhow::Result<Option<i64>> {
     let row = sqlx::query!(
         r#"
         SELECT home_team_id, away_team_id,
@@ -158,13 +157,10 @@ pub async fn process_finished_match(
 ) -> anyhow::Result<bool> {
     let mut tx = pool.begin().await?;
 
-    let got_lock: bool = sqlx::query_scalar!(
-        "SELECT pg_try_advisory_xact_lock($1)",
-        api_match_id,
-    )
-    .fetch_one(&mut *tx)
-    .await?
-    .unwrap_or(false);
+    let got_lock: bool = sqlx::query_scalar!("SELECT pg_try_advisory_xact_lock($1)", api_match_id,)
+        .fetch_one(&mut *tx)
+        .await?
+        .unwrap_or(false);
 
     if !got_lock {
         tx.commit().await?;
@@ -286,10 +282,7 @@ pub async fn update_player_goals(
 /// Finds the player(s) with the highest `goals_scored` (ties all count).
 /// Matching predictions receive 5 + goals; non-matching receive 0.
 /// No-op if no players have scored or all predictions are already scored.
-pub async fn score_top_scorer_predictions(
-    pool: &PgPool,
-    tournament_id: i64,
-) -> anyhow::Result<()> {
+pub async fn score_top_scorer_predictions(pool: &PgPool, tournament_id: i64) -> anyhow::Result<()> {
     let max_goals: i32 = sqlx::query_scalar!(
         "SELECT COALESCE(MAX(goals_scored), 0) FROM players WHERE tournament_id = $1",
         tournament_id,
@@ -437,9 +430,10 @@ mod tests {
         .expect("insert prediction");
 
         // Actual result: home wins
-        let updated = process_finished_match(&pool, t_id, 99001, MatchOutcome::Home, Some(2), Some(1))
-            .await
-            .expect("process match");
+        let updated =
+            process_finished_match(&pool, t_id, 99001, MatchOutcome::Home, Some(2), Some(1))
+                .await
+                .expect("process match");
 
         assert!(updated, "match should be newly scored");
 
@@ -474,9 +468,10 @@ mod tests {
         process_finished_match(&pool, t_id, 99002, MatchOutcome::Home, Some(1), Some(0))
             .await
             .expect("first process");
-        let second = process_finished_match(&pool, t_id, 99002, MatchOutcome::Home, Some(1), Some(0))
-            .await
-            .expect("second process");
+        let second =
+            process_finished_match(&pool, t_id, 99002, MatchOutcome::Home, Some(1), Some(0))
+                .await
+                .expect("second process");
 
         assert!(!second, "second call should be a no-op");
 
@@ -501,8 +496,14 @@ mod tests {
         let p3 = make_player(&pool, t_id, team, "P3").await;
 
         // Both p1 and p2 have 5 goals (tied top scorers)
-        sqlx::query!("UPDATE players SET goals_scored = 5 WHERE id = $1", p1).execute(&pool).await.expect("set goals p1");
-        sqlx::query!("UPDATE players SET goals_scored = 5 WHERE id = $1", p2).execute(&pool).await.expect("set goals p2");
+        sqlx::query!("UPDATE players SET goals_scored = 5 WHERE id = $1", p1)
+            .execute(&pool)
+            .await
+            .expect("set goals p1");
+        sqlx::query!("UPDATE players SET goals_scored = 5 WHERE id = $1", p2)
+            .execute(&pool)
+            .await
+            .expect("set goals p2");
 
         // u1 predicts p1, p2, p3
         for player_id in [p1, p2, p3] {
@@ -515,7 +516,9 @@ mod tests {
             .expect("insert top scorer prediction");
         }
 
-        score_top_scorer_predictions(&pool, t_id).await.expect("score");
+        score_top_scorer_predictions(&pool, t_id)
+            .await
+            .expect("score");
 
         // p1 and p2 should each award 5 + 5 = 10 points
         let p1_pts: Option<i32> = sqlx::query_scalar!(

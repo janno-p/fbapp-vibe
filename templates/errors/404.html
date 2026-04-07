@@ -1,0 +1,16 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+  <div class="text-center max-w-sm">
+    <p class="text-6xl font-bold text-gray-200 mb-4">404</p>
+    <h1 class="text-xl font-semibold text-gray-900 mb-2">Page not found</h1>
+    <p class="text-sm text-gray-500 mb-6">The page you're looking for doesn't exist or has been moved.</p>
+    <a href="/dashboard" class="inline-block bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+      Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

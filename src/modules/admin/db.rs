@@ -49,22 +49,16 @@ pub async fn create_tournament(
 }
 
 pub async fn activate_tournament(pool: &PgPool, id: i64) -> anyhow::Result<()> {
-    sqlx::query!(
-        "UPDATE tournaments SET is_active = TRUE WHERE id = $1",
-        id
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query!("UPDATE tournaments SET is_active = TRUE WHERE id = $1", id)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 
 pub async fn deactivate_tournament(pool: &PgPool, id: i64) -> anyhow::Result<()> {
-    sqlx::query!(
-        "UPDATE tournaments SET is_active = FALSE WHERE id = $1",
-        id
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query!("UPDATE tournaments SET is_active = FALSE WHERE id = $1", id)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 
@@ -155,7 +149,16 @@ pub async fn seed_tournament_data(
             }
         }
 
-        upsert_match(pool, tournament_id, m, group_id, round, home_team_id, away_team_id).await?;
+        upsert_match(
+            pool,
+            tournament_id,
+            m,
+            group_id,
+            round,
+            home_team_id,
+            away_team_id,
+        )
+        .await?;
     }
 
     Ok(())
@@ -234,11 +237,7 @@ async fn upsert_player(
     Ok(())
 }
 
-async fn upsert_group_membership(
-    pool: &PgPool,
-    group_id: i64,
-    team_id: i64,
-) -> anyhow::Result<()> {
+async fn upsert_group_membership(pool: &PgPool, group_id: i64, team_id: i64) -> anyhow::Result<()> {
     sqlx::query!(
         "INSERT INTO group_memberships (group_id, team_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         group_id,
@@ -291,7 +290,9 @@ async fn upsert_match(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::football_api::{Match as ApiMatch, MatchScore, MatchStatus, MatchTeam, ScoreDetail, Team as ApiTeam};
+    use crate::football_api::{
+        Match as ApiMatch, MatchScore, MatchStatus, MatchTeam, ScoreDetail, Team as ApiTeam,
+    };
 
     fn make_team(id: i64, name: &str) -> ApiTeam {
         ApiTeam {
@@ -304,18 +305,33 @@ mod tests {
         }
     }
 
-    fn make_match(id: i64, stage: &str, group: Option<&str>, home_id: i64, away_id: i64) -> ApiMatch {
+    fn make_match(
+        id: i64,
+        stage: &str,
+        group: Option<&str>,
+        home_id: i64,
+        away_id: i64,
+    ) -> ApiMatch {
         ApiMatch {
             id,
             utc_date: "2024-06-14T21:00:00Z".to_string(),
             status: MatchStatus::Scheduled,
             stage: stage.to_string(),
             group: group.map(str::to_string),
-            home_team: MatchTeam { id: Some(home_id), name: None },
-            away_team: MatchTeam { id: Some(away_id), name: None },
+            home_team: MatchTeam {
+                id: Some(home_id),
+                name: None,
+            },
+            away_team: MatchTeam {
+                id: Some(away_id),
+                name: None,
+            },
             score: MatchScore {
                 winner: None,
-                full_time: ScoreDetail { home: None, away: None },
+                full_time: ScoreDetail {
+                    home: None,
+                    away: None,
+                },
             },
         }
     }
@@ -355,12 +371,14 @@ mod tests {
             .unwrap_or(0);
         assert_eq!(team_count_after, 2, "re-seeding must not duplicate rows");
 
-        let updated_name: String = sqlx::query_scalar!(
-            "SELECT name FROM teams WHERE external_id = '1'"
-        )
-        .fetch_one(&pool)
-        .await
-        .expect("fetch name");
-        assert_eq!(updated_name, "Alpha FC", "re-seeding must update existing rows");
+        let updated_name: String =
+            sqlx::query_scalar!("SELECT name FROM teams WHERE external_id = '1'")
+                .fetch_one(&pool)
+                .await
+                .expect("fetch name");
+        assert_eq!(
+            updated_name, "Alpha FC",
+            "re-seeding must update existing rows"
+        );
     }
 }

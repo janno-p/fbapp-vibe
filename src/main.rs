@@ -58,7 +58,14 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(fbapp_vibe::polling::run(state.clone()));
     let app = routes::router(state).layer(auth_layer);
 
-    tracing::info!("listening on {}", if tls.is_some() { format!("https://{addr}") } else { format!("http://{addr}") });
+    tracing::info!(
+        "listening on {}",
+        if tls.is_some() {
+            format!("https://{addr}")
+        } else {
+            format!("http://{addr}")
+        }
+    );
     if let Some(tls_config) = tls {
         axum_server::bind_rustls(addr, tls_config)
             .serve(app.into_make_service())

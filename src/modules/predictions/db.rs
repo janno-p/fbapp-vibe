@@ -77,7 +77,8 @@ pub async fn get_group_matches_with_predictions(
     Ok(order
         .into_iter()
         .filter_map(|name| {
-            map.remove(&name).map(|matches| GroupWithMatches { name, matches })
+            map.remove(&name)
+                .map(|matches| GroupWithMatches { name, matches })
         })
         .collect())
 }
@@ -148,9 +149,7 @@ pub async fn get_knockout_predictions(
     Ok(KnockoutRound::all()
         .iter()
         .map(|round| KnockoutRoundState {
-            predicted_team_ids: round_map
-                .remove(round.slug())
-                .unwrap_or_default(),
+            predicted_team_ids: round_map.remove(round.slug()).unwrap_or_default(),
             round: round.clone(),
         })
         .collect())
@@ -202,7 +201,10 @@ pub async fn save_group_stage_predictions(
     user_id: i64,
     predictions: &[(i64, MatchOutcome)],
 ) -> Result<(), AppError> {
-    let mut tx = pool.begin().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     assert_predictions_open(&mut tx, tournament_id).await?;
 
     for (match_id, outcome) in predictions {
@@ -222,7 +224,9 @@ pub async fn save_group_stage_predictions(
         .map_err(|e| AppError::Unexpected(e.into()))?;
     }
 
-    tx.commit().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     Ok(())
 }
 
@@ -233,7 +237,10 @@ pub async fn save_knockout_round_predictions(
     round: &KnockoutRound,
     team_ids: &[i64],
 ) -> Result<(), AppError> {
-    let mut tx = pool.begin().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     assert_predictions_open(&mut tx, tournament_id).await?;
 
     let valid_count = sqlx::query_scalar!(
@@ -282,7 +289,9 @@ pub async fn save_knockout_round_predictions(
         .map_err(|e| AppError::Unexpected(e.into()))?;
     }
 
-    tx.commit().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     Ok(())
 }
 
@@ -292,7 +301,10 @@ pub async fn save_top_scorer_predictions(
     user_id: i64,
     player_ids: &[i64],
 ) -> Result<(), AppError> {
-    let mut tx = pool.begin().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     assert_predictions_open(&mut tx, tournament_id).await?;
 
     let valid_count = sqlx::query_scalar!(
@@ -335,7 +347,9 @@ pub async fn save_top_scorer_predictions(
         .map_err(|e| AppError::Unexpected(e.into()))?;
     }
 
-    tx.commit().await.map_err(|e| AppError::Unexpected(e.into()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::Unexpected(e.into()))?;
     Ok(())
 }
 
@@ -509,7 +523,11 @@ mod tests {
         .await
         .expect("fetch outcome");
 
-        assert_eq!(outcome, MatchOutcome::Away, "second save must update the value");
+        assert_eq!(
+            outcome,
+            MatchOutcome::Away,
+            "second save must update the value"
+        );
     }
 
     #[sqlx::test(migrations = "./migrations")]
@@ -519,14 +537,8 @@ mod tests {
         let u_id = make_user(&pool).await;
         let team_b = make_team(&pool, t_b, "TeamB").await;
 
-        let result = save_knockout_round_predictions(
-            &pool,
-            t_a,
-            u_id,
-            &KnockoutRound::Qf,
-            &[team_b],
-        )
-        .await;
+        let result =
+            save_knockout_round_predictions(&pool, t_a, u_id, &KnockoutRound::Qf, &[team_b]).await;
 
         assert!(
             matches!(result, Err(AppError::BadRequest(_))),
@@ -544,13 +556,8 @@ mod tests {
         let player_b2 = make_player(&pool, t_b, team_b, "P2").await;
         let player_b3 = make_player(&pool, t_b, team_b, "P3").await;
 
-        let result = save_top_scorer_predictions(
-            &pool,
-            t_a,
-            u_id,
-            &[player_b, player_b2, player_b3],
-        )
-        .await;
+        let result =
+            save_top_scorer_predictions(&pool, t_a, u_id, &[player_b, player_b2, player_b3]).await;
 
         assert!(
             matches!(result, Err(AppError::BadRequest(_))),

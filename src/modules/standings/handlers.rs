@@ -94,7 +94,14 @@ pub async fn standings_page(
             }
         };
 
-    Ok(StandingsTemplate { league_id, league_name, entries, nearest, has_live, no_tournament })
+    Ok(StandingsTemplate {
+        league_id,
+        league_name,
+        entries,
+        nearest,
+        has_live,
+        no_tournament,
+    })
 }
 
 /// GET /leagues/{id}/standings/leaderboard  — HTMX fragment for auto-refresh
@@ -106,19 +113,24 @@ pub async fn leaderboard_fragment(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let (entries, has_live, no_tournament) =
-        match db::get_active_tournament_id(&state.pool).await? {
-            None => (vec![], false, true),
-            Some(t_id) => {
-                let (raw, has_live) = tokio::try_join!(
-                    db::get_leaderboard(&state.pool, t_id, league_id),
-                    db::has_live_matches(&state.pool, t_id),
-                )?;
-                (build_leaderboard(raw), has_live, false)
-            }
-        };
+    let (entries, has_live, no_tournament) = match db::get_active_tournament_id(&state.pool).await?
+    {
+        None => (vec![], false, true),
+        Some(t_id) => {
+            let (raw, has_live) = tokio::try_join!(
+                db::get_leaderboard(&state.pool, t_id, league_id),
+                db::has_live_matches(&state.pool, t_id),
+            )?;
+            (build_leaderboard(raw), has_live, false)
+        }
+    };
 
-    Ok(LeaderboardFragment { league_id, entries, has_live, no_tournament })
+    Ok(LeaderboardFragment {
+        league_id,
+        entries,
+        has_live,
+        no_tournament,
+    })
 }
 
 /// GET /leagues/{id}/standings/match/{match_id}
@@ -144,7 +156,12 @@ pub async fn match_breakdown(
 
     let rows = db::get_group_match_breakdown(&state.pool, league_id, match_id).await?;
 
-    Ok(MatchBreakdownTemplate { league_id, league_name, match_info, rows })
+    Ok(MatchBreakdownTemplate {
+        league_id,
+        league_name,
+        match_info,
+        rows,
+    })
 }
 
 /// GET /leagues/{id}/standings/compare
@@ -167,21 +184,20 @@ pub async fn compare_page(
         all_members
             .iter()
             .find(|m| m.id == id)
-            .map(|m| LeagueMember { id: m.id, name: m.name.clone() })
+            .map(|m| LeagueMember {
+                id: m.id,
+                name: m.name.clone(),
+            })
     };
 
     let user_a = params.a.and_then(find_member);
     let user_b = params.b.and_then(find_member);
 
     let group_rows = match (&user_a, &user_b) {
-        (Some(a), Some(b)) => {
-            match db::get_active_tournament_id(&state.pool).await? {
-                Some(t_id) => {
-                    db::get_compare_group_rows(&state.pool, t_id, a.id, b.id).await?
-                }
-                None => vec![],
-            }
-        }
+        (Some(a), Some(b)) => match db::get_active_tournament_id(&state.pool).await? {
+            Some(t_id) => db::get_compare_group_rows(&state.pool, t_id, a.id, b.id).await?,
+            None => vec![],
+        },
         _ => vec![],
     };
 

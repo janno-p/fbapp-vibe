@@ -1,13 +1,13 @@
 ---
 id: 0019
 title: Styled error pages (404, 403, 500)
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
 created: 2026-04-07
-started: ~
-completed: ~
+started: 2026-04-07
+completed: 2026-04-07
 ---
 
 ## Goal
@@ -49,4 +49,7 @@ Replace the plain-text error responses with styled HTML pages that extend the ba
 
 ## Outcome
 
-_Fill in after completion._
+- Created `templates/errors/{401,403,404,500}.html` extending `layout/base.html`; each shows a large status code, a short message, and a CTA link (dashboard or `/auth/login` for 401)
+- Added four unit Askama template structs in `error.rs` with a shared `render()` helper
+- Changed `IntoResponse` to return `(StatusCode, Html<String>)` for 401/403/404/500; `BadRequest` stays as plain text
+- Updated tests: removed body-string assertions for HTML variants; kept full body check for `BadRequest`; all 44 tests pass
