@@ -3,44 +3,46 @@
 {% block title %}Admin — Leagues{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold text-gray-900">Admin</h1>
-    <a href="/admin" class="text-sm text-gray-600 hover:text-gray-900">← Tournaments</a>
+<div class="min-h-screen flex flex-col">
+  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">Admin</h1>
+    <a href="/admin" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Tournaments</a>
   </header>
 
-  <main class="max-w-4xl mx-auto px-6 py-10">
+  <main class="flex-1 max-w-4xl w-full mx-auto px-6 py-10">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-900">Leagues</h2>
+      <h2 class="font-display font-bold text-2xl tracking-tight text-ink-50">Leagues</h2>
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-lg p-5 mb-8">
-      <h3 class="text-base font-semibold text-gray-900 mb-4">Create league</h3>
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl p-5 mb-8">
+      <h3 class="font-display font-semibold text-base text-ink-100 mb-4 tracking-tight">Create League</h3>
       <form method="post" action="/admin/leagues" class="flex gap-3">
         <input type="text" name="name" placeholder="League name" required
-               class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+               class="flex-1 bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-3 py-2.5 text-sm text-ink-100 placeholder-ink-700 focus:outline-none transition-colors">
         <button type="submit"
-                class="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0">
           Create
         </button>
       </form>
     </div>
 
     {% if leagues.is_empty() %}
-    <p class="text-gray-500">No leagues created yet.</p>
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+      <p class="text-ink-500 text-sm">No leagues created yet.</p>
+    </div>
     {% else %}
     <div class="space-y-3">
       {% for league in leagues %}
-      <div class="bg-white border border-gray-200 rounded-lg p-5 flex items-center justify-between">
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl p-5 flex items-center justify-between gap-4">
         <div>
-          <h3 class="font-semibold text-gray-900">{{ league.name }}</h3>
-          <p class="text-sm text-gray-500 mt-0.5">
+          <h3 class="font-medium text-ink-100">{{ league.name }}</h3>
+          <p class="text-xs text-ink-500 mt-0.5">
             {{ league.member_count }} {{ league.member_count|pluralize("member", "members") }}
           </p>
         </div>
-        <div class="text-sm text-gray-500 font-mono">
+        <div class="text-xs text-ink-700 font-mono truncate">
           <a href="/leagues/join/{{ league.invite_token }}"
-             class="text-indigo-600 hover:text-indigo-800">/leagues/join/{{ league.invite_token }}</a>
+             class="text-goal-500 hover:text-goal-400 transition-colors">/leagues/join/{{ league.invite_token }}</a>
         </div>
       </div>
       {% endfor %}

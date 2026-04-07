@@ -3,30 +3,32 @@
 {% block title %}Standings — {{ league_name }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold text-gray-900">{{ league_name }} — Standings</h1>
-    <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">← Dashboard</a>
+<div class="min-h-screen flex flex-col">
+  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">{{ league_name }}</h1>
+    <a href="/dashboard" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Dashboard</a>
   </header>
 
-  <main class="max-w-3xl mx-auto px-6 py-8 space-y-8">
+  <main class="flex-1 max-w-3xl w-full mx-auto px-6 py-8 space-y-8">
 
     {# ── Nearest match ────────────────────────────────────────────────────── #}
     {% if let Some(m) = nearest %}
     <section>
-      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-        {% if m.is_played() %}Latest result{% else %}Next match{% endif %}
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
+        {% if m.is_played() %}Latest Result{% else %}Next Match{% endif %}
       </h2>
       <a href="/leagues/{{ league_id }}/standings/match/{{ m.id }}"
-         class="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-indigo-300 transition-colors group">
-        <span class="font-medium text-gray-900">{{ m.home_name }} <span class="text-gray-400 font-normal mx-1">vs</span> {{ m.away_name }}</span>
+         class="flex items-center justify-between bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-xl px-5 py-4 transition-all group">
+        <span class="font-display font-semibold text-base text-ink-100 tracking-tight">
+          {{ m.home_name }} <span class="text-ink-500 font-normal mx-1">vs</span> {{ m.away_name }}
+        </span>
         <span class="flex items-center gap-4">
           {% if m.is_played() %}
-          <span class="text-gray-600 font-semibold">{{ m.score_label() }}</span>
+          <span class="font-display font-bold text-lg text-ink-50">{{ m.score_label() }}</span>
           {% else %}
-          <span class="text-gray-400 text-sm">upcoming</span>
+          <span class="text-ink-500 text-xs">upcoming</span>
           {% endif %}
-          <span class="text-sm text-indigo-600 group-hover:text-indigo-800">View breakdown →</span>
+          <span class="text-xs font-medium text-goal-500 group-hover:text-goal-400 transition-colors">Breakdown →</span>
         </span>
       </a>
     </section>
@@ -35,20 +37,20 @@
     {# ── Leaderboard ──────────────────────────────────────────────────────── #}
     <section>
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Leaderboard</h2>
-        <span class="text-xs text-gray-400">Points · Max achievable · Gap</span>
+        <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500">Leaderboard</h2>
+        <span class="text-xs text-ink-700">Points · Max · Gap</span>
       </div>
       {% include "standings/leaderboard.html" %}
     </section>
 
     {# ── Actions ──────────────────────────────────────────────────────────── #}
-    <div class="flex gap-6 text-sm">
+    <div class="flex gap-4 text-sm">
       <a href="/leagues/{{ league_id }}/standings/compare"
-         class="text-indigo-600 hover:text-indigo-800 font-medium">
+         class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors">
         Compare players →
       </a>
       <a href="/predictions"
-         class="text-indigo-600 hover:text-indigo-800 font-medium">
+         class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors">
         My predictions →
       </a>
     </div>

@@ -1,56 +1,89 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Dashboard — fbapp-vibe{% endblock %}
+{% block title %}Dashboard — Kickoff{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold text-gray-900">fbapp-vibe</h1>
+<div class="min-h-screen flex flex-col">
+  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <span class="font-display font-bold text-xl tracking-tight text-ink-50">Kickoff</span>
     <form method="post" action="/auth/logout">
       <button type="submit"
-              class="text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md px-4 py-2 hover:bg-gray-50 transition-colors cursor-pointer">
+              class="text-xs font-medium text-ink-300 hover:text-ink-50 border border-pitch-700 hover:border-pitch-600 rounded-lg px-4 py-2 transition-colors cursor-pointer">
         Sign out
       </button>
     </form>
   </header>
 
-  <main class="max-w-2xl mx-auto px-6 py-12">
-    <div class="flex items-center gap-4 mb-8">
+  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-10">
+
+    {# User greeting #}
+    <div class="flex items-center gap-4 mb-10">
       {% if let Some(avatar) = user.avatar_url %}
       <img src="{{ avatar }}" alt="{{ user.name }}"
-           class="w-14 h-14 rounded-full border border-gray-200">
+           class="w-12 h-12 rounded-full ring-2 ring-pitch-700">
       {% else %}
-      <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xl">
+      <div class="w-12 h-12 rounded-full bg-goal-600 flex items-center justify-center text-ink-50 font-display font-bold text-xl ring-2 ring-pitch-700">
         {{ user.name.chars().next().unwrap_or('?') }}
       </div>
       {% endif %}
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Welcome, {{ user.name }}!</h2>
-        <p class="text-gray-500 text-sm">{{ user.email }}</p>
+        <h2 class="font-display font-bold text-2xl tracking-tight text-ink-50 leading-tight">
+          {{ user.name }}
+        </h2>
+        <p class="text-ink-500 text-xs mt-0.5">{{ user.email }}</p>
       </div>
     </div>
-    <div class="mt-2">
+
+    {# Leagues #}
+    <section>
+      <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Your Leagues</h3>
       {% if leagues.is_empty() %}
-      <p class="text-gray-500 text-sm">You haven't joined any leagues yet. Use an invite link to join one.</p>
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+        <p class="text-ink-500 text-sm">You haven't joined any leagues yet.</p>
+        <p class="text-ink-700 text-xs mt-1">Use an invite link to join one.</p>
+      </div>
       {% else %}
-      <h3 class="text-base font-semibold text-gray-900 mb-3">Your leagues</h3>
       <div class="space-y-2">
         {% for league in leagues %}
-        <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between">
-          <span class="font-medium text-gray-900">{{ league.name }}</span>
-          <a href="/leagues/{{ league.id }}/standings"
-             class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Standings →</a>
-        </div>
+        <a href="/leagues/{{ league.id }}/standings"
+           class="flex items-center justify-between bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-xl px-5 py-4 transition-all duration-200 group">
+          <span class="font-medium text-ink-100 group-hover:text-ink-50">{{ league.name }}</span>
+          <span class="text-xs font-medium text-goal-500 group-hover:text-goal-400 transition-colors">Standings →</span>
+        </a>
         {% endfor %}
       </div>
       {% endif %}
-    </div>
+    </section>
+
+    {# Quick actions #}
+    <section class="mt-8">
+      <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Quick Actions</h3>
+      <div class="grid grid-cols-1 gap-2">
+        <a href="/predictions"
+           class="flex items-center justify-between bg-goal-600 hover:bg-goal-500 rounded-xl px-5 py-4 transition-colors group">
+          <span class="font-display font-semibold text-ink-50 tracking-tight">Make Predictions</span>
+          <span class="text-goal-300 group-hover:text-ink-50 transition-colors">→</span>
+        </a>
+      </div>
+    </section>
+
     {% if user.is_admin %}
-    <div class="mt-6 flex gap-4">
-      <a href="/admin" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Admin panel →</a>
-      <a href="/admin/leagues" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Manage leagues →</a>
-    </div>
+    {# Admin section #}
+    <section class="mt-8 pt-8 border-t border-pitch-800">
+      <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Admin</h3>
+      <div class="flex gap-3">
+        <a href="/admin"
+           class="text-xs font-medium text-ink-300 hover:text-ink-50 border border-pitch-700 hover:border-pitch-600 rounded-lg px-4 py-2 transition-colors">
+          Tournaments
+        </a>
+        <a href="/admin/leagues"
+           class="text-xs font-medium text-ink-300 hover:text-ink-50 border border-pitch-700 hover:border-pitch-600 rounded-lg px-4 py-2 transition-colors">
+          Manage Leagues
+        </a>
+      </div>
+    </section>
     {% endif %}
+
   </main>
 </div>
 {% endblock %}

@@ -6,31 +6,42 @@
      hx-swap="outerHTML"
      {% endif %}>
   {% if entries.is_empty() %}
-  {% if no_tournament %}
-  <p class="text-gray-500 text-sm">The tournament hasn't started yet — standings will appear once a tournament is active.</p>
+  <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+    {% if no_tournament %}
+    <p class="text-ink-500 text-sm">The tournament hasn't started yet — standings will appear once a tournament is active.</p>
+    {% else %}
+    <p class="text-ink-500 text-sm">No predictions yet — standings will appear once predictions are submitted.</p>
+    {% endif %}
+  </div>
   {% else %}
-  <p class="text-gray-500 text-sm">No predictions yet — standings will appear once predictions are submitted.</p>
-  {% endif %}
-  {% else %}
-  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
     <table class="w-full text-sm">
       <thead>
-        <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
+        <tr class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest">
           <th class="px-4 py-3 text-left w-10">#</th>
           <th class="px-4 py-3 text-left">Name</th>
-          <th class="px-4 py-3 text-right">Points</th>
+          <th class="px-4 py-3 text-right">Pts</th>
           <th class="px-4 py-3 text-right">Max</th>
           <th class="px-4 py-3 text-right">Gap</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-pitch-800">
         {% for e in entries %}
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3 text-gray-400 font-medium">{{ e.rank }}</td>
-          <td class="px-4 py-3 text-gray-900 font-medium">{{ e.user_name }}</td>
-          <td class="px-4 py-3 text-right font-semibold text-gray-900">{{ e.total_points }}</td>
-          <td class="px-4 py-3 text-right text-gray-500">{{ e.max_achievable }}</td>
-          <td class="px-4 py-3 text-right text-gray-400">
+        <tr class="{% if e.rank == 1 %}bg-pitch-800{% else %}hover:bg-pitch-800{% endif %} transition-colors">
+          <td class="px-4 py-3 font-display font-semibold text-sm
+            {% if e.rank == 1 %}text-gold-400{% else %}text-ink-500{% endif %}">
+            {% if e.rank == 1 %}1st{% else %}{{ e.rank }}{% endif %}
+          </td>
+          <td class="px-4 py-3 font-medium
+            {% if e.rank == 1 %}text-gold-300{% else %}text-ink-100{% endif %}">
+            {{ e.user_name }}
+          </td>
+          <td class="px-4 py-3 text-right font-display font-bold text-base
+            {% if e.rank == 1 %}text-gold-400{% else %}text-ink-50{% endif %}">
+            {{ e.total_points }}
+          </td>
+          <td class="px-4 py-3 text-right text-ink-500 text-xs">{{ e.max_achievable }}</td>
+          <td class="px-4 py-3 text-right text-ink-700 text-xs">
             {% if e.is_leader() %}—{% else %}-{{ e.points_behind }}{% endif %}
           </td>
         </tr>
@@ -40,6 +51,9 @@
   </div>
   {% endif %}
   {% if has_live %}
-  <p class="mt-2 text-xs text-gray-400">Auto-refreshing every 60 seconds · live match in progress</p>
+  <p class="mt-2 text-xs text-ink-700">
+    <span class="inline-block w-1.5 h-1.5 rounded-full bg-goal-500 mr-1 animate-pulse align-middle"></span>
+    Live · refreshing every 60 seconds
+  </p>
   {% endif %}
 </div>

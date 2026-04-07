@@ -3,31 +3,32 @@
 {% block title %}Predictions — {{ tournament_name }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold text-gray-900">{{ tournament_name }}</h1>
-    <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">← Dashboard</a>
+<div class="min-h-screen flex flex-col">
+  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">{{ tournament_name }}</h1>
+    <a href="/dashboard" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Dashboard</a>
   </header>
 
   {% if predictions_locked %}
-  <div class="bg-amber-50 border-b border-amber-200 px-6 py-3 text-sm text-amber-800 font-medium">
-    Predictions are locked. No further changes can be made.
+  <div class="bg-pitch-800 border-b border-signal-amber px-6 py-3 flex items-center gap-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-signal-amber shrink-0"></span>
+    <span class="text-sm font-medium text-signal-amber">Predictions are locked — no further changes can be made.</span>
   </div>
   {% endif %}
 
-  <main class="max-w-4xl mx-auto px-6 py-8">
+  <main class="flex-1 max-w-4xl w-full mx-auto px-6 py-8">
     {# Tab navigation #}
-    <div class="flex gap-1 mb-8 border-b border-gray-200">
+    <div class="flex gap-1 mb-8 border-b border-pitch-700">
       <button onclick="showTab('group')" data-tab="group"
-              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+              class="tab-btn px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 border-transparent text-ink-500 hover:text-ink-100 cursor-pointer transition-colors">
         Group Stage
       </button>
       <button onclick="showTab('knockout')" data-tab="knockout"
-              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+              class="tab-btn px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 border-transparent text-ink-500 hover:text-ink-100 cursor-pointer transition-colors">
         Knockout
       </button>
       <button onclick="showTab('top-scorer')" data-tab="top-scorer"
-              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+              class="tab-btn px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 border-transparent text-ink-500 hover:text-ink-100 cursor-pointer transition-colors">
         Top Scorer
       </button>
     </div>
@@ -35,33 +36,29 @@
     {# ── Group Stage ────────────────────────────────────────────────────── #}
     <div id="tab-group">
       {% if groups.is_empty() %}
-      <p class="text-gray-500">No group stage matches yet.</p>
+      <p class="text-ink-500 text-sm">No group stage matches yet.</p>
       {% else %}
       <form id="group-form" hx-post="/predictions/group" hx-target="#group-status" hx-swap="innerHTML">
         <div class="space-y-8">
           {% for group in groups %}
           <div>
-            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Group {{ group.name }}</h3>
+            <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Group {{ group.name }}</h3>
             <div class="space-y-2">
               {% for m in group.matches %}
-              <div class="bg-white border border-gray-200 rounded-lg px-4 py-3">
+              <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3">
                 <div class="flex items-center gap-4">
-                  <span class="flex-1 text-sm text-right text-gray-900 font-medium">
-                    {{ m.home_name() }}
-                  </span>
+                  <span class="flex-1 text-sm text-right text-ink-100 font-medium">{{ m.home_name() }}</span>
                   <select name="match_{{ m.id }}"
-                          class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          class="bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-2.5 py-1.5 text-sm text-ink-100 focus:outline-none transition-colors cursor-pointer"
                           {% if predictions_locked %}disabled{% endif %}>
                     <option value="">—</option>
                     <option value="home" {% if m.is_home_selected() %}selected{% endif %}>Home</option>
                     <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
                     <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
                   </select>
-                  <span class="flex-1 text-sm text-left text-gray-900 font-medium">
-                    {{ m.away_name() }}
-                  </span>
+                  <span class="flex-1 text-sm text-left text-ink-100 font-medium">{{ m.away_name() }}</span>
                 </div>
-                <div class="text-xs text-gray-400 text-center mt-1">{{ m.formatted_kickoff() }}</div>
+                <div class="text-xs text-ink-700 text-center mt-1.5">{{ m.formatted_kickoff() }}</div>
               </div>
               {% endfor %}
             </div>
@@ -71,10 +68,10 @@
         {% if !predictions_locked %}
         <div class="mt-6 flex items-center gap-4">
           <button type="submit"
-                  class="bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                  class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer">
             Save group predictions
           </button>
-          <span id="group-status" class="text-sm text-green-600"></span>
+          <span id="group-status" class="text-sm text-goal-400 font-medium"></span>
         </div>
         {% endif %}
       </form>
@@ -84,35 +81,35 @@
     {# ── Knockout ───────────────────────────────────────────────────────── #}
     <div id="tab-knockout" hidden>
       {% if teams.is_empty() %}
-      <p class="text-gray-500">No teams available yet.</p>
+      <p class="text-ink-500 text-sm">No teams available yet.</p>
       {% else %}
       <div class="space-y-10">
         {% for rs in knockout_rounds %}
         <div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-semibold text-gray-900">{{ rs.round.label() }}</h3>
-            <span class="text-xs text-gray-500">Select {{ rs.round.expected_team_count() }} teams</span>
+            <h3 class="font-display font-semibold text-base text-ink-100 tracking-tight">{{ rs.round.label() }}</h3>
+            <span class="text-xs text-ink-500">Select {{ rs.round.expected_team_count() }} teams</span>
           </div>
           <form hx-post="/predictions/knockout/{{ rs.round.slug() }}"
                 hx-target="#ko-{{ rs.round.slug() }}-status"
                 hx-swap="innerHTML">
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3">
               {% for team in teams %}
-              <label class="flex items-center gap-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-gray-50">
+              <label class="flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-[:checked]:border-goal-500 has-[:checked]:bg-pitch-800">
                 <input type="checkbox" name="team_ids" value="{{ team.id }}"
                        {% if rs.has_team(team.id) %}checked{% endif %}
                        {% if predictions_locked %}disabled{% endif %}>
-                <span class="truncate">{{ team.short_name }}</span>
+                <span class="truncate text-ink-300 group-hover:text-ink-100 transition-colors">{{ team.short_name }}</span>
               </label>
               {% endfor %}
             </div>
             {% if !predictions_locked %}
             <div class="flex items-center gap-4">
               <button type="submit"
-                      class="bg-indigo-600 text-white text-sm font-medium px-4 py-1.5 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                      class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer">
                 Save {{ rs.round.label() }}
               </button>
-              <span id="ko-{{ rs.round.slug() }}-status" class="text-sm text-green-600"></span>
+              <span id="ko-{{ rs.round.slug() }}-status" class="text-sm text-goal-400 font-medium"></span>
             </div>
             {% endif %}
           </form>
@@ -125,36 +122,36 @@
     {# ── Top Scorer ─────────────────────────────────────────────────────── #}
     <div id="tab-top-scorer" hidden>
       {% if players.is_empty() %}
-      <p class="text-gray-500">No players available yet.</p>
+      <p class="text-ink-500 text-sm">No players available yet.</p>
       {% else %}
-      <p class="text-sm text-gray-600 mb-4">Select exactly 3 players you expect to top-score.</p>
+      <p class="text-sm text-ink-300 mb-4">Select exactly 3 players you expect to top-score.</p>
       <input type="text" id="player-filter" placeholder="Filter players…"
              oninput="filterPlayers(this.value)"
-             class="mb-4 w-full max-w-sm border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+             class="mb-4 w-full max-w-sm bg-pitch-900 border border-pitch-700 focus:border-goal-500 rounded-lg px-3 py-2.5 text-sm text-ink-100 placeholder-ink-700 focus:outline-none transition-colors">
       <form hx-post="/predictions/top-scorer" hx-target="#top-scorer-status" hx-swap="innerHTML">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4" id="player-list">
           {% for p in players %}
-          <label class="player-row flex items-center gap-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+          <label class="player-row flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-[:checked]:border-goal-500 has-[:checked]:bg-pitch-800"
                  data-search="{{ p.name|lower }} {{ p.team_name|lower }}">
             <input type="checkbox" name="player_ids" value="{{ p.id }}"
                    {% if self.is_top_scorer(p.id) %}checked{% endif %}
                    {% if predictions_locked %}disabled{% endif %}
                    onchange="enforceMaxThree(this)">
             <span class="flex-1 min-w-0">
-              <span class="font-medium">{{ p.name }}</span>
-              <span class="text-gray-400 text-xs ml-1">{{ p.team_name }}</span>
+              <span class="font-medium text-ink-100">{{ p.name }}</span>
+              <span class="text-ink-500 text-xs ml-1">{{ p.team_name }}</span>
             </span>
-            <span class="text-xs font-medium text-indigo-600 bg-indigo-50 rounded px-1.5 py-0.5 shrink-0">{{ p.goals_scored }}g</span>
+            <span class="text-xs font-display font-semibold text-goal-400 bg-pitch-800 rounded px-1.5 py-0.5 shrink-0">{{ p.goals_scored }}g</span>
           </label>
           {% endfor %}
         </div>
         {% if !predictions_locked %}
         <div class="flex items-center gap-4">
           <button type="submit"
-                  class="bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                  class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer">
             Save top scorer picks
           </button>
-          <span id="top-scorer-status" class="text-sm text-green-600"></span>
+          <span id="top-scorer-status" class="text-sm text-goal-400 font-medium"></span>
         </div>
         {% endif %}
       </form>
@@ -170,7 +167,10 @@ function showTab(name) {
   TABS.forEach(t => {
     document.getElementById('tab-' + t).hidden = t !== name;
     document.querySelectorAll('[data-tab="' + t + '"]').forEach(el =>
-      el.classList.toggle('border-indigo-600', t === name)
+      el.classList.toggle('border-goal-500', t === name)
+    );
+    document.querySelectorAll('[data-tab="' + t + '"]').forEach(el =>
+      el.classList.toggle('text-goal-400', t === name)
     );
   });
   history.replaceState(null, '', '#' + name);

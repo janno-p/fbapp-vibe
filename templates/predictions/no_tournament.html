@@ -1,22 +1,26 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Predictions{% endblock %}
+{% block title %}Predictions — Kickoff{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold text-gray-900">Predictions</h1>
-    <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">← Dashboard</a>
+<div class="min-h-screen flex flex-col">
+  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">Predictions</h1>
+    <a href="/dashboard" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Dashboard</a>
   </header>
 
-  <main class="max-w-2xl mx-auto px-6 py-16 text-center">
-    <div class="text-gray-400 text-5xl mb-6">⏳</div>
-    <h2 class="text-xl font-semibold text-gray-900 mb-2">Predictions aren't open yet</h2>
-    <p class="text-gray-500 mb-8">No tournament is currently active. Check back once an admin has activated a tournament.</p>
-    <a href="/dashboard"
-       class="inline-block bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors">
-      Back to dashboard
-    </a>
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
+    <div class="bg-pitch-900 border border-pitch-700 rounded-2xl px-8 py-10 max-w-sm w-full">
+      <div class="text-4xl mb-5">⏳</div>
+      <h2 class="font-display font-bold text-2xl tracking-tight text-ink-50 mb-2">No Active Tournament</h2>
+      <p class="text-ink-500 text-sm mb-8 leading-relaxed">
+        Predictions aren't open yet. Check back once an admin has activated a tournament.
+      </p>
+      <a href="/dashboard"
+         class="inline-block bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors">
+        Back to Dashboard
+      </a>
+    </div>
   </main>
 </div>
 {% endblock %}
