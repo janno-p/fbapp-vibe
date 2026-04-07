@@ -4,5 +4,6 @@ pub mod error;
 pub mod extractors;
 pub mod football_api;
 pub mod modules;
+pub mod polling;
 pub mod routes;
 pub mod state;

@@ -24,6 +24,8 @@ fn test_config() -> Config {
         tls_cert_path: None,
         tls_key_path: None,
         football_api_key: "test-key".to_string(),
+        poll_interval_secs: 120,
+        poll_interval_live_secs: 30,
     }
 }
 

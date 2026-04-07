@@ -15,6 +15,20 @@ pub struct Config {
     pub tls_cert_path: Option<String>,
     pub tls_key_path: Option<String>,
     pub football_api_key: String,
+    /// Polling interval in seconds when no match is live (default: 120).
+    #[serde(default = "default_poll_interval_secs")]
+    pub poll_interval_secs: u64,
+    /// Polling interval in seconds when a match is in progress (default: 30).
+    #[serde(default = "default_poll_interval_live_secs")]
+    pub poll_interval_live_secs: u64,
+}
+
+fn default_poll_interval_secs() -> u64 {
+    120
+}
+
+fn default_poll_interval_live_secs() -> u64 {
+    30
 }
 
 fn default_host() -> String {

@@ -1,13 +1,13 @@
 ---
 id: 0008
 title: Background result polling and scoring
-status: open
+status: done
 type: feature
 adrs: [0016]
 refs: [0004, 0005]
 created: 2026-04-06
-started: ~
-completed: ~
+started: 2026-04-06
+completed: 2026-04-07
 ---
 
 ## Goal
@@ -86,6 +86,14 @@ This task has the highest unit test value in the codebase — scoring rules are 
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Implemented in full across three new files:
+
+- `src/polling/scorer.rs` — pure scoring functions (`group_stage_points`, `knockout_points_per_team`, `top_scorer_points`) with 8 unit tests
+- `src/polling/db.rs` — all DB operations (match processing with advisory lock + idempotency guard, knockout/winner/top-scorer scoring) with 3 `#[sqlx::test]` integration tests
+- `src/polling/mod.rs` — poll loop (`run` / `poll`); errors are logged and retried, live-match detection drives dynamic interval
+
+Wired up in `src/lib.rs` (`pub mod polling`) and `src/main.rs` (`tokio::spawn(fbapp_vibe::polling::run(state.clone()))`).
+
+Also updated `src/config.rs` with `poll_interval_secs` (default 120) and `poll_interval_live_secs` (default 30).
 
 Follow-up tasks: _none_
