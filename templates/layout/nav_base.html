@@ -1,0 +1,58 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+  {# ── Top navigation bar ─────────────────────────────────────────────────── #}
+  <nav class="bg-pitch-900 border-b border-pitch-700 px-6 py-0 flex items-center justify-between shrink-0 h-14">
+    {# Left: logo + primary links #}
+    <div class="flex items-center gap-6">
+      <a href="/dashboard" class="font-display font-bold text-lg tracking-tight text-ink-50 hover:text-goal-400 transition-colors">
+        Kickoff
+      </a>
+      <div class="flex items-center gap-1">
+        <a href="/dashboard"
+           class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                  {% if nav.current_route == "dashboard" %}text-ink-50 bg-pitch-800{% else %}text-ink-400 hover:text-ink-100 hover:bg-pitch-800{% endif %}">
+          Dashboard
+        </a>
+        <a href="/predictions"
+           class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                  {% if nav.current_route == "predictions" %}text-ink-50 bg-pitch-800{% else %}text-ink-400 hover:text-ink-100 hover:bg-pitch-800{% endif %}">
+          Predictions
+        </a>
+        {% if let Some(lid) = nav.standings_league_id %}
+        <a href="/leagues/{{ lid }}/standings"
+           class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                  {% if nav.current_route == "standings" %}text-ink-50 bg-pitch-800{% else %}text-ink-400 hover:text-ink-100 hover:bg-pitch-800{% endif %}">
+          Standings
+        </a>
+        {% endif %}
+        {% if nav.is_admin && nav.current_route == "admin" %}
+        <a href="/admin"
+           class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors text-ink-400 hover:text-ink-100 hover:bg-pitch-800">
+          Tournaments
+        </a>
+        <a href="/admin/leagues"
+           class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors text-ink-400 hover:text-ink-100 hover:bg-pitch-800">
+          Leagues
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Right: user name + sign out #}
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-ink-400 hidden sm:block">{{ nav.user_name }}</span>
+      <form method="post" action="/auth/logout">
+        <button type="submit"
+                class="text-xs font-medium text-ink-300 hover:text-ink-50 border border-pitch-700 hover:border-pitch-600 rounded-lg px-3 py-1.5 transition-colors cursor-pointer">
+          Sign out
+        </button>
+      </form>
+    </div>
+  </nav>
+
+  {# ── Page content ───────────────────────────────────────────────────────── #}
+  {% block main %}{% endblock %}
+</div>
+{% endblock %}

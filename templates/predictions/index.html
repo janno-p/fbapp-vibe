@@ -1,14 +1,8 @@
-{% extends "layout/base.html" %}
+{% extends "layout/nav_base.html" %}
 
 {% block title %}Predictions — {{ tournament_name }}{% endblock %}
 
-{% block content %}
-<div class="min-h-screen flex flex-col">
-  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
-    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">{{ tournament_name }}</h1>
-    <a href="/dashboard" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Dashboard</a>
-  </header>
-
+{% block main %}
   {% if predictions_locked %}
   <div class="bg-pitch-800 border-b border-signal-amber px-6 py-3 flex items-center gap-2">
     <span class="w-1.5 h-1.5 rounded-full bg-signal-amber shrink-0"></span>
@@ -158,7 +152,6 @@
       {% endif %}
     </div>
   </main>
-</div>
 
 <script>
 const TABS = ['group', 'knockout', 'top-scorer'];

@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{error::AppError, modules::auth::AuthSession, state::AppState};
+use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state::AppState};
 
 use super::{
     db,
@@ -27,6 +27,7 @@ struct StandingsTemplate {
     nearest: Option<NearestMatch>,
     has_live: bool,
     no_tournament: bool,
+    nav: NavContext,
 }
 
 #[derive(Template, WebTemplate)]
@@ -41,10 +42,10 @@ struct LeaderboardFragment {
 #[derive(Template, WebTemplate)]
 #[template(path = "standings/match.html")]
 struct MatchBreakdownTemplate {
-    league_id: i64,
     league_name: String,
     match_info: MatchInfo,
     rows: Vec<MatchBreakdownRow>,
+    nav: NavContext,
 }
 
 #[derive(Template, WebTemplate)]
@@ -56,6 +57,7 @@ struct CompareTemplate {
     user_a: Option<LeagueMember>,
     user_b: Option<LeagueMember>,
     group_rows: Vec<CompareGroupRow>,
+    nav: NavContext,
 }
 
 // ── Query params ──────────────────────────────────────────────────────────────
@@ -77,9 +79,11 @@ pub async fn standings_page(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let league_name = db::get_league_name(&state.pool, league_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
     let (entries, nearest, has_live, no_tournament) =
         match db::get_active_tournament_id(&state.pool).await? {
@@ -101,6 +105,7 @@ pub async fn standings_page(
         nearest,
         has_live,
         no_tournament,
+        nav,
     })
 }
 
@@ -142,9 +147,11 @@ pub async fn match_breakdown(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let league_name = db::get_league_name(&state.pool, league_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
     let t_id = db::get_active_tournament_id(&state.pool)
         .await?
@@ -157,10 +164,10 @@ pub async fn match_breakdown(
     let rows = db::get_group_match_breakdown(&state.pool, league_id, match_id).await?;
 
     Ok(MatchBreakdownTemplate {
-        league_id,
         league_name,
         match_info,
         rows,
+        nav,
     })
 }
 
@@ -174,9 +181,11 @@ pub async fn compare_page(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let league_name = db::get_league_name(&state.pool, league_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
     let all_members = db::get_league_members(&state.pool, league_id).await?;
 
@@ -208,6 +217,7 @@ pub async fn compare_page(
         user_a,
         user_b,
         group_rows,
+        nav,
     })
 }
 

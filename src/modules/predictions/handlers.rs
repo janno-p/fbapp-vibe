@@ -12,6 +12,7 @@ use crate::{
     error::AppError,
     extractors::QsForm,
     modules::auth::AuthSession,
+    nav::NavContext,
     state::AppState,
 };
 
@@ -29,7 +30,9 @@ use super::{
 
 #[derive(Template, WebTemplate)]
 #[template(path = "predictions/no_tournament.html")]
-struct NoTournamentTemplate;
+struct NoTournamentTemplate {
+    nav: NavContext,
+}
 
 #[derive(Template, WebTemplate)]
 #[template(path = "predictions/index.html")]
@@ -41,6 +44,7 @@ struct PredictionsTemplate {
     knockout_rounds: Vec<KnockoutRoundState>,
     players: Vec<PlayerInfo>,
     top_scorer_ids: Vec<i64>,
+    nav: NavContext,
 }
 
 impl PredictionsTemplate {
@@ -56,9 +60,10 @@ pub async fn predictions_page(
     State(state): State<AppState>,
 ) -> Result<Response, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+    let nav = crate::nav::load(&state.pool, &user, "predictions").await?;
 
     let Some(tournament) = db::get_active_tournament(&state.pool).await? else {
-        return Ok(NoTournamentTemplate.into_response());
+        return Ok(NoTournamentTemplate { nav }.into_response());
     };
 
     let (groups, teams, knockout_rounds, players, top_scorer_ids) = tokio::try_join!(
@@ -77,6 +82,7 @@ pub async fn predictions_page(
         knockout_rounds,
         players,
         top_scorer_ids,
+        nav,
     }
     .into_response())
 }

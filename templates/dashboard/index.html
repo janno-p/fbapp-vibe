@@ -1,19 +1,8 @@
-{% extends "layout/base.html" %}
+{% extends "layout/nav_base.html" %}
 
 {% block title %}Dashboard — Kickoff{% endblock %}
 
-{% block content %}
-<div class="min-h-screen flex flex-col">
-  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
-    <span class="font-display font-bold text-xl tracking-tight text-ink-50">Kickoff</span>
-    <form method="post" action="/auth/logout">
-      <button type="submit"
-              class="text-xs font-medium text-ink-300 hover:text-ink-50 border border-pitch-700 hover:border-pitch-600 rounded-lg px-4 py-2 transition-colors cursor-pointer">
-        Sign out
-      </button>
-    </form>
-  </header>
-
+{% block main %}
   <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-10">
 
     {# User greeting #}
@@ -85,5 +74,4 @@
     {% endif %}
 
   </main>
-</div>
 {% endblock %}

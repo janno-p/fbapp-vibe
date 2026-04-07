@@ -1,14 +1,8 @@
-{% extends "layout/base.html" %}
+{% extends "layout/nav_base.html" %}
 
 {% block title %}Admin — Register Tournament{% endblock %}
 
-{% block content %}
-<div class="min-h-screen flex flex-col">
-  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
-    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">Admin</h1>
-    <a href="/admin" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Tournaments</a>
-  </header>
-
+{% block main %}
   <main class="flex-1 max-w-3xl w-full mx-auto px-6 py-10">
     <h2 class="font-display font-bold text-2xl tracking-tight text-ink-50 mb-2">Register Tournament</h2>
     <p class="text-sm text-ink-500 mb-8 leading-relaxed">Select a competition from the list below. This will register it and seed all team, player, and fixture data.</p>
@@ -41,5 +35,4 @@
     </div>
     {% endif %}
   </main>
-</div>
 {% endblock %}

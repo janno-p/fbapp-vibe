@@ -1,14 +1,8 @@
-{% extends "layout/base.html" %}
+{% extends "layout/nav_base.html" %}
 
 {% block title %}Compare — {{ league_name }}{% endblock %}
 
-{% block content %}
-<div class="min-h-screen flex flex-col">
-  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
-    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">Compare Predictions</h1>
-    <a href="/leagues/{{ league_id }}/standings" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Standings</a>
-  </header>
-
+{% block main %}
   <main class="flex-1 max-w-4xl w-full mx-auto px-6 py-8">
 
     {# ── Picker form ──────────────────────────────────────────────────────── #}
@@ -111,5 +105,4 @@
     {% endif %}
 
   </main>
-</div>
 {% endblock %}

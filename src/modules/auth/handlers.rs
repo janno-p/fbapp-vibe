@@ -10,7 +10,7 @@ use oauth2::{
 use serde::Deserialize;
 use tower_sessions::Session;
 
-use crate::{error::AppError, modules::leagues, state::AppState};
+use crate::{error::AppError, modules::leagues, nav::NavContext, state::AppState};
 
 use super::{
     db,
@@ -29,6 +29,7 @@ struct HomeTemplate;
 struct DashboardTemplate {
     user: User,
     leagues: Vec<leagues::models::League>,
+    nav: NavContext,
 }
 
 // ── Query params ─────────────────────────────────────────────────────────────
@@ -56,8 +57,11 @@ pub async fn dashboard(
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
-    let leagues = leagues::list_user_leagues(&state.pool, user.id).await?;
-    Ok(DashboardTemplate { user, leagues })
+    let (leagues, nav) = tokio::try_join!(
+        leagues::list_user_leagues(&state.pool, user.id),
+        crate::nav::load(&state.pool, &user, "dashboard"),
+    )?;
+    Ok(DashboardTemplate { user, leagues, nav })
 }
 
 /// GET /auth/login

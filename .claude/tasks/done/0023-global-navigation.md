@@ -1,13 +1,13 @@
 ---
 id: 0023
 title: Global navigation bar and breadcrumbs
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
 created: 2026-04-07
-started: ~
-completed: ~
+started: 2026-04-07
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -51,4 +51,15 @@ There is no persistent navigation across the app. Users who are deep in standing
 
 ## Outcome
 
-_Fill in after completion._
+Added a persistent top navigation bar to all authenticated pages via a new `nav_base.html` intermediate layout that extends `base.html`.
+
+**What was built:**
+- `src/nav.rs` — `NavContext` struct with `user_name`, `is_admin`, `current_route`, `standings_league_id`; `nav::load()` returns `anyhow::Result` for compatibility with handler error propagation
+- `templates/layout/nav_base.html` — nav bar with Kickoff logo, Dashboard/Predictions/Standings links (Standings shown only when active tournament + league membership), admin links (Tournaments/Leagues when on admin pages), username display, Sign out button
+- All authenticated templates updated: `dashboard/index.html`, `predictions/index.html`, `predictions/no_tournament.html`, `standings/index.html`, `standings/match.html`, `standings/compare.html`, `admin/dashboard.html`, `admin/competitions.html`, `admin/leagues.html`
+- All corresponding handler structs updated to include `nav: NavContext`, using `tokio::try_join!` for parallel loading where existing queries are present
+- All per-page standalone `<header>` elements and `<div class="min-h-screen flex flex-col">` wrappers removed
+
+**Deviations from spec:**
+- Used a new intermediate `nav_base.html` layout rather than modifying `base.html` directly — keeps unauthenticated pages (home, login) unaffected without conditional logic
+- Admin-specific links (Tournaments, Leagues) are shown only when on admin pages (`current_route == "admin"`), not only when user is_admin — this limits visual noise and keeps the nav uncluttered on non-admin pages

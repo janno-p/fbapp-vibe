@@ -7,7 +7,7 @@ use axum::{
 };
 use tower_sessions::Session;
 
-use crate::{error::AppError, modules::auth::AuthSession, state::AppState};
+use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state::AppState};
 
 use super::{
     db,
@@ -21,16 +21,20 @@ use super::{
 #[template(path = "admin/leagues.html")]
 struct AdminLeaguesTemplate {
     leagues: Vec<LeagueWithCount>,
+    nav: NavContext,
 }
 
 // ── Admin handlers ─────────────────────────────────────────────────────────────
 
 pub async fn admin_list_leagues(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    let leagues = db::list_leagues_with_counts(&state.pool).await?;
-    Ok(AdminLeaguesTemplate { leagues })
+    let (leagues, nav) = tokio::try_join!(
+        db::list_leagues_with_counts(&state.pool),
+        crate::nav::load(&state.pool, &admin.0, "admin"),
+    )?;
+    Ok(AdminLeaguesTemplate { leagues, nav })
 }
 
 pub async fn admin_create_league(

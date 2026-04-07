@@ -6,7 +6,7 @@ use axum::{
     Form,
 };
 
-use crate::{error::AppError, football_api::Competition, state::AppState};
+use crate::{error::AppError, football_api::Competition, nav::NavContext, state::AppState};
 
 use super::{
     db,
@@ -20,34 +20,40 @@ use super::{
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
     tournaments: Vec<Tournament>,
+    nav: NavContext,
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "admin/competitions.html")]
 struct CompetitionsTemplate {
     competitions: Vec<Competition>,
+    nav: NavContext,
 }
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 pub async fn dashboard(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    let tournaments = db::list_tournaments(&state.pool).await?;
-    Ok(DashboardTemplate { tournaments })
+    let (tournaments, nav) = tokio::try_join!(
+        db::list_tournaments(&state.pool),
+        crate::nav::load(&state.pool, &admin.0, "admin"),
+    )?;
+    Ok(DashboardTemplate { tournaments, nav })
 }
 
 pub async fn list_competitions(
-    _admin: AdminUser,
+    admin: AdminUser,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
+    let nav = crate::nav::load(&state.pool, &admin.0, "admin").await?;
     let competitions = state
         .football_api
         .list_competitions()
         .await
         .map_err(AppError::Unexpected)?;
-    Ok(CompetitionsTemplate { competitions })
+    Ok(CompetitionsTemplate { competitions, nav })
 }
 
 pub async fn register_tournament(

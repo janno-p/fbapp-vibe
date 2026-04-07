@@ -1,14 +1,8 @@
-{% extends "layout/base.html" %}
+{% extends "layout/nav_base.html" %}
 
 {% block title %}Standings — {{ league_name }}{% endblock %}
 
-{% block content %}
-<div class="min-h-screen flex flex-col">
-  <header class="bg-pitch-900 border-b border-pitch-700 px-6 py-4 flex items-center justify-between shrink-0">
-    <h1 class="font-display font-bold text-xl tracking-tight text-ink-50">{{ league_name }}</h1>
-    <a href="/dashboard" class="text-xs font-medium text-ink-500 hover:text-ink-100 transition-colors">← Dashboard</a>
-  </header>
-
+{% block main %}
   <main class="flex-1 max-w-3xl w-full mx-auto px-6 py-8 space-y-8">
 
     {# ── Nearest match ────────────────────────────────────────────────────── #}
@@ -56,5 +50,4 @@
     </div>
 
   </main>
-</div>
 {% endblock %}
