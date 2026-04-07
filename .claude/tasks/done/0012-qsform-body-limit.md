@@ -40,6 +40,6 @@ Change the `to_bytes` call from `usize::MAX` to the constant. Return `StatusCode
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `MAX_FORM_BYTES = 16 * 1024` constant in `src/extractors.rs`. Body read error now maps to 413 Payload Too Large; serde_qs parse failure remains 400 Bad Request.
 
 Follow-up tasks: _none_
