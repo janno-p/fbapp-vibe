@@ -45,6 +45,6 @@ Extract a small pure function `fn is_safe_redirect(url: &str) -> bool` and call 
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `is_safe_redirect(url: &str) -> bool` in `src/modules/leagues/handlers.rs`. The `join_league` handler now guards the `session.insert` call with it — if the path fails validation the insert is skipped and the auth callback falls back to `/dashboard`. Four unit tests cover all specified cases (relative path accepted; absolute URL, protocol-relative URL, and newline-containing path rejected).
 
 Follow-up tasks: _none_

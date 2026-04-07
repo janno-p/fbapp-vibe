@@ -62,14 +62,58 @@ pub async fn join_league(
         Some(u) => u,
         None => {
             let invite_path = format!("/leagues/join/{token}");
-            session
-                .insert("post_login_redirect", invite_path)
-                .await
-                .map_err(|e| AppError::Unexpected(e.into()))?;
+            if is_safe_redirect(&invite_path) {
+                session
+                    .insert("post_login_redirect", invite_path)
+                    .await
+                    .map_err(|e| AppError::Unexpected(e.into()))?;
+            }
             return Ok(Redirect::to("/auth/login").into_response());
         }
     };
 
     db::join_league(&state.pool, league.id, user.id).await?;
     Ok(Redirect::to("/dashboard").into_response())
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/// Returns `true` only for relative paths that are safe to use as post-login
+/// redirects. Rejects absolute URLs, protocol-relative URLs, and values
+/// containing newlines (which could enable header injection).
+fn is_safe_redirect(url: &str) -> bool {
+    url.starts_with('/')
+        && !url.starts_with("//")
+        && !url.contains("://")
+        && !url.contains('\n')
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_relative_paths() {
+        assert!(is_safe_redirect("/predictions#knockout"));
+        assert!(is_safe_redirect("/leagues/join/abc-123"));
+        assert!(is_safe_redirect("/dashboard"));
+    }
+
+    #[test]
+    fn rejects_absolute_urls() {
+        assert!(!is_safe_redirect("https://evil.com"));
+        assert!(!is_safe_redirect("http://evil.com"));
+    }
+
+    #[test]
+    fn rejects_protocol_relative_urls() {
+        assert!(!is_safe_redirect("//evil.com"));
+    }
+
+    #[test]
+    fn rejects_newlines() {
+        assert!(!is_safe_redirect("/foo\nbar"));
+    }
 }
