@@ -6,7 +6,11 @@
      hx-swap="outerHTML"
      {% endif %}>
   {% if entries.is_empty() %}
+  {% if no_tournament %}
+  <p class="text-gray-500 text-sm">The tournament hasn't started yet — standings will appear once a tournament is active.</p>
+  {% else %}
   <p class="text-gray-500 text-sm">No predictions yet — standings will appear once predictions are submitted.</p>
+  {% endif %}
   {% else %}
   <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
     <table class="w-full text-sm">

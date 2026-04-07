@@ -26,6 +26,7 @@ struct StandingsTemplate {
     entries: Vec<LeaderboardEntry>,
     nearest: Option<NearestMatch>,
     has_live: bool,
+    no_tournament: bool,
 }
 
 #[derive(Template, WebTemplate)]
@@ -34,6 +35,7 @@ struct LeaderboardFragment {
     league_id: i64,
     entries: Vec<LeaderboardEntry>,
     has_live: bool,
+    no_tournament: bool,
 }
 
 #[derive(Template, WebTemplate)]
@@ -79,20 +81,20 @@ pub async fn standings_page(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let (entries, nearest, has_live) =
+    let (entries, nearest, has_live, no_tournament) =
         match db::get_active_tournament_id(&state.pool).await? {
-            None => (vec![], None, false),
+            None => (vec![], None, false, true),
             Some(t_id) => {
                 let (raw, nearest, has_live) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, t_id, league_id),
                     db::get_nearest_match(&state.pool, t_id),
                     db::has_live_matches(&state.pool, t_id),
                 )?;
-                (build_leaderboard(raw), nearest, has_live)
+                (build_leaderboard(raw), nearest, has_live, false)
             }
         };
 
-    Ok(StandingsTemplate { league_id, league_name, entries, nearest, has_live })
+    Ok(StandingsTemplate { league_id, league_name, entries, nearest, has_live, no_tournament })
 }
 
 /// GET /leagues/{id}/standings/leaderboard  — HTMX fragment for auto-refresh
@@ -104,19 +106,19 @@ pub async fn leaderboard_fragment(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let (entries, has_live) =
+    let (entries, has_live, no_tournament) =
         match db::get_active_tournament_id(&state.pool).await? {
-            None => (vec![], false),
+            None => (vec![], false, true),
             Some(t_id) => {
                 let (raw, has_live) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, t_id, league_id),
                     db::has_live_matches(&state.pool, t_id),
                 )?;
-                (build_leaderboard(raw), has_live)
+                (build_leaderboard(raw), has_live, false)
             }
         };
 
-    Ok(LeaderboardFragment { league_id, entries, has_live })
+    Ok(LeaderboardFragment { league_id, entries, has_live, no_tournament })
 }
 
 /// GET /leagues/{id}/standings/match/{match_id}

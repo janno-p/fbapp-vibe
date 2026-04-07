@@ -1,7 +1,7 @@
 ---
 id: 0020
 title: Graceful empty states (no active tournament)
-status: open
+status: done
 type: feature
 adrs: []
 refs: []
@@ -48,4 +48,6 @@ Several routes return 404 when there is no active tournament instead of showing 
 
 ## Outcome
 
-_Fill in after completion._
+- `/predictions` with no active tournament now returns a styled "Predictions aren't open yet" page (`templates/predictions/no_tournament.html`) instead of 404. Handler uses early return pattern with `let Some(...) = ... else { return Ok(NoTournamentTemplate.into_response()) }`.
+- `/leagues/{id}/standings` already didn't 404 (returns empty vecs). Added `no_tournament: bool` field to `StandingsTemplate` and `LeaderboardFragment`; leaderboard template now shows "The tournament hasn't started yet" vs "No predictions yet" depending on which case applies.
+- Dashboard empty-leagues state was already handled in the existing template.

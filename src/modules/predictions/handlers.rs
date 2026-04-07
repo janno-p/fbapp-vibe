@@ -3,7 +3,7 @@ use askama_web::WebTemplate;
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, HeaderValue, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     Form,
 };
 
@@ -28,6 +28,10 @@ use super::{
 // ── Templates ─────────────────────────────────────────────────────────────────
 
 #[derive(Template, WebTemplate)]
+#[template(path = "predictions/no_tournament.html")]
+struct NoTournamentTemplate;
+
+#[derive(Template, WebTemplate)]
 #[template(path = "predictions/index.html")]
 struct PredictionsTemplate {
     tournament_name: String,
@@ -50,12 +54,12 @@ impl PredictionsTemplate {
 pub async fn predictions_page(
     auth_session: AuthSession,
     State(state): State<AppState>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Response, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
-    let tournament = db::get_active_tournament(&state.pool)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let Some(tournament) = db::get_active_tournament(&state.pool).await? else {
+        return Ok(NoTournamentTemplate.into_response());
+    };
 
     let (groups, teams, knockout_rounds, players, top_scorer_ids) = tokio::try_join!(
         db::get_group_matches_with_predictions(&state.pool, tournament.id, user.id),
@@ -73,7 +77,8 @@ pub async fn predictions_page(
         knockout_rounds,
         players,
         top_scorer_ids,
-    })
+    }
+    .into_response())
 }
 
 pub async fn save_group(
