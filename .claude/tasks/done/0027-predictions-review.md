@@ -1,13 +1,13 @@
 ---
 id: 0027
 title: Read-only predictions review page
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0005]
 refs: [0007, 0025]
 created: 2026-04-08
-started: ~
-completed: ~
+started: 2026-04-08
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -58,8 +58,17 @@ Once predictions are locked, users cannot see what they submitted — the predic
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `GET /leagues/{id}/predictions/review` — a read-only page showing the authenticated user's predictions for the active tournament alongside actual results and points.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+**What was built:**
+- Three new model types in `predictions/models.rs`: `GroupReviewRow`, `KnockoutReviewRow`, `TopScorerReviewRow`, each with a `points_display()` helper returning `"—"` for unscored entries
+- Three read-only DB queries in `predictions/db.rs` (group, knockout, top scorer), each joining predictions with match/team/player tables and ordering for subheading grouping in the template
+- `predictions_review` handler: auth check → membership check via `standings::db::is_member` → parallel query fetch → render
+- `templates/predictions/review.html`: three sections with inline group/round subheadings using `{% let mut current_group %}` pattern; outcome badges coloured green/red by `score_state()`
+- Route registered in `predictions/mod.rs`; "My predictions →" link in `standings/index.html` updated to point to this new route
+
+**Deviations from spec:**
+- Used `standings::db::is_member` (changed to `pub(crate)`) instead of `leagues::db::is_member` — both exist but `standings::db` was already imported in predictions context; this avoided adding a second cross-module dependency
+- No collapsible/tabbed sections — flat layout with subheadings is sufficient and simpler
 
 Follow-up tasks: _none_

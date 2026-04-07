@@ -18,6 +18,10 @@ pub fn router() -> Router<AppState> {
             post(handlers::save_knockout),
         )
         .route("/predictions/top-scorer", post(handlers::save_top_scorer))
+        .route(
+            "/leagues/{id}/predictions/review",
+            get(handlers::predictions_review),
+        )
 }
 
 // ── Unit tests for round validation ──────────────────────────────────────────

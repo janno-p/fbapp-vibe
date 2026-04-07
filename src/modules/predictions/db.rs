@@ -8,7 +8,10 @@ use crate::{
     modules::admin::models::Tournament,
 };
 
-use super::models::{GroupWithMatches, KnockoutRoundState, MatchRow, PlayerInfo, TeamInfo};
+use super::models::{
+    GroupReviewRow, GroupWithMatches, KnockoutReviewRow, KnockoutRoundState, MatchRow, PlayerInfo,
+    TeamInfo, TopScorerReviewRow,
+};
 
 // ── Read queries ──────────────────────────────────────────────────────────────
 
@@ -168,6 +171,118 @@ pub async fn get_top_scorer_prediction_ids(
     .fetch_all(pool)
     .await?;
     Ok(ids)
+}
+
+// ── Review queries ────────────────────────────────────────────────────────────
+
+pub async fn get_group_predictions_review(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<Vec<GroupReviewRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            g.name                          AS group_name,
+            COALESCE(ht.name, 'TBD')        AS "home_name!: String",
+            COALESCE(at.name, 'TBD')        AS "away_name!: String",
+            m.scheduled_at,
+            gsp.predicted_outcome           AS "predicted_outcome: MatchOutcome",
+            m.outcome                       AS "actual_outcome?: MatchOutcome",
+            gsp.points_awarded
+        FROM group_stage_predictions gsp
+        JOIN matches m  ON m.id  = gsp.match_id
+        JOIN groups  g  ON g.id  = m.group_id
+        LEFT JOIN teams ht ON ht.id = m.home_team_id
+        LEFT JOIN teams at ON at.id = m.away_team_id
+        WHERE m.tournament_id = $1 AND gsp.user_id = $2
+        ORDER BY g.name, m.scheduled_at
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| GroupReviewRow {
+            group_name: r.group_name,
+            home_name: r.home_name,
+            away_name: r.away_name,
+            scheduled_at: r.scheduled_at,
+            predicted_outcome: r.predicted_outcome,
+            actual_outcome: r.actual_outcome,
+            points_awarded: r.points_awarded,
+        })
+        .collect())
+}
+
+pub async fn get_knockout_predictions_review(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<Vec<KnockoutReviewRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            kp.round            AS "round: KnockoutRound",
+            t.name              AS team_name,
+            kp.points_awarded
+        FROM knockout_predictions kp
+        JOIN teams t ON t.id = kp.team_id
+        WHERE kp.tournament_id = $1 AND kp.user_id = $2
+        ORDER BY kp.round, t.name
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| KnockoutReviewRow {
+            round: r.round,
+            team_name: r.team_name,
+            points_awarded: r.points_awarded,
+        })
+        .collect())
+}
+
+pub async fn get_top_scorer_predictions_review(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<Vec<TopScorerReviewRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            p.name      AS player_name,
+            t.name      AS team_name,
+            p.goals_scored,
+            tsp.points_awarded
+        FROM top_scorer_predictions tsp
+        JOIN players p ON p.id = tsp.player_id
+        JOIN teams   t ON t.id = p.team_id
+        WHERE tsp.tournament_id = $1 AND tsp.user_id = $2
+        ORDER BY p.goals_scored DESC, p.name
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| TopScorerReviewRow {
+            player_name: r.player_name,
+            team_name: r.team_name,
+            goals_scored: r.goals_scored,
+            points_awarded: r.points_awarded,
+        })
+        .collect())
 }
 
 // ── Write queries (all require lock check) ────────────────────────────────────

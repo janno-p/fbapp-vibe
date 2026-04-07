@@ -21,8 +21,8 @@ const TOP_SCORER_PICKS: usize = 3;
 use super::{
     db,
     models::{
-        GroupStageForm, GroupWithMatches, KnockoutForm, KnockoutRoundState, PlayerInfo, TeamInfo,
-        TopScorerForm,
+        GroupReviewRow, GroupStageForm, GroupWithMatches, KnockoutForm, KnockoutReviewRow,
+        KnockoutRoundState, PlayerInfo, TeamInfo, TopScorerForm, TopScorerReviewRow,
     },
 };
 
@@ -51,6 +51,17 @@ impl PredictionsTemplate {
     fn is_top_scorer(&self, player_id: &i64) -> bool {
         self.top_scorer_ids.contains(player_id)
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "predictions/review.html")]
+struct ReviewTemplate {
+    league_id: i64,
+    group_rows: Vec<GroupReviewRow>,
+    knockout_rows: Vec<KnockoutReviewRow>,
+    top_scorer_rows: Vec<TopScorerReviewRow>,
+    no_tournament: bool,
+    nav: NavContext,
 }
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -170,6 +181,43 @@ pub async fn save_top_scorer(
     db::save_top_scorer_predictions(&state.pool, tournament.id, user.id, &form.player_ids).await?;
 
     Ok(htmx_redirect("/predictions#top-scorer"))
+}
+
+/// GET /leagues/{id}/predictions/review
+pub async fn predictions_review(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    axum::extract::Path(league_id): axum::extract::Path<i64>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+
+    if !crate::modules::standings::db::is_member(&state.pool, league_id, user.id).await? {
+        return Err(AppError::Forbidden);
+    }
+
+    let nav = crate::nav::load(&state.pool, &user, "standings").await?;
+
+    let (group_rows, knockout_rows, top_scorer_rows, no_tournament) =
+        match db::get_active_tournament(&state.pool).await? {
+            None => (vec![], vec![], vec![], true),
+            Some(t) => {
+                let (group_rows, knockout_rows, top_scorer_rows) = tokio::try_join!(
+                    db::get_group_predictions_review(&state.pool, t.id, user.id),
+                    db::get_knockout_predictions_review(&state.pool, t.id, user.id),
+                    db::get_top_scorer_predictions_review(&state.pool, t.id, user.id),
+                )?;
+                (group_rows, knockout_rows, top_scorer_rows, false)
+            }
+        };
+
+    Ok(ReviewTemplate {
+        league_id,
+        group_rows,
+        knockout_rows,
+        top_scorer_rows,
+        no_tournament,
+        nav,
+    })
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────────

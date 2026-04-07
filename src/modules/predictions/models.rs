@@ -69,6 +69,87 @@ impl KnockoutRoundState {
     }
 }
 
+// ── Review view models ────────────────────────────────────────────────────────
+
+pub struct GroupReviewRow {
+    pub group_name: String,
+    pub home_name: String,
+    pub away_name: String,
+    pub scheduled_at: time::OffsetDateTime,
+    pub predicted_outcome: MatchOutcome,
+    pub actual_outcome: Option<MatchOutcome>,
+    pub points_awarded: Option<i32>,
+}
+
+impl GroupReviewRow {
+    pub fn formatted_kickoff(&self) -> String {
+        let fmt = time::format_description::parse("[day] [month repr:short] [hour]:[minute] UTC")
+            .expect("static format is valid");
+        self.scheduled_at
+            .format(&fmt)
+            .unwrap_or_else(|_| "TBD".to_string())
+    }
+
+    pub fn outcome_label(outcome: &MatchOutcome) -> &'static str {
+        match outcome {
+            MatchOutcome::Home => "Home",
+            MatchOutcome::Draw => "Draw",
+            MatchOutcome::Away => "Away",
+        }
+    }
+
+    /// Returns (correct, wrong, pending) — used by templates to pick a colour.
+    pub fn score_state(&self) -> &'static str {
+        match (&self.actual_outcome, self.points_awarded) {
+            (None, _) => "pending",
+            (Some(actual), _) if actual == &self.predicted_outcome => "correct",
+            _ => "wrong",
+        }
+    }
+
+    pub fn points_display(&self) -> String {
+        match self.points_awarded {
+            Some(p) => p.to_string(),
+            None => "—".to_string(),
+        }
+    }
+}
+
+pub struct KnockoutReviewRow {
+    pub round: KnockoutRound,
+    pub team_name: String,
+    pub points_awarded: Option<i32>,
+}
+
+impl KnockoutReviewRow {
+    pub fn round_label(&self) -> &'static str {
+        self.round.label()
+    }
+
+    pub fn points_display(&self) -> String {
+        match self.points_awarded {
+            Some(p) => p.to_string(),
+            None => "—".to_string(),
+        }
+    }
+}
+
+pub struct TopScorerReviewRow {
+    pub player_name: String,
+    pub team_name: String,
+    pub goals_scored: i32,
+    pub points_awarded: Option<i32>,
+}
+
+impl TopScorerReviewRow {
+    pub fn points_display(&self) -> String {
+        match self.points_awarded {
+            Some(p) => p.to_string(),
+            None => "—".to_string(),
+        }
+    }
+}
+
 // ── Form payloads ─────────────────────────────────────────────────────────────
 
 /// Group stage form: dynamic keys `match_{id}` → "home" | "draw" | "away"

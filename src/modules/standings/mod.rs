@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 
 use crate::state::AppState;
 
-mod db;
+pub(crate) mod db;
 mod handlers;
 pub mod models;
 

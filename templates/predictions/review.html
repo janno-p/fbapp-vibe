@@ -1,0 +1,174 @@
+{% extends "layout/nav_base.html" %}
+
+{% block title %}My Predictions — Kickoff{% endblock %}
+
+{% block main %}
+  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8 space-y-8">
+
+    {# ── Header ───────────────────────────────────────────────────────────── #}
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="font-display font-bold text-3xl tracking-tight text-ink-50 leading-tight">
+          My Predictions
+        </h1>
+        <p class="text-ink-500 text-xs mt-2">
+          Your submitted predictions alongside actual results
+        </p>
+      </div>
+      <a href="/leagues/{{ league_id }}/standings"
+         class="text-xs text-ink-400 hover:text-ink-200 transition-colors">
+        ← Standings
+      </a>
+    </div>
+
+    {# ── No tournament ────────────────────────────────────────────────────── #}
+    {% if no_tournament %}
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center">
+      <p class="text-ink-500 text-sm">No active tournament at the moment.</p>
+    </div>
+
+    {% else %}
+
+    {# ── Group Stage ──────────────────────────────────────────────────────── #}
+    <section>
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
+        Group Stage
+      </h2>
+
+      {% if group_rows.is_empty() %}
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+        <p class="text-ink-500 text-sm">No group stage predictions submitted.</p>
+      </div>
+      {% else %}
+
+      {# Group rows keyed by group_name — render a header when group changes #}
+      {% let mut current_group = "" %}
+      <div class="space-y-4">
+        {% for row in group_rows %}
+
+        {# New group header #}
+        {% if row.group_name != current_group %}
+        {% let current_group = row.group_name.as_str() %}
+        <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-600 mt-2 mb-1 px-1">
+          Group {{ row.group_name }}
+        </h3>
+        {% endif %}
+
+        <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-4 flex items-center gap-4">
+
+          {# Teams #}
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-ink-100 truncate">
+              {{ row.home_name }} <span class="text-ink-600">vs</span> {{ row.away_name }}
+            </p>
+            <p class="text-xs text-ink-600 mt-0.5">{{ row.formatted_kickoff() }}</p>
+          </div>
+
+          {# Predicted outcome #}
+          <div class="shrink-0 text-center">
+            <p class="text-xs text-ink-600 mb-1">Predicted</p>
+            <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold bg-pitch-700 text-ink-300">
+              {{ GroupReviewRow::outcome_label(&row.predicted_outcome) }}
+            </span>
+          </div>
+
+          {# Actual outcome #}
+          <div class="shrink-0 text-center">
+            <p class="text-xs text-ink-600 mb-1">Result</p>
+            {% if let Some(actual) = row.actual_outcome %}
+            <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold
+              {% if row.score_state() == "correct" %}bg-green-900/40 text-green-400{% else %}bg-red-900/40 text-red-400{% endif %}">
+              {{ GroupReviewRow::outcome_label(&actual) }}
+            </span>
+            {% else %}
+            <span class="text-xs text-ink-600">—</span>
+            {% endif %}
+          </div>
+
+          {# Points #}
+          <div class="shrink-0 w-10 text-right">
+            <p class="text-xs text-ink-600 mb-1">Pts</p>
+            <span class="font-display font-bold text-sm
+              {% if row.score_state() == "correct" %}text-goal-400{% elif row.score_state() == "wrong" %}text-ink-600{% else %}text-ink-500{% endif %}">
+              {{ row.points_display() }}
+            </span>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── Knockout ─────────────────────────────────────────────────────────── #}
+    <section>
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
+        Knockout Stage
+      </h2>
+
+      {% if knockout_rows.is_empty() %}
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+        <p class="text-ink-500 text-sm">No knockout predictions submitted.</p>
+      </div>
+      {% else %}
+
+      {% let mut current_round = "" %}
+      <div class="space-y-4">
+        {% for row in knockout_rows %}
+
+        {% if row.round_label() != current_round %}
+        {% let current_round = row.round_label() %}
+        <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-600 mt-2 mb-1 px-1">
+          {{ row.round_label() }}
+        </h3>
+        {% endif %}
+
+        <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-3 flex items-center justify-between">
+          <span class="text-sm font-medium text-ink-100">{{ row.team_name }}</span>
+          <span class="font-display font-bold text-sm {% if row.points_awarded.is_some() %}text-goal-400{% else %}text-ink-600{% endif %}">
+            {{ row.points_display() }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── Top Scorer ───────────────────────────────────────────────────────── #}
+    <section>
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
+        Top Scorer
+      </h2>
+
+      {% if top_scorer_rows.is_empty() %}
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
+        <p class="text-ink-500 text-sm">No top scorer predictions submitted.</p>
+      </div>
+      {% else %}
+      <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
+        {% for row in top_scorer_rows %}
+        <div class="flex items-center gap-4 px-5 py-4 border-b border-pitch-800 last:border-b-0">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-ink-100">{{ row.player_name }}</p>
+            <p class="text-xs text-ink-600 mt-0.5">{{ row.team_name }}</p>
+          </div>
+          <div class="shrink-0 text-center">
+            <p class="text-xs text-ink-600 mb-0.5">Goals</p>
+            <span class="font-display font-bold text-sm text-ink-200">{{ row.goals_scored }}</span>
+          </div>
+          <div class="shrink-0 w-10 text-right">
+            <p class="text-xs text-ink-600 mb-0.5">Pts</p>
+            <span class="font-display font-bold text-sm {% if row.points_awarded.is_some() %}text-goal-400{% else %}text-ink-600{% endif %}">
+              {{ row.points_display() }}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    {% endif %}
+
+  </main>
+{% endblock %}
