@@ -1,13 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}fbapp-vibe{% endblock %}</title>
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <script src="https://unpkg.com/htmx.org@2.0.7" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous" defer></script>
-</head>
-<body>
-    {% block content %}{% endblock %}
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}fbapp-vibe{% endblock %}</title>
+        <link rel="stylesheet" href="/assets/css/main.css" />
+        <script
+            src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.js"
+            integrity="sha384-ezjq8118wdwdRMj+nX4bevEi+cDLTbhLAeFF688VK8tPDGeLUe0WoY2MZtSla72F"
+            crossorigin="anonymous"
+        ></script>
+    </head>
+    <body>
+        {% block content %}{% endblock %}
+    </body>
 </html>

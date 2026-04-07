@@ -29,6 +29,7 @@ rustls = { version = "0.23", features = ["aws_lc_rs"] }
 async-trait = "0.1"
 time = "0.3"
 uuid = { version = "1", features = ["v4"] }
+serde_qs = "1.1.1"
 
 [dev-dependencies]
 axum-test = "20"

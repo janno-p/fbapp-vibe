@@ -10,13 +10,17 @@ use axum::{
 use crate::{
     db_types::{KnockoutRound, MatchOutcome},
     error::AppError,
+    extractors::QsForm,
     modules::auth::AuthSession,
     state::AppState,
 };
 
 use super::{
     db,
-    models::{GroupStageForm, GroupWithMatches, KnockoutForm, KnockoutRoundState, PlayerInfo, TeamInfo, TopScorerForm},
+    models::{
+        GroupStageForm, GroupWithMatches, KnockoutForm, KnockoutRoundState, PlayerInfo, TeamInfo,
+        TopScorerForm,
+    },
 };
 
 // ── Templates ─────────────────────────────────────────────────────────────────
@@ -100,7 +104,7 @@ pub async fn save_knockout(
     auth_session: AuthSession,
     State(state): State<AppState>,
     Path(round_slug): Path<String>,
-    Form(form): Form<KnockoutForm>,
+    QsForm(form): QsForm<KnockoutForm>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
@@ -135,7 +139,7 @@ pub async fn save_knockout(
 pub async fn save_top_scorer(
     auth_session: AuthSession,
     State(state): State<AppState>,
-    Form(form): Form<TopScorerForm>,
+    QsForm(form): QsForm<TopScorerForm>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
