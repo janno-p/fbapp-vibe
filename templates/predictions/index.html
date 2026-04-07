@@ -1,0 +1,200 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Predictions — {{ tournament_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">{{ tournament_name }}</h1>
+    <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">← Dashboard</a>
+  </header>
+
+  {% if predictions_locked %}
+  <div class="bg-amber-50 border-b border-amber-200 px-6 py-3 text-sm text-amber-800 font-medium">
+    Predictions are locked. No further changes can be made.
+  </div>
+  {% endif %}
+
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    {# Tab navigation #}
+    <div class="flex gap-1 mb-8 border-b border-gray-200">
+      <button onclick="showTab('group')" data-tab="group"
+              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+        Group Stage
+      </button>
+      <button onclick="showTab('knockout')" data-tab="knockout"
+              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+        Knockout
+      </button>
+      <button onclick="showTab('top-scorer')" data-tab="top-scorer"
+              class="tab-btn px-4 py-2 text-sm font-medium rounded-t border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer">
+        Top Scorer
+      </button>
+    </div>
+
+    {# ── Group Stage ────────────────────────────────────────────────────── #}
+    <div id="tab-group">
+      {% if groups.is_empty() %}
+      <p class="text-gray-500">No group stage matches yet.</p>
+      {% else %}
+      <form id="group-form" hx-post="/predictions/group" hx-target="#group-status" hx-swap="innerHTML">
+        <div class="space-y-8">
+          {% for group in groups %}
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Group {{ group.name }}</h3>
+            <div class="space-y-2">
+              {% for m in group.matches %}
+              <div class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-4">
+                <span class="flex-1 text-sm text-right text-gray-900 font-medium">
+                  {{ m.home_name() }}
+                </span>
+                <select name="match_{{ m.id }}"
+                        class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        {% if predictions_locked %}disabled{% endif %}>
+                  <option value="">—</option>
+                  <option value="home" {% if m.is_home_selected() %}selected{% endif %}>Home</option>
+                  <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
+                  <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
+                </select>
+                <span class="flex-1 text-sm text-left text-gray-900 font-medium">
+                  {{ m.away_name() }}
+                </span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if !predictions_locked %}
+        <div class="mt-6 flex items-center gap-4">
+          <button type="submit"
+                  class="bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+            Save group predictions
+          </button>
+          <span id="group-status" class="text-sm text-green-600"></span>
+        </div>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+
+    {# ── Knockout ───────────────────────────────────────────────────────── #}
+    <div id="tab-knockout" hidden>
+      {% if teams.is_empty() %}
+      <p class="text-gray-500">No teams available yet.</p>
+      {% else %}
+      <div class="space-y-10">
+        {% for rs in knockout_rounds %}
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-semibold text-gray-900">{{ rs.round.label() }}</h3>
+            <span class="text-xs text-gray-500">Select {{ rs.round.expected_team_count() }} teams</span>
+          </div>
+          <form hx-post="/predictions/knockout/{{ rs.round.slug() }}"
+                hx-target="#ko-{{ rs.round.slug() }}-status"
+                hx-swap="innerHTML">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3">
+              {% for team in teams %}
+              <label class="flex items-center gap-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="team_ids" value="{{ team.id }}"
+                       {% if rs.has_team(team.id) %}checked{% endif %}
+                       {% if predictions_locked %}disabled{% endif %}>
+                <span class="truncate">{{ team.short_name }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            {% if !predictions_locked %}
+            <div class="flex items-center gap-4">
+              <button type="submit"
+                      class="bg-indigo-600 text-white text-sm font-medium px-4 py-1.5 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                Save {{ rs.round.label() }}
+              </button>
+              <span id="ko-{{ rs.round.slug() }}-status" class="text-sm text-green-600"></span>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── Top Scorer ─────────────────────────────────────────────────────── #}
+    <div id="tab-top-scorer" hidden>
+      {% if players.is_empty() %}
+      <p class="text-gray-500">No players available yet.</p>
+      {% else %}
+      <p class="text-sm text-gray-600 mb-4">Select exactly 3 players you expect to top-score.</p>
+      <input type="text" id="player-filter" placeholder="Filter players…"
+             oninput="filterPlayers(this.value)"
+             class="mb-4 w-full max-w-sm border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <form hx-post="/predictions/top-scorer" hx-target="#top-scorer-status" hx-swap="innerHTML">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4" id="player-list">
+          {% for p in players %}
+          <label class="player-row flex items-center gap-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                 data-search="{{ p.name|lower }} {{ p.team_name|lower }}">
+            <input type="checkbox" name="player_ids" value="{{ p.id }}"
+                   {% if self.is_top_scorer(p.id) %}checked{% endif %}
+                   {% if predictions_locked %}disabled{% endif %}
+                   onchange="enforceMaxThree(this)">
+            <span>
+              <span class="font-medium">{{ p.name }}</span>
+              <span class="text-gray-400 text-xs ml-1">{{ p.team_name }}</span>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        {% if !predictions_locked %}
+        <div class="flex items-center gap-4">
+          <button type="submit"
+                  class="bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+            Save top scorer picks
+          </button>
+          <span id="top-scorer-status" class="text-sm text-green-600"></span>
+        </div>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<script>
+const TABS = ['group', 'knockout', 'top-scorer'];
+
+function showTab(name) {
+  TABS.forEach(t => {
+    document.getElementById('tab-' + t).hidden = t !== name;
+    document.querySelectorAll('[data-tab="' + t + '"]').forEach(el =>
+      el.classList.toggle('border-indigo-600', t === name)
+    );
+  });
+  history.replaceState(null, '', '#' + name);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hash = location.hash.replace('#', '');
+  showTab(TABS.includes(hash) ? hash : 'group');
+});
+
+function enforceMaxThree(el) {
+  const boxes = document.querySelectorAll('input[name="player_ids"]:checked');
+  if (boxes.length > 3) el.checked = false;
+}
+
+function filterPlayers(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.player-row').forEach(row => {
+    row.hidden = q && !row.dataset.search.includes(q);
+  });
+}
+
+// Show "✓ Saved" after HTMX save
+document.body.addEventListener('htmx:afterRequest', function(e) {
+  if (e.detail.successful) {
+    const target = e.detail.target;
+    if (target) target.innerHTML = '✓ Saved';
+  }
+});
+</script>
+{% endblock %}

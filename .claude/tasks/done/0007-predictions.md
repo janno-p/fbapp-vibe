@@ -1,13 +1,13 @@
 ---
 id: 0007
 title: Predictions UI
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0016]
 refs: [0005]
 created: 2026-04-06
-started: ~
-completed: ~
+started: 2026-04-06
+completed: 2026-04-06
 ---
 
 ## Goal
@@ -16,14 +16,14 @@ Let authenticated users submit and edit their tournament predictions before the 
 
 ## Acceptance Criteria
 
-- [ ] Predictions page is only accessible when there is an active tournament
-- [ ] **Group stage tab**: displays all group stage matches; user selects home / draw / away for each; saves on submit
-- [ ] **Knockout tab**: for each round (R32 → R16 → QF → SF → Final → Winner), user selects the expected advancing teams from the full team list; correct number of teams enforced per round (32 / 16 / 8 / 4 / 2 / 1)
-- [ ] **Top scorer tab**: user selects exactly 3 players from the full player list
-- [ ] All three forms support partial save (user does not need to fill everything in one go)
-- [ ] Existing predictions are pre-filled when the page loads
-- [ ] Any write attempt after `predictions_locked_at` returns 403; UI shows a "predictions locked" state instead of forms
-- [ ] Prediction lock check uses `SELECT ... FOR UPDATE` on the tournament row (per ADR-0016 concurrency rules)
+- [x] Predictions page is only accessible when there is an active tournament
+- [x] **Group stage tab**: displays all group stage matches; user selects home / draw / away for each; saves on submit
+- [x] **Knockout tab**: for each round (R32 → R16 → QF → SF → Final → Winner), user selects the expected advancing teams from the full team list; correct number of teams enforced per round (32 / 16 / 8 / 4 / 2 / 1)
+- [x] **Top scorer tab**: user selects exactly 3 players from the full player list
+- [x] All three forms support partial save (user does not need to fill everything in one go)
+- [x] Existing predictions are pre-filled when the page loads
+- [x] Any write attempt after `predictions_locked_at` returns 403; UI shows a "predictions locked" state instead of forms
+- [x] Prediction lock check uses `SELECT ... FOR UPDATE` on the tournament row (per ADR-0016 concurrency rules)
 
 ## Context for Claude 🤖
 
@@ -72,6 +72,15 @@ Enforce these counts at the handler level before any DB write.
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Implemented the full predictions module:
+
+- `src/modules/predictions/` — handlers, db, models, mod with router
+- `templates/predictions/index.html` — tabbed UI (group stage, knockout, top scorer) with HTMX form submissions, hash-based tab switching, client-side player filter
+- Group stage: per-match select (home/draw/away), upsert on save
+- Knockout: per-round team checkboxes, delete-and-reinsert within transaction
+- Top scorer: exactly 3 player checkboxes with JS enforcement
+- Lock check via `SELECT ... FOR UPDATE` on tournament row in every write transaction
+- `#[sqlx::test]` for lock enforcement and group stage upsert idempotency
+- Unit tests in `mod.rs` for all round slug/label/count/`all()` combinations
 
 Follow-up tasks: _none_
