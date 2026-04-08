@@ -109,6 +109,10 @@ pub async fn save_group(
         .await?
         .ok_or(AppError::NotFound)?;
 
+    if tournament.is_predictions_locked() {
+        return Err(AppError::Forbidden);
+    }
+
     // Parse match_{id} → MatchOutcome entries
     let predictions: Vec<(i64, MatchOutcome)> = form
         .iter()
@@ -148,6 +152,10 @@ pub async fn save_knockout(
         .await?
         .ok_or(AppError::NotFound)?;
 
+    if tournament.is_predictions_locked() {
+        return Err(AppError::Forbidden);
+    }
+
     db::save_knockout_round_predictions(
         &state.pool,
         tournament.id,
@@ -177,6 +185,10 @@ pub async fn save_top_scorer(
     let tournament = db::get_active_tournament(&state.pool)
         .await?
         .ok_or(AppError::NotFound)?;
+
+    if tournament.is_predictions_locked() {
+        return Err(AppError::Forbidden);
+    }
 
     db::save_top_scorer_predictions(&state.pool, tournament.id, user.id, &form.player_ids).await?;
 
