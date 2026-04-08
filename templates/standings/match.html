@@ -64,5 +64,47 @@
     </div>
     {% endif %}
 
+    {# ── Consensus (shown only after predictions are locked) ──────────────── #}
+    {% if is_locked %}
+    {% if let Some(c) = consensus %}
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-6 py-5 mt-6">
+      <h2 class="font-display font-semibold text-xs uppercase tracking-widest text-ink-500 mb-4">League Consensus</h2>
+      {% if c.total_predictors() == 0 %}
+      <p class="text-ink-500 text-sm">No predictions submitted.</p>
+      {% else %}
+      <div class="space-y-2 mb-3">
+        {# Home bar #}
+        <div class="flex items-center gap-3">
+          <span class="w-12 text-xs text-ink-400 font-display text-right">Home</span>
+          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-signal-green rounded-full" style="width: {{ c.home_percentage() }}%"></div>
+          </div>
+          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.home_count }} ({{ c.home_percentage() }}%)</span>
+        </div>
+        {# Draw bar #}
+        <div class="flex items-center gap-3">
+          <span class="w-12 text-xs text-ink-400 font-display text-right">Draw</span>
+          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-amber-400 rounded-full" style="width: {{ c.draw_percentage() }}%"></div>
+          </div>
+          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.draw_count }} ({{ c.draw_percentage() }}%)</span>
+        </div>
+        {# Away bar #}
+        <div class="flex items-center gap-3">
+          <span class="w-12 text-xs text-ink-400 font-display text-right">Away</span>
+          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-blue-400 rounded-full" style="width: {{ c.away_percentage() }}%"></div>
+          </div>
+          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.away_count }} ({{ c.away_percentage() }}%)</span>
+        </div>
+      </div>
+      {% if c.no_prediction_count > 0 %}
+      <p class="text-xs text-ink-600">{{ c.no_prediction_count }} member{% if c.no_prediction_count != 1 %}s{% endif %} did not predict</p>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+    {% endif %}
+
   </main>
 {% endblock %}

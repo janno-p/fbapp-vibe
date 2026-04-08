@@ -12,7 +12,7 @@ use super::{
     db,
     models::{
         build_leaderboard, group_fixtures, CompareGroupRow, FixtureGroup, LeaderboardEntry,
-        LeagueMember, MatchBreakdownRow, MatchInfo, NearestMatch,
+        LeagueMember, MatchBreakdownRow, MatchConsensus, MatchInfo, NearestMatch,
     },
 };
 
@@ -45,6 +45,8 @@ struct MatchBreakdownTemplate {
     league_name: String,
     match_info: MatchInfo,
     rows: Vec<MatchBreakdownRow>,
+    is_locked: bool,
+    consensus: Option<MatchConsensus>,
     nav: NavContext,
 }
 
@@ -163,20 +165,35 @@ pub async fn match_breakdown(
     )?;
     let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
-    let t_id = db::get_active_tournament_id(&state.pool)
+    let tournament = db::get_active_tournament(&state.pool)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let match_info = db::get_match_info(&state.pool, t_id, match_id)
+    let match_info = db::get_match_info(&state.pool, tournament.id, match_id)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let rows = db::get_group_match_breakdown(&state.pool, league_id, match_id).await?;
+    let is_locked = tournament.is_predictions_locked();
+
+    let (rows, consensus) = tokio::try_join!(
+        db::get_group_match_breakdown(&state.pool, league_id, match_id),
+        async {
+            if is_locked {
+                db::get_match_consensus(&state.pool, league_id, match_id)
+                    .await
+                    .map(Some)
+            } else {
+                Ok(None)
+            }
+        },
+    )?;
 
     Ok(MatchBreakdownTemplate {
         league_name,
         match_info,
         rows,
+        is_locked,
+        consensus,
         nav,
     })
 }

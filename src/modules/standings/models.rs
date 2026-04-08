@@ -268,6 +268,46 @@ pub fn group_fixtures(rows: Vec<FixtureRow>) -> Vec<FixtureGroup> {
     groups
 }
 
+// ── Consensus ─────────────────────────────────────────────────────────────────
+
+/// Distribution of league member predictions for a single group stage match.
+///
+/// The percentage denominator is `total_predictors()` (excludes members who
+/// did not submit a prediction). Division by zero is guarded — all percentage
+/// methods return 0 when no one has predicted.
+pub struct MatchConsensus {
+    pub home_count: i64,
+    pub draw_count: i64,
+    pub away_count: i64,
+    /// Members who are in the league but have no prediction for this match.
+    pub no_prediction_count: i64,
+}
+
+impl MatchConsensus {
+    pub fn total_predictors(&self) -> i64 {
+        self.home_count + self.draw_count + self.away_count
+    }
+
+    pub fn home_percentage(&self) -> u32 {
+        percentage(self.home_count, self.total_predictors())
+    }
+
+    pub fn draw_percentage(&self) -> u32 {
+        percentage(self.draw_count, self.total_predictors())
+    }
+
+    pub fn away_percentage(&self) -> u32 {
+        percentage(self.away_count, self.total_predictors())
+    }
+}
+
+fn percentage(count: i64, total: i64) -> u32 {
+    if total == 0 {
+        return 0;
+    }
+    ((count as f64 / total as f64) * 100.0).round() as u32
+}
+
 // ── Future prospects (pure) ───────────────────────────────────────────────────
 
 /// Returns the maximum points a user can still achieve.
@@ -296,6 +336,55 @@ pub fn max_achievable_points(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ── MatchConsensus ────────────────────────────────────────────────────────
+
+    fn consensus(h: i64, d: i64, a: i64, n: i64) -> MatchConsensus {
+        MatchConsensus { home_count: h, draw_count: d, away_count: a, no_prediction_count: n }
+    }
+
+    #[test]
+    fn consensus_returns_zero_when_no_predictors() {
+        let c = consensus(0, 0, 0, 3);
+        assert_eq!(c.total_predictors(), 0);
+        assert_eq!(c.home_percentage(), 0);
+        assert_eq!(c.draw_percentage(), 0);
+        assert_eq!(c.away_percentage(), 0);
+    }
+
+    #[test]
+    fn consensus_even_split_three_outcomes() {
+        let c = consensus(1, 1, 1, 0);
+        assert_eq!(c.total_predictors(), 3);
+        assert_eq!(c.home_percentage(), 33);
+        assert_eq!(c.draw_percentage(), 33);
+        assert_eq!(c.away_percentage(), 33);
+    }
+
+    #[test]
+    fn consensus_majority_home_rounds_correctly() {
+        // 2/7, 2/7, 3/7 → 29%, 29%, 43%
+        let c = consensus(2, 2, 3, 0);
+        assert_eq!(c.home_percentage(), 29);
+        assert_eq!(c.draw_percentage(), 29);
+        assert_eq!(c.away_percentage(), 43);
+    }
+
+    #[test]
+    fn consensus_all_home_gives_100_percent() {
+        let c = consensus(5, 0, 0, 2);
+        assert_eq!(c.home_percentage(), 100);
+        assert_eq!(c.draw_percentage(), 0);
+        assert_eq!(c.away_percentage(), 0);
+    }
+
+    #[test]
+    fn consensus_no_prediction_count_does_not_affect_percentages() {
+        // 3 predictors, 2 non-predictors — denominator is 3
+        let c = consensus(3, 0, 0, 2);
+        assert_eq!(c.total_predictors(), 3);
+        assert_eq!(c.home_percentage(), 100);
+    }
 
     // ── max_achievable_points ─────────────────────────────────────────────────
 

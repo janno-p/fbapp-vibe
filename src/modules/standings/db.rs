@@ -1,10 +1,13 @@
 use sqlx::PgPool;
 
-use crate::db_types::{KnockoutRound, MatchOutcome};
+use crate::{
+    db_types::{KnockoutRound, MatchOutcome},
+    modules::admin::models::Tournament,
+};
 
 use super::models::{
-    CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchInfo,
-    NearestMatch,
+    CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchConsensus,
+    MatchInfo, NearestMatch,
 };
 
 // ── Access guard ──────────────────────────────────────────────────────────────
@@ -28,6 +31,17 @@ pub async fn get_active_tournament_id(pool: &PgPool) -> anyhow::Result<Option<i6
         .fetch_optional(pool)
         .await?;
     Ok(id)
+}
+
+pub async fn get_active_tournament(pool: &PgPool) -> anyhow::Result<Option<Tournament>> {
+    let t = sqlx::query_as!(
+        Tournament,
+        "SELECT id, external_id, name, season, is_active, predictions_locked_at \
+         FROM tournaments WHERE is_active = TRUE LIMIT 1"
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(t)
 }
 
 pub async fn get_league_name(pool: &PgPool, league_id: i64) -> anyhow::Result<Option<String>> {
@@ -310,6 +324,37 @@ pub async fn get_group_match_breakdown(
         .collect())
 }
 
+pub async fn get_match_consensus(
+    pool: &PgPool,
+    league_id: i64,
+    match_id: i64,
+) -> anyhow::Result<MatchConsensus> {
+    let row = sqlx::query!(
+        r#"
+        SELECT
+            COUNT(*) FILTER (WHERE gsp.predicted_outcome = 'home') AS "home_count!: i64",
+            COUNT(*) FILTER (WHERE gsp.predicted_outcome = 'draw') AS "draw_count!: i64",
+            COUNT(*) FILTER (WHERE gsp.predicted_outcome = 'away') AS "away_count!: i64",
+            COUNT(*) FILTER (WHERE gsp.predicted_outcome IS NULL)  AS "no_prediction_count!: i64"
+        FROM league_members lm
+        LEFT JOIN group_stage_predictions gsp
+               ON gsp.user_id = lm.user_id AND gsp.match_id = $2
+        WHERE lm.league_id = $1
+        "#,
+        league_id,
+        match_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(MatchConsensus {
+        home_count: row.home_count,
+        draw_count: row.draw_count,
+        away_count: row.away_count,
+        no_prediction_count: row.no_prediction_count,
+    })
+}
+
 // ── Comparison ────────────────────────────────────────────────────────────────
 
 pub async fn get_compare_group_rows(
@@ -450,8 +495,10 @@ mod tests {
     }
 
     async fn make_league(pool: &PgPool, creator_id: i64) -> i64 {
+        let token = format!("tok-{creator_id}");
         sqlx::query_scalar!(
-            "INSERT INTO leagues (name, invite_token, created_by) VALUES ('Test', 'tok', $1) RETURNING id",
+            "INSERT INTO leagues (name, invite_token, created_by) VALUES ('Test', $1, $2) RETURNING id",
+            token,
             creator_id,
         )
         .fetch_one(pool)
@@ -499,6 +546,119 @@ mod tests {
         .fetch_one(pool)
         .await
         .expect("insert match")
+    }
+
+    async fn predict(pool: &PgPool, user_id: i64, match_id: i64, outcome: Option<MatchOutcome>) {
+        if let Some(o) = outcome {
+            sqlx::query!(
+                r#"INSERT INTO group_stage_predictions (user_id, match_id, predicted_outcome)
+                   VALUES ($1, $2, $3)"#,
+                user_id,
+                match_id,
+                o as MatchOutcome,
+            )
+            .execute(pool)
+            .await
+            .expect("insert prediction");
+        }
+        // None = no row inserted (member without prediction)
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consensus_all_predict_same_outcome(pool: PgPool) {
+        let u1 = make_user(&pool, "g1", "a@t.com", "Alice").await;
+        let u2 = make_user(&pool, "g2", "b@t.com", "Bob").await;
+        let t_id = make_tournament(&pool).await;
+        let league = make_league(&pool, u1).await;
+        add_member(&pool, league, u1).await;
+        add_member(&pool, league, u2).await;
+        let home = make_team(&pool, t_id, "H").await;
+        let away = make_team(&pool, t_id, "A").await;
+        let m_id = make_match(&pool, t_id, home, away).await;
+
+        predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
+        predict(&pool, u2, m_id, Some(MatchOutcome::Home)).await;
+
+        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        assert_eq!(c.home_count, 2);
+        assert_eq!(c.draw_count, 0);
+        assert_eq!(c.away_count, 0);
+        assert_eq!(c.no_prediction_count, 0);
+        assert_eq!(c.home_percentage(), 100);
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consensus_mixed_predictions(pool: PgPool) {
+        let u1 = make_user(&pool, "g1", "a@t.com", "Alice").await;
+        let u2 = make_user(&pool, "g2", "b@t.com", "Bob").await;
+        let u3 = make_user(&pool, "g3", "c@t.com", "Carol").await;
+        let t_id = make_tournament(&pool).await;
+        let league = make_league(&pool, u1).await;
+        add_member(&pool, league, u1).await;
+        add_member(&pool, league, u2).await;
+        add_member(&pool, league, u3).await;
+        let home = make_team(&pool, t_id, "H").await;
+        let away = make_team(&pool, t_id, "A").await;
+        let m_id = make_match(&pool, t_id, home, away).await;
+
+        predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
+        predict(&pool, u2, m_id, Some(MatchOutcome::Draw)).await;
+        predict(&pool, u3, m_id, Some(MatchOutcome::Away)).await;
+
+        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        assert_eq!(c.home_count, 1);
+        assert_eq!(c.draw_count, 1);
+        assert_eq!(c.away_count, 1);
+        assert_eq!(c.no_prediction_count, 0);
+        assert_eq!(c.total_predictors(), 3);
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consensus_some_members_did_not_predict(pool: PgPool) {
+        let u1 = make_user(&pool, "g1", "a@t.com", "Alice").await;
+        let u2 = make_user(&pool, "g2", "b@t.com", "Bob").await;
+        let u3 = make_user(&pool, "g3", "c@t.com", "Carol").await;
+        let t_id = make_tournament(&pool).await;
+        let league = make_league(&pool, u1).await;
+        add_member(&pool, league, u1).await;
+        add_member(&pool, league, u2).await;
+        add_member(&pool, league, u3).await;
+        let home = make_team(&pool, t_id, "H").await;
+        let away = make_team(&pool, t_id, "A").await;
+        let m_id = make_match(&pool, t_id, home, away).await;
+
+        // Only u1 predicted; u2 and u3 did not
+        predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
+
+        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        assert_eq!(c.home_count, 1);
+        assert_eq!(c.no_prediction_count, 2);
+        assert_eq!(c.total_predictors(), 1);
+        assert_eq!(c.home_percentage(), 100);
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consensus_cross_league_isolation(pool: PgPool) {
+        let u1 = make_user(&pool, "g1", "a@t.com", "Alice").await;
+        let u2 = make_user(&pool, "g2", "b@t.com", "Bob").await;
+        let t_id = make_tournament(&pool).await;
+        let league_a = make_league(&pool, u1).await;
+        let league_b = make_league(&pool, u2).await;
+        add_member(&pool, league_a, u1).await;
+        add_member(&pool, league_b, u2).await;
+        let home = make_team(&pool, t_id, "H").await;
+        let away = make_team(&pool, t_id, "A").await;
+        let m_id = make_match(&pool, t_id, home, away).await;
+
+        // u1 (league_a) predicts home; u2 (league_b) predicts away
+        predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
+        predict(&pool, u2, m_id, Some(MatchOutcome::Away)).await;
+
+        // league_a consensus should only see u1's prediction
+        let c = get_match_consensus(&pool, league_a, m_id).await.expect("consensus");
+        assert_eq!(c.home_count, 1);
+        assert_eq!(c.away_count, 0);
+        assert_eq!(c.total_predictors(), 1);
     }
 
     #[sqlx::test(migrations = "./migrations")]

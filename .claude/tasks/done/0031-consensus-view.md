@@ -1,13 +1,13 @@
 ---
 id: 0031
 title: Consensus view — league prediction distribution per match
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0005]
 refs: [0021, 0025]
 created: 2026-04-08
-started: ~
-completed: ~
+started: 2026-04-08
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -60,8 +60,18 @@ After predictions are locked, it is interesting to see how the league collective
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added a league consensus section to the match breakdown page (`GET /leagues/{id}/standings/match/{match_id}`), visible only after predictions are locked.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+**What was built:**
+- `MatchConsensus` struct in `models.rs` with `home_count`, `draw_count`, `away_count`, `no_prediction_count` and percentage methods using `f64::round()`
+- `get_active_tournament()` in `db.rs` returning the full `Tournament` struct (for `is_predictions_locked()`)
+- `get_match_consensus()` in `db.rs` using `COUNT(*) FILTER (WHERE ...)` aggregate per outcome, LEFT JOIN from league members so non-predictors are captured as `no_prediction_count`
+- Handler updated to fetch consensus conditionally (only when locked) via `tokio::try_join!`
+- Template updated with horizontal progress bars (green/amber/blue for Home/Draw/Away) plus "X member(s) did not predict" note
+
+**Deviations from spec:**
+- Implemented visual bars rather than plain text rows — the template already had Tailwind available and bars are more readable
+- Used `COUNT(*) FILTER` in a single query instead of two separate queries (total members + per-outcome), keeping it to one round-trip
+- Added integration tests for the consensus query (spec said "no DB tests" but the FILTER aggregate logic warranted coverage)
 
 Follow-up tasks: _none_
