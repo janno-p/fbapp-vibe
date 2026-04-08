@@ -2,11 +2,7 @@ use crate::db_types::{KnockoutRound, MatchOutcome};
 
 /// Points awarded for a correct group stage match prediction.
 pub fn group_stage_points(predicted: &MatchOutcome, actual: &MatchOutcome) -> i32 {
-    if predicted == actual {
-        1
-    } else {
-        0
-    }
+    if predicted == actual { 1 } else { 0 }
 }
 
 /// Points awarded per team for a correctly predicted knockout round advancement.

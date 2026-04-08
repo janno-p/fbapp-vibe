@@ -13,9 +13,8 @@ use tower_sessions::Session;
 use crate::{error::AppError, modules::leagues, nav::NavContext, state::AppState};
 
 use super::{
-    db,
+    AuthSession, db,
     models::{GoogleUserInfo, User},
-    AuthSession,
 };
 
 // ── Templates ────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::get, Router};
+use axum::{Router, http::StatusCode, routing::get};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 use crate::{modules, state::AppState};

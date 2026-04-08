@@ -86,10 +86,10 @@ async fn poll(state: &AppState) -> anyhow::Result<bool> {
                 .await?;
         }
 
-        if *round == KnockoutRound::Final {
-            if let Some(winner_id) = db::get_final_winner(&state.pool, tournament.id).await? {
-                db::score_winner_predictions(&state.pool, tournament.id, winner_id).await?;
-            }
+        if *round == KnockoutRound::Final
+            && let Some(winner_id) = db::get_final_winner(&state.pool, tournament.id).await?
+        {
+            db::score_winner_predictions(&state.pool, tournament.id, winner_id).await?;
         }
     }
 

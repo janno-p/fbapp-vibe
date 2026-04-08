@@ -1,17 +1,16 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
+    Form,
     extract::{Path, State},
     response::{IntoResponse, Redirect},
-    Form,
 };
 
 use crate::{error::AppError, football_api::Competition, nav::NavContext, state::AppState};
 
 use super::{
-    db,
+    AdminUser, db,
     models::{RegisterTournamentForm, Tournament},
-    AdminUser,
 };
 
 // ── Templates ─────────────────────────────────────────────────────────────────

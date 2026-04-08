@@ -273,10 +273,15 @@ pub fn group_fixtures(rows: Vec<FixtureRow>) -> Vec<FixtureGroup> {
         } else {
             "Other".to_string()
         };
-        if groups.last().map(|g: &FixtureGroup| g.label == label).unwrap_or(false) {
-            groups.last_mut().unwrap().matches.push(row);
+        if let Some(g) = groups.last_mut()
+            && g.label == label
+        {
+            g.matches.push(row);
         } else {
-            groups.push(FixtureGroup { label, matches: vec![row] });
+            groups.push(FixtureGroup {
+                label,
+                matches: vec![row],
+            });
         }
     }
     groups
@@ -421,7 +426,12 @@ mod tests {
     // ── MatchConsensus ────────────────────────────────────────────────────────
 
     fn consensus(h: i64, d: i64, a: i64, n: i64) -> MatchConsensus {
-        MatchConsensus { home_count: h, draw_count: d, away_count: a, no_prediction_count: n }
+        MatchConsensus {
+            home_count: h,
+            draw_count: d,
+            away_count: a,
+            no_prediction_count: n,
+        }
     }
 
     #[test]
@@ -556,7 +566,10 @@ mod tests {
             },
         ];
         let entries = build_leaderboard(rows);
-        assert_eq!(entries[0].user_id, 1, "Alice has higher ceiling, should rank first");
+        assert_eq!(
+            entries[0].user_id, 1,
+            "Alice has higher ceiling, should rank first"
+        );
         assert_eq!(entries[1].user_id, 2);
     }
 
@@ -592,7 +605,10 @@ mod tests {
     #[test]
     fn streaks_best_is_longer_than_current() {
         // T T T F T T → current=2, best=3
-        assert_eq!(compute_streaks(&[true, true, true, false, true, true]), (2, 3));
+        assert_eq!(
+            compute_streaks(&[true, true, true, false, true, true]),
+            (2, 3)
+        );
     }
 
     #[test]

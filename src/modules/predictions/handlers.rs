@@ -1,10 +1,10 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
+    Form,
     extract::{Path, State},
     http::{HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
-    Form,
 };
 
 use crate::{

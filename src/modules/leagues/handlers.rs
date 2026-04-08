@@ -1,18 +1,17 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
+    Form,
     extract::{Path, State},
     response::{IntoResponse, Redirect},
-    Form,
 };
 use tower_sessions::Session;
 
 use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state::AppState};
 
 use super::{
-    db,
+    AdminUser, db,
     models::{CreateLeagueForm, LeagueOverview, LeagueWithCount},
-    AdminUser,
 };
 
 // ── Templates ─────────────────────────────────────────────────────────────────
@@ -81,8 +80,6 @@ pub async fn league_overview(
 
     Ok(LeagueOverviewTemplate { overview, nav })
 }
-
-
 
 /// GET /leagues/join/{token}
 ///

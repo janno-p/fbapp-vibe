@@ -2,10 +2,10 @@ use std::net::SocketAddr;
 
 use axum_login::AuthManagerLayerBuilder;
 use axum_server::tls_rustls::RustlsConfig;
-use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
-use tower_sessions::{cookie::SameSite, Expiry, SessionManagerLayer};
+use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
+use tower_sessions::{Expiry, SessionManagerLayer, cookie::SameSite};
 use tower_sessions_sqlx_store::PostgresStore;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use fbapp_vibe::{
     config::Config,

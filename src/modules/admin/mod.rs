@@ -1,8 +1,8 @@
 use axum::{
+    Router,
     extract::FromRequestParts,
     http::request::Parts,
     routing::{get, post},
-    Router,
 };
 
 use crate::{

@@ -1,4 +1,4 @@
-use oauth2::{basic::BasicClient, EndpointNotSet, EndpointSet};
+use oauth2::{EndpointNotSet, EndpointSet, basic::BasicClient};
 use sqlx::PgPool;
 
 use crate::config::Config;

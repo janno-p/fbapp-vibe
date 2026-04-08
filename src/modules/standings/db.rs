@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::models::{
-    CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchConsensus,
-    MatchInfo, MemberGroupPredRow, NearestMatch,
+    CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow,
+    MatchConsensus, MatchInfo, MemberGroupPredRow, NearestMatch,
 };
 
 // ── Access guard ──────────────────────────────────────────────────────────────
@@ -697,7 +697,9 @@ mod tests {
         predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
         predict(&pool, u2, m_id, Some(MatchOutcome::Home)).await;
 
-        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        let c = get_match_consensus(&pool, league, m_id)
+            .await
+            .expect("consensus");
         assert_eq!(c.home_count, 2);
         assert_eq!(c.draw_count, 0);
         assert_eq!(c.away_count, 0);
@@ -723,7 +725,9 @@ mod tests {
         predict(&pool, u2, m_id, Some(MatchOutcome::Draw)).await;
         predict(&pool, u3, m_id, Some(MatchOutcome::Away)).await;
 
-        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        let c = get_match_consensus(&pool, league, m_id)
+            .await
+            .expect("consensus");
         assert_eq!(c.home_count, 1);
         assert_eq!(c.draw_count, 1);
         assert_eq!(c.away_count, 1);
@@ -748,7 +752,9 @@ mod tests {
         // Only u1 predicted; u2 and u3 did not
         predict(&pool, u1, m_id, Some(MatchOutcome::Home)).await;
 
-        let c = get_match_consensus(&pool, league, m_id).await.expect("consensus");
+        let c = get_match_consensus(&pool, league, m_id)
+            .await
+            .expect("consensus");
         assert_eq!(c.home_count, 1);
         assert_eq!(c.no_prediction_count, 2);
         assert_eq!(c.total_predictors(), 1);
@@ -773,7 +779,9 @@ mod tests {
         predict(&pool, u2, m_id, Some(MatchOutcome::Away)).await;
 
         // league_a consensus should only see u1's prediction
-        let c = get_match_consensus(&pool, league_a, m_id).await.expect("consensus");
+        let c = get_match_consensus(&pool, league_a, m_id)
+            .await
+            .expect("consensus");
         assert_eq!(c.home_count, 1);
         assert_eq!(c.away_count, 0);
         assert_eq!(c.total_predictors(), 1);

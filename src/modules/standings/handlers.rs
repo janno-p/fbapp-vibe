@@ -11,9 +11,9 @@ use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state:
 use super::{
     db,
     models::{
-        build_leaderboard, compute_streaks, group_fixtures, CompareGroupRow, FixtureGroup,
-        LeaderboardEntry, LeagueMember, MatchBreakdownRow, MatchConsensus, MatchInfo, MemberStats,
-        NearestMatch,
+        CompareGroupRow, FixtureGroup, LeaderboardEntry, LeagueMember, MatchBreakdownRow,
+        MatchConsensus, MatchInfo, MemberStats, NearestMatch, build_leaderboard, compute_streaks,
+        group_fixtures,
     },
 };
 
@@ -358,7 +358,12 @@ pub async fn member_stats(
         }
     };
 
-    Ok(MemberStatsTemplate { league_id, league_name, stats, nav })
+    Ok(MemberStatsTemplate {
+        league_id,
+        league_name,
+        stats,
+        nav,
+    })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
