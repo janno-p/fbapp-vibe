@@ -92,6 +92,10 @@ impl MatchInfo {
             .format(&fmt)
             .unwrap_or_else(|_| "TBD".to_string())
     }
+
+    pub fn scheduled_at_epoch_ms(&self) -> i64 {
+        self.scheduled_at.unix_timestamp() * 1000
+    }
 }
 
 /// One league member's prediction row for a group stage match breakdown.
@@ -242,6 +246,10 @@ impl FixtureRow {
         self.scheduled_at
             .format(&fmt)
             .unwrap_or_else(|_| "TBD".to_string())
+    }
+
+    pub fn scheduled_at_epoch_ms(&self) -> i64 {
+        self.scheduled_at.unix_timestamp() * 1000
     }
 }
 

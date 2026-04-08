@@ -53,8 +53,13 @@ Match pages and the fixture list show a static formatted kickoff time in UTC, bu
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Implemented per-match countdown timer using Alpine.js (per ADR-0020) instead of the vanilla JS file originally specified.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+- Added `scheduled_at_epoch_ms() -> i64` to `MatchInfo` and `FixtureRow` in `src/modules/standings/models.rs`
+- Created `assets/js/countdown.js` — a 13-line Alpine component factory `countdown(kickoffMs)` that computes the label synchronously on construction (no flash) and updates via `setInterval` in `init()`
+- Added `{% block head_scripts %}` extension point to `templates/layout/base.html` for page-specific deferred scripts
+- Updated `templates/standings/match.html` and `templates/standings/fixtures.html` to use `x-data="countdown(...)"` with `x-text="label"` in the not-played branch
+
+Deviation from spec: Alpine.js used instead of a separate vanilla JS file, consistent with ADR-0020. The `countdown.js` file still exists as a static asset but defines an Alpine component factory rather than direct DOM manipulation.
 
 Follow-up tasks: _none_

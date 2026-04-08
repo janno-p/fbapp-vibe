@@ -1,5 +1,7 @@
 {% extends "layout/nav_base.html" %}
 
+{% block head_scripts %}<script src="/assets/js/countdown.js" defer></script>{% endblock %}
+
 {% block title %}{{ match_info.home_name }} vs {{ match_info.away_name }} — {{ league_name }}{% endblock %}
 
 {% block main %}
@@ -18,7 +20,10 @@
           <div class="text-xs text-ink-500 mt-1 font-display uppercase tracking-wide">{{ match_info.outcome_label() }}</div>
           {% else %}
           <span class="font-display font-bold text-xl text-ink-500">vs</span>
-          <div class="text-xs text-ink-700 mt-1">{{ match_info.formatted_kickoff() }}</div>
+          <div class="text-xs mt-1"
+               x-data="countdown({{ match_info.scheduled_at_epoch_ms() }})">
+            <span x-text="label" class="text-ink-700"></span>
+          </div>
           {% endif %}
         </div>
         <div class="flex items-center gap-2 flex-1 min-w-0">
