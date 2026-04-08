@@ -1,7 +1,7 @@
 ---
 id: 0033
 title: Prediction revision window before kickoff
-status: open
+status: cancelled
 phase: MVP
 type: feature
 adrs: [0005, 0007, 0009]
