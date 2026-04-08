@@ -3,8 +3,7 @@ use askama_web::WebTemplate;
 use axum::{
     Form,
     extract::{Path, State},
-    http::{HeaderMap, HeaderValue, StatusCode},
-    response::{IntoResponse, Response},
+    response::{Html, IntoResponse, Response},
 };
 
 use crate::{
@@ -125,7 +124,7 @@ pub async fn save_group(
 
     db::save_group_stage_predictions(&state.pool, tournament.id, user.id, &predictions).await?;
 
-    Ok(htmx_redirect("/predictions#group"))
+    Ok(Html("Saved").into_response())
 }
 
 pub async fn save_knockout(
@@ -165,7 +164,7 @@ pub async fn save_knockout(
     )
     .await?;
 
-    Ok(htmx_redirect("/predictions#knockout"))
+    Ok(Html("Saved").into_response())
 }
 
 pub async fn save_top_scorer(
@@ -192,7 +191,7 @@ pub async fn save_top_scorer(
 
     db::save_top_scorer_predictions(&state.pool, tournament.id, user.id, &form.player_ids).await?;
 
-    Ok(htmx_redirect("/predictions#top-scorer"))
+    Ok(Html("Saved").into_response())
 }
 
 /// GET /leagues/{id}/predictions/review
@@ -232,14 +231,3 @@ pub async fn predictions_review(
     })
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────────
-
-/// Returns an HX-Redirect response so HTMX navigates to `url` after a save.
-fn htmx_redirect(url: &str) -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "HX-Redirect",
-        HeaderValue::from_str(url).unwrap_or_else(|_| HeaderValue::from_static("/predictions")),
-    );
-    (StatusCode::OK, headers, "")
-}
