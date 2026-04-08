@@ -65,7 +65,7 @@ fbapp-vibe/
 
 ### ADR constraints
 
-- **ADR-0001**: Rust edition 2021
+- **ADR-0001**: Rust (see ADR-0021 for edition — currently edition 2024)
 - **ADR-0002**: `axum` is the HTTP framework; no other HTTP crate used directly
 - **ADR-0005**: `sqlx` with features `postgres`, `runtime-tokio-rustls`, `macros`; `PgPool` in `AppState`; run migrations at startup via `sqlx::migrate!()`
 - **ADR-0007**: `routes.rs` only calls `module::router()` — no handler logic; module `mod.rs` re-exports only the public API

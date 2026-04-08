@@ -60,4 +60,5 @@ We will use **Rust** 🦀 as the primary programming language for this project.
 - All new application code is written in Rust 🦀 unless a specific component has a documented justification for using another language.
 - The project uses `cargo` as the build and dependency management tool.
 - Contributors are expected to follow idiomatic Rust practices enforced by `clippy` and `rustfmt`.
-- Future ADRs may specify which Rust edition and which key crates are adopted for cross-cutting concerns (async runtime, serialization, etc.).
+- The project uses **Rust edition 2024** (`edition = "2024"` in `Cargo.toml`). See [ADR-0021](0021-rust-2024-edition-upgrade.md) for the upgrade decision and notable 2024 changes that affect the codebase.
+- Future ADRs may specify which key crates are adopted for cross-cutting concerns (async runtime, serialization, etc.).
