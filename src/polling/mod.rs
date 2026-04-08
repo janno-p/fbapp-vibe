@@ -36,6 +36,15 @@ async fn poll(state: &AppState) -> anyhow::Result<bool> {
         return Ok(false);
     };
 
+    // ── Auto-lock predictions when first match has started ────────────────────
+
+    if db::auto_lock_if_started(&state.pool, tournament.id).await? {
+        tracing::info!(
+            tournament_id = tournament.id,
+            "predictions auto-locked: first match started"
+        );
+    }
+
     // ── Process finished matches ──────────────────────────────────────────────
 
     let matches = state

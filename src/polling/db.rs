@@ -139,6 +139,37 @@ pub async fn get_final_winner(pool: &PgPool, tournament_id: i64) -> anyhow::Resu
 
 // ── Write queries ─────────────────────────────────────────────────────────────
 
+/// If the tournament's first match has started and `predictions_locked_at` is NULL,
+/// sets `predictions_locked_at` to the first match's `scheduled_at`.
+/// Returns `true` if the lock was applied, `false` if already locked or no match
+/// has started yet. Safe under concurrent polling runs: the `WHERE
+/// predictions_locked_at IS NULL` guard means only one cycle can win the update.
+pub async fn auto_lock_if_started(pool: &PgPool, tournament_id: i64) -> anyhow::Result<bool> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE tournaments
+        SET predictions_locked_at = (
+            SELECT MIN(scheduled_at)
+            FROM matches
+            WHERE tournament_id = $1
+        )
+        WHERE id = $1
+          AND predictions_locked_at IS NULL
+          AND EXISTS (
+              SELECT 1 FROM matches
+              WHERE tournament_id = $1
+                AND scheduled_at <= NOW()
+          )
+        RETURNING id
+        "#,
+        tournament_id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(result.is_some())
+}
+
 /// Tries to record a finished match result and score group stage predictions.
 ///
 /// Uses `pg_try_advisory_xact_lock` (keyed on the API match ID) so that
@@ -539,5 +570,101 @@ mod tests {
         assert_eq!(p1_pts, Some(10), "p1 tied top scorer: 5 + 5 goals");
         assert_eq!(p2_pts, Some(10), "p2 tied top scorer: 5 + 5 goals");
         assert_eq!(p3_pts, Some(0), "p3 not a top scorer");
+    }
+
+    async fn make_match_at(pool: &PgPool, tournament_id: i64, scheduled_at: OffsetDateTime) {
+        let group_id: i64 = sqlx::query_scalar!(
+            "INSERT INTO groups (tournament_id, name) VALUES ($1, 'X') ON CONFLICT (tournament_id, name) DO UPDATE SET name = 'X' RETURNING id",
+            tournament_id
+        )
+        .fetch_one(pool)
+        .await
+        .expect("upsert group");
+
+        sqlx::query!(
+            "INSERT INTO matches (tournament_id, external_id, group_id, scheduled_at) VALUES ($1, 'ext-autolock', $2, $3)",
+            tournament_id, group_id, scheduled_at,
+        )
+        .execute(pool)
+        .await
+        .expect("insert match");
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn auto_lock_sets_lock_when_first_match_started(pool: PgPool) {
+        let t_id = make_tournament(&pool).await;
+        let past = OffsetDateTime::now_utc() - time::Duration::hours(1);
+        make_match_at(&pool, t_id, past).await;
+
+        let locked = auto_lock_if_started(&pool, t_id).await.expect("auto_lock");
+        assert!(locked, "should lock when a match has started");
+
+        let locked_at: Option<OffsetDateTime> = sqlx::query_scalar!(
+            "SELECT predictions_locked_at FROM tournaments WHERE id = $1",
+            t_id,
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("fetch tournament");
+
+        assert!(locked_at.is_some(), "predictions_locked_at should be set");
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn auto_lock_does_not_lock_when_match_is_in_future(pool: PgPool) {
+        let t_id = make_tournament(&pool).await;
+        let future = OffsetDateTime::now_utc() + time::Duration::hours(1);
+        make_match_at(&pool, t_id, future).await;
+
+        let locked = auto_lock_if_started(&pool, t_id).await.expect("auto_lock");
+        assert!(!locked, "should not lock when all matches are in the future");
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn auto_lock_does_not_overwrite_existing_lock(pool: PgPool) {
+        let t_id = make_tournament(&pool).await;
+        let past = OffsetDateTime::now_utc() - time::Duration::hours(1);
+        make_match_at(&pool, t_id, past).await;
+
+        // Manually lock the tournament first
+        let manual_lock = OffsetDateTime::now_utc() - time::Duration::hours(2);
+        sqlx::query!(
+            "UPDATE tournaments SET predictions_locked_at = $1 WHERE id = $2",
+            manual_lock,
+            t_id,
+        )
+        .execute(&pool)
+        .await
+        .expect("manual lock");
+
+        let locked = auto_lock_if_started(&pool, t_id).await.expect("auto_lock");
+        assert!(!locked, "should not overwrite existing lock");
+
+        let locked_at: Option<OffsetDateTime> = sqlx::query_scalar!(
+            "SELECT predictions_locked_at FROM tournaments WHERE id = $1",
+            t_id,
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("fetch tournament");
+
+        assert_eq!(
+            locked_at.map(|t| t.unix_timestamp()),
+            Some(manual_lock.unix_timestamp()),
+            "lock timestamp should remain unchanged"
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn auto_lock_is_idempotent_after_first_lock(pool: PgPool) {
+        let t_id = make_tournament(&pool).await;
+        let past = OffsetDateTime::now_utc() - time::Duration::hours(1);
+        make_match_at(&pool, t_id, past).await;
+
+        let first = auto_lock_if_started(&pool, t_id).await.expect("first call");
+        assert!(first, "first call should lock");
+
+        let second = auto_lock_if_started(&pool, t_id).await.expect("second call");
+        assert!(!second, "second call should be a no-op");
     }
 }
