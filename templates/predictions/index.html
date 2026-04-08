@@ -1,193 +1,353 @@
-{% extends "layout/nav_base.html" %}
-
-{% block title %}Predictions — {{ tournament_name }}{% endblock %}
-
-{% block main %}
-  {% if predictions_locked %}
-  <div class="bg-pitch-800 border-b border-signal-amber px-6 py-3 flex items-center gap-2">
+{% extends "layout/nav_base.html" %} {% block title %}Predictions — {{
+tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
+<div
+    class="bg-pitch-800 border-b border-signal-amber px-6 py-3 flex items-center gap-2"
+>
     <span class="w-1.5 h-1.5 rounded-full bg-signal-amber shrink-0"></span>
-    <span class="text-sm font-medium text-signal-amber">Predictions are locked — no further changes can be made.</span>
-  </div>
-  {% endif %}
+    <span class="text-sm font-medium text-signal-amber"
+        >Predictions are locked — no further changes can be made.</span
+    >
+</div>
+{% endif %}
 
-  <main class="flex-1 max-w-4xl w-full mx-auto px-6 py-8"
-        x-data="predictionTabs()"
-        x-init="init()">
+<main
+    class="flex-1 max-w-4xl w-full mx-auto px-6 py-8"
+    x-data="predictionTabs()"
+    x-init="init()"
+>
     {# Tab navigation #}
     <div class="flex gap-1 mb-8 border-b border-pitch-700">
-      <button @click="show('group')" :class="activeTab === 'group' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
-              class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors">
-        Group Stage
-      </button>
-      <button @click="show('knockout')" :class="activeTab === 'knockout' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
-              class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors">
-        Knockout
-      </button>
-      <button @click="show('top-scorer')" :class="activeTab === 'top-scorer' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
-              class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors">
-        Top Scorer
-      </button>
+        <button
+            @click="show('group')"
+            :class="activeTab === 'group' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
+            class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors"
+        >
+            Group Stage
+        </button>
+        <button
+            @click="show('knockout')"
+            :class="activeTab === 'knockout' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
+            class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors"
+        >
+            Knockout
+        </button>
+        <button
+            @click="show('top-scorer')"
+            :class="activeTab === 'top-scorer' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
+            class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors"
+        >
+            Top Scorer
+        </button>
     </div>
 
     {# ── Group Stage ────────────────────────────────────────────────────── #}
     <div x-show="activeTab === 'group'" x-cloak>
-      {% if groups.is_empty() %}
-      <p class="text-ink-500 text-sm">No group stage matches yet.</p>
-      {% else %}
-      <form id="group-form" hx-post="/predictions/group" hx-target="#group-status" hx-swap="innerHTML">
-        <div class="space-y-8">
-          {% for group in groups %}
-          <div>
-            <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">Group {{ group.name }}</h3>
-            <div class="space-y-2">
-              {% for m in group.matches %}
-              <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3">
-                <div class="flex items-center gap-4">
-                  <span class="flex items-center justify-end gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium">
-                    <span class="truncate">{{ m.home_name() }}</span>
-                    <span class="text-lg leading-none shrink-0">{{ m.home_emoji }}</span>
-                  </span>
-                  <select name="match_{{ m.id }}"
-                          class="bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-2.5 py-1.5 text-sm text-ink-100 focus:outline-none transition-colors cursor-pointer"
-                          {% if predictions_locked %}disabled{% endif %}>
-                    <option value="">—</option>
-                    <option value="home" {% if m.is_home_selected() %}selected{% endif %}>Home</option>
-                    <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
-                    <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
-                  </select>
-                  <span class="flex items-center gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium">
-                    <span class="text-lg leading-none shrink-0">{{ m.away_emoji }}</span>
-                    <span class="truncate">{{ m.away_name() }}</span>
-                  </span>
+        {% if groups.is_empty() %}
+        <p class="text-ink-500 text-sm">No group stage matches yet.</p>
+        {% else %}
+        <form
+            id="group-form"
+            hx-post="/predictions/group"
+            hx-target="#group-status"
+            hx-swap="innerHTML"
+        >
+            <div class="space-y-8">
+                {% for group in groups %}
+                <div>
+                    <h3
+                        class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3"
+                    >
+                        Group {{ group.name }}
+                    </h3>
+                    <div class="space-y-2">
+                        {% for m in group.matches %}
+                        <div
+                            class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3"
+                        >
+                            <div class="flex items-center gap-4">
+                                <span
+                                    class="flex items-center justify-end gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium"
+                                >
+                                    <span class="truncate"
+                                        >{{ m.home_name() }}</span
+                                    >
+                                    <span
+                                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
+                                        style="--crest-url: url('{{ m.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                                    ></span>
+                                </span>
+                                <select
+                                    name="match_{{ m.id }}"
+                                    class="bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-2.5 py-1.5 text-sm text-ink-100 focus:outline-none transition-colors cursor-pointer"
+                                    {%
+                                    if
+                                    predictions_locked
+                                    %}disabled{%
+                                    endif
+                                    %}
+                                >
+                                    <option value="">—</option>
+                                    <option
+                                        value="home"
+                                        {%
+                                        if
+                                        m.is_home_selected()
+                                        %}selected{%
+                                        endif
+                                        %}
+                                    >
+                                        Home
+                                    </option>
+                                    <option
+                                        value="draw"
+                                        {%
+                                        if
+                                        m.is_draw_selected()
+                                        %}selected{%
+                                        endif
+                                        %}
+                                    >
+                                        Draw
+                                    </option>
+                                    <option
+                                        value="away"
+                                        {%
+                                        if
+                                        m.is_away_selected()
+                                        %}selected{%
+                                        endif
+                                        %}
+                                    >
+                                        Away
+                                    </option>
+                                </select>
+                                <span
+                                    class="flex items-center gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium"
+                                >
+                                    <span
+                                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
+                                        style="--crest-url: url('{{ m.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                                    ></span>
+                                    <span class="truncate"
+                                        >{{ m.away_name() }}</span
+                                    >
+                                </span>
+                            </div>
+                            <div
+                                class="text-xs text-ink-700 text-center mt-1.5"
+                            >
+                                {{ m.formatted_kickoff() }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="text-xs text-ink-700 text-center mt-1.5">{{ m.formatted_kickoff() }}</div>
-              </div>
-              {% endfor %}
+                {% endfor %}
             </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% if !predictions_locked %}
-        <div class="mt-6 flex items-center gap-4">
-          <button type="submit"
-                  class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer">
-            Save group predictions
-          </button>
-          <span id="group-status" class="text-sm text-goal-400 font-medium"></span>
-        </div>
+            {% if !predictions_locked %}
+            <div class="mt-6 flex items-center gap-4">
+                <button
+                    type="submit"
+                    class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer"
+                >
+                    Save group predictions
+                </button>
+                <span
+                    id="group-status"
+                    class="text-sm text-goal-400 font-medium"
+                ></span>
+            </div>
+            {% endif %}
+        </form>
         {% endif %}
-      </form>
-      {% endif %}
     </div>
 
     {# ── Knockout ───────────────────────────────────────────────────────── #}
     <div x-show="activeTab === 'knockout'" x-cloak>
-      {% if teams.is_empty() %}
-      <p class="text-ink-500 text-sm">No teams available yet.</p>
-      {% else %}
-      <div class="space-y-10">
-        {% for rs in knockout_rounds %}
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-display font-semibold text-base text-ink-100 tracking-tight">{{ rs.round.label() }}</h3>
-            <span class="text-xs text-ink-500">Select {{ rs.round.expected_team_count() }} teams</span>
-          </div>
-          <form hx-post="/predictions/knockout/{{ rs.round.slug() }}"
-                hx-target="#ko-{{ rs.round.slug() }}-status"
-                hx-swap="innerHTML">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3">
-              {% for team in teams %}
-              <label class="flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-[:checked]:border-goal-500 has-[:checked]:bg-pitch-800">
-                <input type="checkbox" name="team_ids" value="{{ team.id }}"
-                       {% if rs.has_team(team.id) %}checked{% endif %}
-                       {% if predictions_locked %}disabled{% endif %}>
-                <span class="text-lg leading-none shrink-0">{{ team.emoji }}</span>
-                <span class="truncate text-ink-300 group-hover:text-ink-100 transition-colors">{{ team.short_name }}</span>
-              </label>
-              {% endfor %}
+        {% if teams.is_empty() %}
+        <p class="text-ink-500 text-sm">No teams available yet.</p>
+        {% else %}
+        <div class="space-y-10">
+            {% for rs in knockout_rounds %}
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h3
+                        class="font-display font-semibold text-base text-ink-100 tracking-tight"
+                    >
+                        {{ rs.round.label() }}
+                    </h3>
+                    <span class="text-xs text-ink-500"
+                        >Select {{ rs.round.expected_team_count() }} teams</span
+                    >
+                </div>
+                <form
+                    hx-post="/predictions/knockout/{{ rs.round.slug() }}"
+                    hx-target="#ko-{{ rs.round.slug() }}-status"
+                    hx-swap="innerHTML"
+                >
+                    <div
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3"
+                    >
+                        {% for team in teams %}
+                        <label
+                            class="flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-checked:border-goal-500 has-checked:bg-pitch-800"
+                        >
+                            <input
+                                type="checkbox"
+                                name="team_ids"
+                                value="{{ team.id }}"
+                                {%
+                                if
+                                rs.has_team(team.id)
+                                %}checked{%
+                                endif
+                                %}
+                                {%
+                                if
+                                predictions_locked
+                                %}disabled{%
+                                endif
+                                %}
+                            />
+                            <span
+                                class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
+                                style="--crest-url: url('{{ team.crest_url }}#svgView(preserveAspectRatio(none))')"
+                            ></span>
+                            <span
+                                class="truncate text-ink-300 group-hover:text-ink-100 transition-colors"
+                                >{{ team.short_name }}</span
+                            >
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% if !predictions_locked %}
+                    <div class="flex items-center gap-4">
+                        <button
+                            type="submit"
+                            class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                        >
+                            Save {{ rs.round.label() }}
+                        </button>
+                        <span
+                            id="ko-{{ rs.round.slug() }}-status"
+                            class="text-sm text-goal-400 font-medium"
+                        ></span>
+                    </div>
+                    {% endif %}
+                </form>
             </div>
-            {% if !predictions_locked %}
-            <div class="flex items-center gap-4">
-              <button type="submit"
-                      class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer">
-                Save {{ rs.round.label() }}
-              </button>
-              <span id="ko-{{ rs.round.slug() }}-status" class="text-sm text-goal-400 font-medium"></span>
-            </div>
-            {% endif %}
-          </form>
+            {% endfor %}
         </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+        {% endif %}
     </div>
 
     {# ── Top Scorer ─────────────────────────────────────────────────────── #}
     <div x-show="activeTab === 'top-scorer'" x-cloak>
-      {% if players.is_empty() %}
-      <p class="text-ink-500 text-sm">No players available yet.</p>
-      {% else %}
-      <p class="text-sm text-ink-300 mb-4">Select exactly 3 players you expect to top-score.</p>
-      <div x-data="playerPicker()">
-      <input type="text" placeholder="Filter players…"
-             x-model="query"
-             class="mb-4 w-full max-w-sm bg-pitch-900 border border-pitch-700 focus:border-goal-500 rounded-lg px-3 py-2.5 text-sm text-ink-100 placeholder-ink-700 focus:outline-none transition-colors">
-      <form hx-post="/predictions/top-scorer" hx-target="#top-scorer-status" hx-swap="innerHTML">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-          {% for p in players %}
-          <label class="flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-[:checked]:border-goal-500 has-[:checked]:bg-pitch-800"
-                 x-show="!query || '{{ p.name|lower }} {{ p.team_name|lower }}'.includes(query.toLowerCase())">
-            <input type="checkbox" name="player_ids" value="{{ p.id }}"
-                   {% if self.is_top_scorer(p.id) %}checked{% endif %}
-                   {% if predictions_locked %}disabled{% endif %}
-                   @change="enforceMax3($event.target)">
-            <span class="flex-1 min-w-0">
-              <span class="font-medium text-ink-100">{{ p.name }}</span>
-              <span class="text-ink-500 text-xs ml-1">{{ p.team_name }}</span>
-            </span>
-            <span class="text-xs font-display font-semibold text-goal-400 bg-pitch-800 rounded px-1.5 py-0.5 shrink-0">{{ p.goals_scored }}g</span>
-          </label>
-          {% endfor %}
+        {% if players.is_empty() %}
+        <p class="text-ink-500 text-sm">No players available yet.</p>
+        {% else %}
+        <p class="text-sm text-ink-300 mb-4">
+            Select exactly 3 players you expect to top-score.
+        </p>
+        <div x-data="playerPicker()">
+            <input
+                type="text"
+                placeholder="Filter players…"
+                x-model="query"
+                class="mb-4 w-full max-w-sm bg-pitch-900 border border-pitch-700 focus:border-goal-500 rounded-lg px-3 py-2.5 text-sm text-ink-100 placeholder-ink-700 focus:outline-none transition-colors"
+            />
+            <form
+                hx-post="/predictions/top-scorer"
+                hx-target="#top-scorer-status"
+                hx-swap="innerHTML"
+            >
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4"
+                >
+                    {% for p in players %}
+                    <label
+                        class="flex items-center gap-2 bg-pitch-900 border border-pitch-700 hover:border-goal-600 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors group has-checked:border-goal-500 has-checked:bg-pitch-800"
+                        x-show="!query || '{{ p.name|lower }} {{ p.team_name|lower }}'.includes(query.toLowerCase())"
+                    >
+                        <input
+                            type="checkbox"
+                            name="player_ids"
+                            value="{{ p.id }}"
+                            {%
+                            if
+                            self.is_top_scorer(p.id)
+                            %}checked{%
+                            endif
+                            %}
+                            {%
+                            if
+                            predictions_locked
+                            %}disabled{%
+                            endif
+                            %}
+                            @change="enforceMax3($event.target)"
+                        />
+                        <span class="flex-1 min-w-0">
+                            <span class="font-medium text-ink-100"
+                                >{{ p.name }}</span
+                            >
+                            <span class="text-ink-500 text-xs ml-1"
+                                >{{ p.team_name }}</span
+                            >
+                        </span>
+                        <span
+                            class="text-xs font-display font-semibold text-goal-400 bg-pitch-800 rounded px-1.5 py-0.5 shrink-0"
+                            >{{ p.goals_scored }}g</span
+                        >
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if !predictions_locked %}
+                <div class="flex items-center gap-4">
+                    <button
+                        type="submit"
+                        class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                        Save top scorer picks
+                    </button>
+                    <span
+                        id="top-scorer-status"
+                        class="text-sm text-goal-400 font-medium"
+                    ></span>
+                </div>
+                {% endif %}
+            </form>
         </div>
-        {% if !predictions_locked %}
-        <div class="flex items-center gap-4">
-          <button type="submit"
-                  class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer">
-            Save top scorer picks
-          </button>
-          <span id="top-scorer-status" class="text-sm text-goal-400 font-medium"></span>
-        </div>
-        {% endif %}
-      </form>
-      </div>{# /playerPicker #}
-      {% endif %}
+        {# /playerPicker #} {% endif %}
     </div>
-  </main>
+</main>
 
 <script>
-function predictionTabs() {
-  const TABS = ['group', 'knockout', 'top-scorer'];
-  return {
-    activeTab: 'group',
-    init() {
-      const hash = location.hash.replace('#', '');
-      this.activeTab = TABS.includes(hash) ? hash : 'group';
-    },
-    show(tab) {
-      this.activeTab = tab;
-      history.replaceState(null, '', '#' + tab);
-    },
-  };
-}
+    function predictionTabs() {
+        const TABS = ["group", "knockout", "top-scorer"];
+        return {
+            activeTab: "group",
+            init() {
+                const hash = location.hash.replace("#", "");
+                this.activeTab = TABS.includes(hash) ? hash : "group";
+            },
+            show(tab) {
+                this.activeTab = tab;
+                history.replaceState(null, "", "#" + tab);
+            },
+        };
+    }
 
-function playerPicker() {
-  return {
-    query: '',
-    enforceMax3(el) {
-      const checked = document.querySelectorAll('input[name="player_ids"]:checked');
-      if (checked.length > 3) el.checked = false;
-    },
-  };
-}
+    function playerPicker() {
+        return {
+            query: "",
+            enforceMax3(el) {
+                const checked = document.querySelectorAll(
+                    'input[name="player_ids"]:checked',
+                );
+                if (checked.length > 3) el.checked = false;
+            },
+        };
+    }
 </script>
 {% endblock %}

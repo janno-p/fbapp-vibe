@@ -10,8 +10,8 @@ pub struct MatchRow {
     pub group_name: String,
     pub home_team_name: Option<String>,
     pub away_team_name: Option<String>,
-    pub home_emoji: String,
-    pub away_emoji: String,
+    pub home_crest_url: String,
+    pub away_crest_url: String,
     pub scheduled_at: time::OffsetDateTime,
     pub predicted_outcome: Option<MatchOutcome>,
 }
@@ -51,7 +51,7 @@ pub struct TeamInfo {
     pub id: i64,
     pub name: String,
     pub short_name: String,
-    pub emoji: String,
+    pub crest_url: String,
 }
 
 pub struct PlayerInfo {

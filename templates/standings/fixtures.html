@@ -1,75 +1,96 @@
-{% extends "layout/nav_base.html" %}
-
-{% block head_scripts %}<script src="/assets/js/countdown.js" defer></script>{% endblock %}
-
-{% block title %}Fixtures — {{ league_name }}{% endblock %}
-
-{% block main %}
-  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8 space-y-8">
-
-    {# ── Header ───────────────────────────────────────────────────────────── #}
+{% extends "layout/nav_base.html" %} {% block head_scripts %}
+<script src="/assets/js/countdown.js" defer></script>
+{% endblock %} {% block title %}Fixtures — {{ league_name }}{% endblock %} {%
+block main %}
+<main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8 space-y-8">
+    {# ── Header ─────────────────────────────────────────────────────────────
+    #}
     <div>
-      <h1 class="font-display font-bold text-3xl tracking-tight text-ink-50 leading-tight">
-        Fixtures
-      </h1>
-      <p class="text-ink-500 text-xs mt-2">{{ league_name }}</p>
+        <h1
+            class="font-display font-bold text-3xl tracking-tight text-ink-50 leading-tight"
+        >
+            Fixtures
+        </h1>
+        <p class="text-ink-500 text-xs mt-2">{{ league_name }}</p>
     </div>
 
-    {# ── No tournament ────────────────────────────────────────────────────── #}
-    {% if no_tournament %}
-    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center">
-      <p class="text-ink-500 text-sm">No active tournament at the moment.</p>
+    {# ── No tournament ──────────────────────────────────────────────────────
+    #} {% if no_tournament %}
+    <div
+        class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center"
+    >
+        <p class="text-ink-500 text-sm">No active tournament at the moment.</p>
     </div>
 
-    {# ── Fixture groups ───────────────────────────────────────────────────── #}
-    {% else %}
-    {% for group in groups %}
+    {# ── Fixture groups ─────────────────────────────────────────────────────
+    #} {% else %} {% for group in groups %}
     <section>
-      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
-        {{ group.label }}
-      </h2>
-      <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
-        {% for m in group.matches %}
-        <a href="/leagues/{{ league_id }}/standings/match/{{ m.id }}"
-           class="flex items-center gap-3 px-5 py-4 border-b border-pitch-800 last:border-b-0 hover:bg-pitch-800 transition-colors group">
+        <h2
+            class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3"
+        >
+            {{ group.label }}
+        </h2>
+        <div
+            class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden"
+        >
+            {% for m in group.matches %}
+            <a
+                href="/leagues/{{ league_id }}/standings/match/{{ m.id }}"
+                class="flex items-center gap-3 px-5 py-4 border-b border-pitch-800 last:border-b-0 hover:bg-pitch-800 transition-colors group"
+            >
+                {# Home team #}
+                <span
+                    class="flex items-center justify-end gap-2 flex-1 min-w-0"
+                >
+                    <span
+                        class="font-medium text-ink-100 text-sm tracking-tight truncate group-hover:text-ink-50"
+                        >{{ m.home_name }}</span
+                    >
+                    <span
+                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
+                        style="--crest-url: url('{{ m.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                    ></span>
+                </span>
 
-          {# Home team #}
-          <span class="flex items-center justify-end gap-2 flex-1 min-w-0">
-            <span class="font-medium text-ink-100 text-sm tracking-tight truncate group-hover:text-ink-50">{{ m.home_name }}</span>
-            <span class="text-xl leading-none shrink-0">{{ m.home_emoji }}</span>
-          </span>
+                {# Score / kickoff #}
+                <div class="shrink-0 w-24 text-center">
+                    {% if m.is_played() %}
+                    <span
+                        class="font-display font-bold text-base text-ink-50 tracking-tight"
+                    >
+                        {{ m.result_label() }}
+                    </span>
+                    {% else %}
+                    <div x-data="countdown({{ m.scheduled_at_epoch_ms() }})">
+                        <span
+                            x-text="label"
+                            class="text-xs text-ink-500"
+                        ></span>
+                    </div>
+                    {% endif %}
+                </div>
 
-          {# Score / kickoff #}
-          <div class="shrink-0 w-24 text-center">
-            {% if m.is_played() %}
-            <span class="font-display font-bold text-base text-ink-50 tracking-tight">
-              {{ m.result_label() }}
-            </span>
-            {% else %}
-            <div x-data="countdown({{ m.scheduled_at_epoch_ms() }})">
-              <span x-text="label" class="text-xs text-ink-500"></span>
-            </div>
-            {% endif %}
-          </div>
-
-          {# Away team #}
-          <span class="flex items-center gap-2 flex-1 min-w-0">
-            <span class="text-xl leading-none shrink-0">{{ m.away_emoji }}</span>
-            <span class="font-medium text-ink-100 text-sm tracking-tight truncate group-hover:text-ink-50">{{ m.away_name }}</span>
-          </span>
-
-        </a>
-        {% endfor %}
-      </div>
+                {# Away team #}
+                <span class="flex items-center gap-2 flex-1 min-w-0">
+                    <span
+                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
+                        style="--crest-url: url('{{ m.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                    ></span>
+                    <span
+                        class="font-medium text-ink-100 text-sm tracking-tight truncate group-hover:text-ink-50"
+                        >{{ m.away_name }}</span
+                    >
+                </span>
+            </a>
+            {% endfor %}
+        </div>
     </section>
-    {% endfor %}
-
-    {% if groups.is_empty() %}
-    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center">
-      <p class="text-ink-500 text-sm">No matches scheduled yet.</p>
+    {% endfor %} {% if groups.is_empty() %}
+    <div
+        class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center"
+    >
+        <p class="text-ink-500 text-sm">No matches scheduled yet.</p>
     </div>
-    {% endif %}
-    {% endif %}
-
-  </main>
+    {% endif %} {% endif %}
+</main>
 {% endblock %}

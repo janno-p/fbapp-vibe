@@ -1,117 +1,176 @@
-{% extends "layout/nav_base.html" %}
-
-{% block head_scripts %}<script src="/assets/js/countdown.js" defer></script>{% endblock %}
-
-{% block title %}{{ match_info.home_name }} vs {{ match_info.away_name }} — {{ league_name }}{% endblock %}
-
-{% block main %}
-  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8">
-
-    {# ── Match header ─────────────────────────────────────────────────────── #}
+{% extends "layout/nav_base.html" %} {% block head_scripts %}
+<script src="/assets/js/countdown.js" defer></script>
+{% endblock %} {% block title %}{{ match_info.home_name }} vs {{
+match_info.away_name }} — {{ league_name }}{% endblock %} {% block main %}
+<main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8">
+    {# ── Match header ───────────────────────────────────────────────────────
+    #}
     <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-6 py-6 mb-6">
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex items-center justify-end gap-2 flex-1 min-w-0">
-          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate">{{ match_info.home_name }}</span>
-          <span class="text-2xl leading-none shrink-0">{{ match_info.home_emoji }}</span>
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center justify-end gap-2 flex-1 min-w-0">
+                <span
+                    class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate"
+                    >{{ match_info.home_name }}</span
+                >
+                <span
+                    class="shrink-0 size-10 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_19px,rgba(0,0,0,0.5)_20px,transparent_20px]"
+                    style="--crest-url: url('{{ match_info.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                ></span>
+            </div>
+            <div class="mx-4 text-center shrink-0">
+                {% if match_info.is_played() %}
+                <span
+                    class="font-display font-bold text-3xl text-ink-50 tracking-tight"
+                    >{{ match_info.result_label() }}</span
+                >
+                <div
+                    class="text-xs text-ink-500 mt-1 font-display uppercase tracking-wide"
+                >
+                    {{ match_info.outcome_label() }}
+                </div>
+                {% else %}
+                <span class="font-display font-bold text-xl text-ink-500"
+                    >vs</span
+                >
+                <div
+                    class="text-xs mt-1"
+                    x-data="countdown({{ match_info.scheduled_at_epoch_ms() }})"
+                >
+                    <span x-text="label" class="text-ink-700"></span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <span
+                    class="shrink-0 size-10 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_19px,rgba(0,0,0,0.5)_20px,transparent_20px]"
+                    style="--crest-url: url('{{ match_info.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                ></span>
+                <span
+                    class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate"
+                    >{{ match_info.away_name }}</span
+                >
+            </div>
         </div>
-        <div class="mx-4 text-center shrink-0">
-          {% if match_info.is_played() %}
-          <span class="font-display font-bold text-3xl text-ink-50 tracking-tight">{{ match_info.result_label() }}</span>
-          <div class="text-xs text-ink-500 mt-1 font-display uppercase tracking-wide">{{ match_info.outcome_label() }}</div>
-          {% else %}
-          <span class="font-display font-bold text-xl text-ink-500">vs</span>
-          <div class="text-xs mt-1"
-               x-data="countdown({{ match_info.scheduled_at_epoch_ms() }})">
-            <span x-text="label" class="text-ink-700"></span>
-          </div>
-          {% endif %}
-        </div>
-        <div class="flex items-center gap-2 flex-1 min-w-0">
-          <span class="text-2xl leading-none shrink-0">{{ match_info.away_emoji }}</span>
-          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate">{{ match_info.away_name }}</span>
-        </div>
-      </div>
     </div>
 
-    {# ── Predictions table ─────────────────────────────────────────────────── #}
-    {% if rows.is_empty() %}
-    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center">
-      <p class="text-ink-500 text-sm">No predictions in this league yet.</p>
+    {# ── Predictions table ───────────────────────────────────────────────────
+    #} {% if rows.is_empty() %}
+    <div
+        class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-6 text-center"
+    >
+        <p class="text-ink-500 text-sm">No predictions in this league yet.</p>
     </div>
     {% else %}
-    <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest">
-            <th class="px-4 py-3 text-left">Player</th>
-            <th class="px-4 py-3 text-center">Prediction</th>
-            <th class="px-4 py-3 text-center">Points</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-pitch-800">
-          {% for row in rows %}
-          <tr class="hover:bg-pitch-800 transition-colors">
-            <td class="px-4 py-3 font-medium text-ink-100">{{ row.user_name }}</td>
-            <td class="px-4 py-3 text-center text-ink-300">{{ row.prediction_label() }}</td>
-            <td class="px-4 py-3 text-center">
-              {% if let Some(pts) = row.points_awarded %}
-                {% if row.points_positive() %}
-                <span class="font-display font-bold text-signal-green">+{{ pts }}</span>
-                {% else %}
-                <span class="text-ink-700">0</span>
-                {% endif %}
-              {% else %}
-              <span class="text-ink-700">—</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div
+        class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden"
+    >
+        <table class="w-full text-sm">
+            <thead>
+                <tr
+                    class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest"
+                >
+                    <th class="px-4 py-3 text-left">Player</th>
+                    <th class="px-4 py-3 text-center">Prediction</th>
+                    <th class="px-4 py-3 text-center">Points</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-pitch-800">
+                {% for row in rows %}
+                <tr class="hover:bg-pitch-800 transition-colors">
+                    <td class="px-4 py-3 font-medium text-ink-100">
+                        {{ row.user_name }}
+                    </td>
+                    <td class="px-4 py-3 text-center text-ink-300">
+                        {{ row.prediction_label() }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if let Some(pts) = row.points_awarded %} {% if
+                        row.points_positive() %}
+                        <span class="font-display font-bold text-signal-green"
+                            >+{{ pts }}</span
+                        >
+                        {% else %}
+                        <span class="text-ink-700">0</span>
+                        {% endif %} {% else %}
+                        <span class="text-ink-700">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% endif %}
-
-    {# ── Consensus (shown only after predictions are locked) ──────────────── #}
-    {% if is_locked %}
-    {% if let Some(c) = consensus %}
+    {% endif %} {# ── Consensus (shown only after predictions are locked)
+    ──────────────── #} {% if is_locked %} {% if let Some(c) = consensus %}
     <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-6 py-5 mt-6">
-      <h2 class="font-display font-semibold text-xs uppercase tracking-widest text-ink-500 mb-4">League Consensus</h2>
-      {% if c.total_predictors() == 0 %}
-      <p class="text-ink-500 text-sm">No predictions submitted.</p>
-      {% else %}
-      <div class="space-y-2 mb-3">
-        {# Home bar #}
-        <div class="flex items-center gap-3">
-          <span class="w-12 text-xs text-ink-400 font-display text-right">Home</span>
-          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
-            <div class="h-full bg-signal-green rounded-full" style="width: {{ c.home_percentage() }}%"></div>
-          </div>
-          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.home_count }} ({{ c.home_percentage() }}%)</span>
+        <h2
+            class="font-display font-semibold text-xs uppercase tracking-widest text-ink-500 mb-4"
+        >
+            League Consensus
+        </h2>
+        {% if c.total_predictors() == 0 %}
+        <p class="text-ink-500 text-sm">No predictions submitted.</p>
+        {% else %}
+        <div class="space-y-2 mb-3">
+            {# Home bar #}
+            <div class="flex items-center gap-3">
+                <span class="w-12 text-xs text-ink-400 font-display text-right"
+                    >Home</span
+                >
+                <div
+                    class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden"
+                >
+                    <div
+                        class="h-full bg-signal-green rounded-full"
+                        style="width: {{ c.home_percentage() }}%"
+                    ></div>
+                </div>
+                <span class="w-20 text-xs text-ink-300 text-right font-display"
+                    >{{ c.home_count }} ({{ c.home_percentage() }}%)</span
+                >
+            </div>
+            {# Draw bar #}
+            <div class="flex items-center gap-3">
+                <span class="w-12 text-xs text-ink-400 font-display text-right"
+                    >Draw</span
+                >
+                <div
+                    class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden"
+                >
+                    <div
+                        class="h-full bg-amber-400 rounded-full"
+                        style="width: {{ c.draw_percentage() }}%"
+                    ></div>
+                </div>
+                <span class="w-20 text-xs text-ink-300 text-right font-display"
+                    >{{ c.draw_count }} ({{ c.draw_percentage() }}%)</span
+                >
+            </div>
+            {# Away bar #}
+            <div class="flex items-center gap-3">
+                <span class="w-12 text-xs text-ink-400 font-display text-right"
+                    >Away</span
+                >
+                <div
+                    class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden"
+                >
+                    <div
+                        class="h-full bg-blue-400 rounded-full"
+                        style="width: {{ c.away_percentage() }}%"
+                    ></div>
+                </div>
+                <span class="w-20 text-xs text-ink-300 text-right font-display"
+                    >{{ c.away_count }} ({{ c.away_percentage() }}%)</span
+                >
+            </div>
         </div>
-        {# Draw bar #}
-        <div class="flex items-center gap-3">
-          <span class="w-12 text-xs text-ink-400 font-display text-right">Draw</span>
-          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
-            <div class="h-full bg-amber-400 rounded-full" style="width: {{ c.draw_percentage() }}%"></div>
-          </div>
-          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.draw_count }} ({{ c.draw_percentage() }}%)</span>
-        </div>
-        {# Away bar #}
-        <div class="flex items-center gap-3">
-          <span class="w-12 text-xs text-ink-400 font-display text-right">Away</span>
-          <div class="flex-1 bg-pitch-800 rounded-full h-2 overflow-hidden">
-            <div class="h-full bg-blue-400 rounded-full" style="width: {{ c.away_percentage() }}%"></div>
-          </div>
-          <span class="w-20 text-xs text-ink-300 text-right font-display">{{ c.away_count }} ({{ c.away_percentage() }}%)</span>
-        </div>
-      </div>
-      {% if c.no_prediction_count > 0 %}
-      <p class="text-xs text-ink-600">{{ c.no_prediction_count }} member{% if c.no_prediction_count != 1 %}s{% endif %} did not predict</p>
-      {% endif %}
-      {% endif %}
+        {% if c.no_prediction_count > 0 %}
+        <p class="text-xs text-ink-600">
+            {{ c.no_prediction_count }} member{% if c.no_prediction_count != 1
+            %}s{% endif %} did not predict
+        </p>
+        {% endif %} {% endif %}
     </div>
-    {% endif %}
-    {% endif %}
-
-  </main>
+    {% endif %} {% endif %}
+</main>
 {% endblock %}
