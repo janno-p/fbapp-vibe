@@ -8,8 +8,9 @@
     {# ── Match header ─────────────────────────────────────────────────────── #}
     <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-6 py-6 mb-6">
       <div class="flex items-center justify-between gap-4">
-        <div class="flex-1 text-right">
-          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight">{{ match_info.home_name }}</span>
+        <div class="flex items-center justify-end gap-2 flex-1 min-w-0">
+          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate">{{ match_info.home_name }}</span>
+          <span class="text-2xl leading-none shrink-0">{{ match_info.home_emoji }}</span>
         </div>
         <div class="mx-4 text-center shrink-0">
           {% if match_info.is_played() %}
@@ -20,8 +21,9 @@
           <div class="text-xs text-ink-700 mt-1">{{ match_info.formatted_kickoff() }}</div>
           {% endif %}
         </div>
-        <div class="flex-1 text-left">
-          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight">{{ match_info.away_name }}</span>
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <span class="text-2xl leading-none shrink-0">{{ match_info.away_emoji }}</span>
+          <span class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate">{{ match_info.away_name }}</span>
         </div>
       </div>
     </div>

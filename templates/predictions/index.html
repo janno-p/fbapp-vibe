@@ -41,7 +41,10 @@
               {% for m in group.matches %}
               <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3">
                 <div class="flex items-center gap-4">
-                  <span class="flex-1 text-sm text-right text-ink-100 font-medium">{{ m.home_name() }}</span>
+                  <span class="flex items-center justify-end gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium">
+                    <span class="truncate">{{ m.home_name() }}</span>
+                    <span class="text-lg leading-none shrink-0">{{ m.home_emoji }}</span>
+                  </span>
                   <select name="match_{{ m.id }}"
                           class="bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-2.5 py-1.5 text-sm text-ink-100 focus:outline-none transition-colors cursor-pointer"
                           {% if predictions_locked %}disabled{% endif %}>
@@ -50,7 +53,10 @@
                     <option value="draw" {% if m.is_draw_selected() %}selected{% endif %}>Draw</option>
                     <option value="away" {% if m.is_away_selected() %}selected{% endif %}>Away</option>
                   </select>
-                  <span class="flex-1 text-sm text-left text-ink-100 font-medium">{{ m.away_name() }}</span>
+                  <span class="flex items-center gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium">
+                    <span class="text-lg leading-none shrink-0">{{ m.away_emoji }}</span>
+                    <span class="truncate">{{ m.away_name() }}</span>
+                  </span>
                 </div>
                 <div class="text-xs text-ink-700 text-center mt-1.5">{{ m.formatted_kickoff() }}</div>
               </div>
@@ -93,6 +99,7 @@
                 <input type="checkbox" name="team_ids" value="{{ team.id }}"
                        {% if rs.has_team(team.id) %}checked{% endif %}
                        {% if predictions_locked %}disabled{% endif %}>
+                <span class="text-lg leading-none shrink-0">{{ team.emoji }}</span>
                 <span class="truncate text-ink-300 group-hover:text-ink-100 transition-colors">{{ team.short_name }}</span>
               </label>
               {% endfor %}

@@ -178,11 +178,12 @@ fn api_stage_to_round(stage: &str) -> Option<KnockoutRound> {
 async fn upsert_team(pool: &PgPool, tournament_id: i64, team: &ApiTeam) -> anyhow::Result<i64> {
     let row = sqlx::query!(
         r#"
-        INSERT INTO teams (tournament_id, external_id, name, short_name, crest_url)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO teams (tournament_id, external_id, name, short_name, tla, crest_url)
+        VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (tournament_id, external_id) DO UPDATE
-            SET name      = EXCLUDED.name,
+            SET name       = EXCLUDED.name,
                 short_name = EXCLUDED.short_name,
+                tla        = EXCLUDED.tla,
                 crest_url  = EXCLUDED.crest_url
         RETURNING id
         "#,
@@ -190,6 +191,7 @@ async fn upsert_team(pool: &PgPool, tournament_id: i64, team: &ApiTeam) -> anyho
         team.id.to_string(),
         team.name,
         team.short_name.as_deref().unwrap_or(&team.name),
+        team.tla.as_deref(),
         team.crest.as_deref()
     )
     .fetch_one(pool)

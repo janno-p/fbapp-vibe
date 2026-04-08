@@ -42,6 +42,8 @@ pub async fn get_group_matches_with_predictions(
             g.name  AS group_name,
             ht.name AS "home_team_name?: String",
             at.name AS "away_team_name?: String",
+            ht.tla  AS "home_tla?: String",
+            at.tla  AS "away_tla?: String",
             m.scheduled_at,
             gsp.predicted_outcome AS "predicted_outcome?: MatchOutcome"
         FROM matches m
@@ -72,6 +74,8 @@ pub async fn get_group_matches_with_predictions(
             group_name: r.group_name,
             home_team_name: r.home_team_name,
             away_team_name: r.away_team_name,
+            home_emoji: crate::flags::flag_emoji(r.home_tla.as_deref()),
+            away_emoji: crate::flags::flag_emoji(r.away_tla.as_deref()),
             scheduled_at: r.scheduled_at,
             predicted_outcome: r.predicted_outcome,
         });
@@ -87,10 +91,9 @@ pub async fn get_group_matches_with_predictions(
 }
 
 pub async fn get_teams(pool: &PgPool, tournament_id: i64) -> anyhow::Result<Vec<TeamInfo>> {
-    let teams = sqlx::query_as!(
-        TeamInfo,
+    let rows = sqlx::query!(
         r#"
-        SELECT id, name, short_name
+        SELECT id, name, short_name, tla
         FROM teams
         WHERE tournament_id = $1
         ORDER BY name
@@ -99,7 +102,15 @@ pub async fn get_teams(pool: &PgPool, tournament_id: i64) -> anyhow::Result<Vec<
     )
     .fetch_all(pool)
     .await?;
-    Ok(teams)
+    Ok(rows
+        .into_iter()
+        .map(|r| TeamInfo {
+            id: r.id,
+            name: r.name,
+            short_name: r.short_name,
+            emoji: crate::flags::flag_emoji(r.tla.as_deref()),
+        })
+        .collect())
 }
 
 pub async fn get_players_with_team(

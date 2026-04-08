@@ -1,13 +1,13 @@
 ---
 id: 0036
-title: Country flag images for teams
-status: open
+title: Country flag emoji for teams
+status: done
 type: feature
-adrs: [0005, 0007]
+adrs: [0005, 0007, 0019]
 refs: [0026]
 created: 2026-04-08
-started: ~
-completed: ~
+started: 2026-04-08
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -120,8 +120,18 @@ Call it when building `MatchInfo`, `FixtureRow`, etc., storing result as `home_f
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Implemented using Unicode flag emoji instead of SVG image assets (spec was revised before implementation began).
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+- Added `migrations/0012_team_tla.sql` — `ALTER TABLE teams ADD COLUMN IF NOT EXISTS tla TEXT;`
+- Created `src/flags.rs` — `flag_emoji(tla)` with TLA→ISO-alpha2 map, UK tag-sequence literals, `🏳` fallback; unit-tested
+- Updated `src/modules/admin/db.rs` — `upsert_team` now persists `tla`
+- Updated `src/modules/standings/db.rs` — all three queries (`get_nearest_match`, `get_match_info`, `get_all_fixtures`) fetch `ht.tla`/`at.tla` and pre-compute `home_emoji`/`away_emoji`
+- Updated `src/modules/standings/models.rs` — added `home_emoji`/`away_emoji` fields to `MatchInfo`, `NearestMatch`, `FixtureRow`
+- Updated `src/modules/predictions/models.rs` — added `emoji` to `TeamInfo`; added `home_emoji`/`away_emoji` to `MatchRow`
+- Updated `src/modules/predictions/db.rs` — `get_teams` and `get_group_matches_with_predictions` fetch TLA and compute emoji
+- Updated 4 templates (`standings/fixtures.html`, `standings/match.html`, `standings/index.html`, `predictions/index.html`) — emoji rendered as `<span class="text-xl leading-none shrink-0">` beside team names
+- Created ADR-0019 documenting the emoji-vs-SVG trade-off
+
+Deviations from original spec: used emoji instead of SVG files; no `assets/flags/` directory created; no `_unknown.svg` placeholder needed (falls back to `🏳`).
 
 Follow-up tasks: _none_
