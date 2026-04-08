@@ -22,5 +22,6 @@ certs/
 .DS_Store
 Thumbs.db
 
-# HTMX distribution files
+# JS distribution files (copied from node_modules via make js)
 /assets/js/htmx.js
+/assets/js/alpine.js

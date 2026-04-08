@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Hide Alpine x-cloak elements until Alpine initialises */
+[x-cloak] { display: none !important; }
+
 @theme {
   /* ── Pitch palette ──────────────────────────────────────── */
   --color-pitch-950: #04080f;

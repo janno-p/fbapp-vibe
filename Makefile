@@ -26,3 +26,4 @@ css:
 
 js:
 	cp node_modules/htmx.org/dist/htmx.min.js assets/js/htmx.js
+	cp node_modules/alpinejs/dist/cdn.min.js assets/js/alpine.js
