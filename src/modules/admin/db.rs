@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use time::format_description::well_known::Rfc3339;
 
 use crate::db_types::KnockoutRound;
-use crate::football_api::{Match as ApiMatch, Player as ApiPlayer, Team as ApiTeam};
+use crate::football_api::{Match as ApiMatch, Team as ApiTeam};
 
 use super::models::Tournament;
 
@@ -111,16 +111,41 @@ pub async fn seed_tournament_data(
         group_id_map.insert(name.clone(), db_id);
     }
 
-    // 3. Upsert players from team squads
+    // 3. Upsert players from team squads — single bulk query via UNNEST
+    let mut p_team_ids: Vec<i64> = vec![];
+    let mut p_ext_ids: Vec<String> = vec![];
+    let mut p_names: Vec<String> = vec![];
+
     for team in api_teams {
         if let Some(&db_team_id) = team_id_map.get(&team.id) {
             for player in &team.squad {
-                upsert_player(pool, tournament_id, db_team_id, player).await?;
+                p_team_ids.push(db_team_id);
+                p_ext_ids.push(player.id.to_string());
+                p_names.push(player.name.clone());
             }
         }
     }
 
-    // 4. Upsert group memberships and matches
+    if !p_team_ids.is_empty() {
+        sqlx::query!(
+            r#"
+            INSERT INTO players (tournament_id, external_id, name, team_id)
+            SELECT $1, unnest($2::text[]), unnest($3::text[]), unnest($4::bigint[])
+            ON CONFLICT (tournament_id, external_id) DO UPDATE
+                SET name = EXCLUDED.name, team_id = EXCLUDED.team_id
+            "#,
+            tournament_id,
+            &p_ext_ids as &[String],
+            &p_names as &[String],
+            &p_team_ids as &[i64],
+        )
+        .execute(pool)
+        .await?;
+    }
+
+    // 4. Upsert matches; collect group memberships for bulk insert
+    let mut memberships: HashSet<(i64, i64)> = HashSet::new();
+
     for m in api_matches {
         let (group_id, round) = match m.stage.as_str() {
             "GROUP_STAGE" => {
@@ -139,13 +164,12 @@ pub async fn seed_tournament_data(
         let home_team_id = m.home_team.id.and_then(|id| team_id_map.get(&id)).copied();
         let away_team_id = m.away_team.id.and_then(|id| team_id_map.get(&id)).copied();
 
-        // Insert group memberships for group-stage matches
         if let Some(gid) = group_id {
             if let Some(htid) = home_team_id {
-                upsert_group_membership(pool, gid, htid).await?;
+                memberships.insert((gid, htid));
             }
             if let Some(atid) = away_team_id {
-                upsert_group_membership(pool, gid, atid).await?;
+                memberships.insert((gid, atid));
             }
         }
 
@@ -158,6 +182,22 @@ pub async fn seed_tournament_data(
             home_team_id,
             away_team_id,
         )
+        .await?;
+    }
+
+    // Bulk upsert all collected group memberships — single query via UNNEST
+    if !memberships.is_empty() {
+        let (gids, tids): (Vec<i64>, Vec<i64>) = memberships.into_iter().unzip();
+        sqlx::query!(
+            r#"
+            INSERT INTO group_memberships (group_id, team_id)
+            SELECT unnest($1::bigint[]), unnest($2::bigint[])
+            ON CONFLICT DO NOTHING
+            "#,
+            &gids as &[i64],
+            &tids as &[i64],
+        )
+        .execute(pool)
         .await?;
     }
 
@@ -213,41 +253,6 @@ async fn upsert_group(pool: &PgPool, tournament_id: i64, name: &str) -> anyhow::
     .fetch_one(pool)
     .await?;
     Ok(row.id)
-}
-
-async fn upsert_player(
-    pool: &PgPool,
-    tournament_id: i64,
-    team_id: i64,
-    player: &ApiPlayer,
-) -> anyhow::Result<()> {
-    sqlx::query!(
-        r#"
-        INSERT INTO players (tournament_id, external_id, name, team_id)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (tournament_id, external_id) DO UPDATE
-            SET name    = EXCLUDED.name,
-                team_id = EXCLUDED.team_id
-        "#,
-        tournament_id,
-        player.id.to_string(),
-        player.name,
-        team_id
-    )
-    .execute(pool)
-    .await?;
-    Ok(())
-}
-
-async fn upsert_group_membership(pool: &PgPool, group_id: i64, team_id: i64) -> anyhow::Result<()> {
-    sqlx::query!(
-        "INSERT INTO group_memberships (group_id, team_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-        group_id,
-        team_id
-    )
-    .execute(pool)
-    .await?;
-    Ok(())
 }
 
 async fn upsert_match(
