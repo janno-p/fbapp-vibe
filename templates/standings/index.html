@@ -61,12 +61,14 @@
     {# ── Actions ────────────────────────────────────────────────────────────
     #}
     <div class="flex gap-4 text-sm">
+        {% if is_locked %}
         <a
             href="/leagues/{{ league_id }}/standings/compare"
             class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors"
         >
             Compare players →
         </a>
+        {% endif %}
         <a
             href="/leagues/{{ league_id }}/predictions/review"
             class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors"

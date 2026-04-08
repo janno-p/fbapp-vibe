@@ -1,0 +1,22 @@
+{% extends "layout/nav_base.html" %} {% block title %}Not available yet — {{
+league_name }}{% endblock %} {% block main %}
+<main class="flex-1 max-w-3xl w-full mx-auto px-6 py-8 space-y-8">
+    <div>
+        <h1
+            class="font-display font-bold text-3xl tracking-tight text-ink-50 leading-tight"
+        >
+            Not available yet
+        </h1>
+        <p class="text-ink-500 text-xs mt-2">{{ league_name }}</p>
+    </div>
+
+    <div
+        class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-8 text-center"
+    >
+        <p class="text-ink-500 text-sm">
+            Predictions are hidden until the tournament kicks off. Check back
+            once the competition has started.
+        </p>
+    </div>
+</main>
+{% endblock %}

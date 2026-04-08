@@ -1,7 +1,7 @@
 ---
 id: 0043
 title: Hide other users' predictions until tournament is locked
-status: open
+status: done
 phase: MVP
 type: feature
 adrs: []
@@ -80,8 +80,14 @@ No new unit or integration tests required — the lock-check logic is a one-line
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added lock gating to `compare_page()` and `member_stats()` in `src/modules/standings/handlers.rs`. Both handlers now call `db::get_active_tournament()` and return a `NotLockedTemplate` (new `templates/standings/not_locked.html`) with HTTP 200 when predictions are not yet locked.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+`StandingsTemplate` and `LeaderboardFragment` gained an `is_locked: bool` field — `standings_page()` and `leaderboard_fragment()` now call `get_active_tournament()` instead of `get_active_tournament_id()` to populate it.
+
+Template changes:
+- `templates/standings/index.html`: "Compare players →" link wrapped in `{% if is_locked %}` guard
+- `templates/standings/leaderboard.html`: member name rendered as plain text when `!is_locked`, anchor when `is_locked`
+
+No deviations from spec. No new tests needed (lock check is a one-liner on already-tested `is_predictions_locked()`).
 
 Follow-up tasks: _none_

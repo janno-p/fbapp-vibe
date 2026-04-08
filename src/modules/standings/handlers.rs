@@ -2,7 +2,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
     extract::{Path, Query, State},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 use serde::Deserialize;
 
@@ -28,6 +28,7 @@ struct StandingsTemplate {
     nearest: Option<NearestMatch>,
     has_live: bool,
     no_tournament: bool,
+    is_locked: bool,
     nav: NavContext,
 }
 
@@ -38,6 +39,14 @@ struct LeaderboardFragment {
     entries: Vec<LeaderboardEntry>,
     has_live: bool,
     no_tournament: bool,
+    is_locked: bool,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "standings/not_locked.html")]
+struct NotLockedTemplate {
+    league_name: String,
+    nav: NavContext,
 }
 
 #[derive(Template, WebTemplate)]
@@ -107,16 +116,17 @@ pub async fn standings_page(
     )?;
     let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
-    let (entries, nearest, has_live, no_tournament) =
-        match db::get_active_tournament_id(&state.pool).await? {
-            None => (vec![], None, false, true),
-            Some(t_id) => {
+    let (entries, nearest, has_live, no_tournament, is_locked) =
+        match db::get_active_tournament(&state.pool).await? {
+            None => (vec![], None, false, true, false),
+            Some(tournament) => {
+                let locked = tournament.is_predictions_locked();
                 let (raw, nearest, has_live) = tokio::try_join!(
-                    db::get_leaderboard(&state.pool, t_id, league_id),
-                    db::get_nearest_match(&state.pool, t_id),
-                    db::has_live_matches(&state.pool, t_id),
+                    db::get_leaderboard(&state.pool, tournament.id, league_id),
+                    db::get_nearest_match(&state.pool, tournament.id),
+                    db::has_live_matches(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw), nearest, has_live, false)
+                (build_leaderboard(raw), nearest, has_live, false, locked)
             }
         };
 
@@ -127,6 +137,7 @@ pub async fn standings_page(
         nearest,
         has_live,
         no_tournament,
+        is_locked,
         nav,
     })
 }
@@ -140,23 +151,25 @@ pub async fn leaderboard_fragment(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let (entries, has_live, no_tournament) = match db::get_active_tournament_id(&state.pool).await?
-    {
-        None => (vec![], false, true),
-        Some(t_id) => {
-            let (raw, has_live) = tokio::try_join!(
-                db::get_leaderboard(&state.pool, t_id, league_id),
-                db::has_live_matches(&state.pool, t_id),
-            )?;
-            (build_leaderboard(raw), has_live, false)
-        }
-    };
+    let (entries, has_live, no_tournament, is_locked) =
+        match db::get_active_tournament(&state.pool).await? {
+            None => (vec![], false, true, false),
+            Some(tournament) => {
+                let locked = tournament.is_predictions_locked();
+                let (raw, has_live) = tokio::try_join!(
+                    db::get_leaderboard(&state.pool, tournament.id, league_id),
+                    db::has_live_matches(&state.pool, tournament.id),
+                )?;
+                (build_leaderboard(raw), has_live, false, locked)
+            }
+        };
 
     Ok(LeaderboardFragment {
         league_id,
         entries,
         has_live,
         no_tournament,
+        is_locked,
     })
 }
 
@@ -214,7 +227,7 @@ pub async fn compare_page(
     State(state): State<AppState>,
     Path(league_id): Path<i64>,
     Query(params): Query<CompareParams>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Response, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
@@ -223,6 +236,15 @@ pub async fn compare_page(
         crate::nav::load(&state.pool, &user, "standings"),
     )?;
     let league_name = league_name_opt.ok_or(AppError::NotFound)?;
+
+    if !db::get_active_tournament(&state.pool)
+        .await?
+        .as_ref()
+        .map(|t| t.is_predictions_locked())
+        .unwrap_or(false)
+    {
+        return Ok(NotLockedTemplate { league_name, nav }.into_response());
+    }
 
     let all_members = db::get_league_members(&state.pool, league_id).await?;
 
@@ -255,7 +277,8 @@ pub async fn compare_page(
         user_b,
         group_rows,
         nav,
-    })
+    }
+    .into_response())
 }
 
 /// GET /leagues/{id}/fixtures
@@ -295,7 +318,7 @@ pub async fn member_stats(
     auth_session: AuthSession,
     State(state): State<AppState>,
     Path((league_id, target_user_id)): Path<(i64, i64)>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Response, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
@@ -307,7 +330,17 @@ pub async fn member_stats(
     let league_name = league_name_opt.ok_or(AppError::NotFound)?;
     let (user_name, league_joined_at) = member_info.ok_or(AppError::Forbidden)?;
 
-    let stats = match db::get_active_tournament_id(&state.pool).await? {
+    let tournament = db::get_active_tournament(&state.pool).await?;
+
+    if !tournament
+        .as_ref()
+        .map(|t| t.is_predictions_locked())
+        .unwrap_or(false)
+    {
+        return Ok(NotLockedTemplate { league_name, nav }.into_response());
+    }
+
+    let stats = match tournament.map(|t| t.id) {
         None => MemberStats {
             user_id: target_user_id,
             user_name,
@@ -363,7 +396,8 @@ pub async fn member_stats(
         league_name,
         stats,
         nav,
-    })
+    }
+    .into_response())
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
