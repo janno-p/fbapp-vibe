@@ -1,6 +1,8 @@
 ## Status
 
-✅ Accepted
+⛔ Superseded by [ADR-0022](0022-team-crest-images.md)
+
+> The Unicode emoji approach was replaced by API-provided crest images in task 0036. See ADR-0022 for the current implementation.
 
 ## Date
 
