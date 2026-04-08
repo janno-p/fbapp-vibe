@@ -1,13 +1,13 @@
 ---
 id: 0030
 title: Per-user prediction accuracy stats
-status: open
+status: done
 type: feature
 adrs: [0007, 0009, 0005]
 refs: [0025, 0027]
 created: 2026-04-08
-started: ~
-completed: ~
+started: 2026-04-08
+completed: 2026-04-08
 ---
 
 ## Goal
@@ -56,8 +56,6 @@ The leaderboard shows total points but gives no insight into *how* a user is sco
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
-
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+Built `GET /leagues/{id}/members/{user_id}` as a stats page within the `standings` module. Added four DB query functions (`get_member_info`, `get_member_group_preds`, `get_member_knockout_stats`, `get_member_top_scorer_points`), `MemberGroupPredRow` and `MemberStats` model types, and the pure `compute_streaks(&[bool]) -> (usize, usize)` function with 6 unit tests. Handler uses `tokio::try_join!` to run DB calls concurrently and reuses `build_leaderboard` for rank derivation. Template covers: player header (name, join date, points, rank), group stage accuracy bar, current/best streak grid, and points breakdown table. Leaderboard names are now linked to member stats pages. Zero deviation from spec.
 
 Follow-up tasks: _none_

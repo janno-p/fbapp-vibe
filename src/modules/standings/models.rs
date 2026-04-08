@@ -331,6 +331,73 @@ pub fn max_achievable_points(
     earned + group_unplayed + knockout_possible + top_scorer_possible
 }
 
+// ── Member stats ─────────────────────────────────────────────────────────────
+
+/// Raw row for a member's group stage prediction on a played match.
+pub struct MemberGroupPredRow {
+    pub predicted_outcome: Option<MatchOutcome>,
+    pub actual_outcome: MatchOutcome,
+}
+
+impl MemberGroupPredRow {
+    pub fn is_correct(&self) -> bool {
+        self.predicted_outcome.as_ref() == Some(&self.actual_outcome)
+    }
+}
+
+/// Aggregated per-user prediction stats for the member stats page.
+pub struct MemberStats {
+    pub user_id: i64,
+    pub user_name: String,
+    pub league_joined_at: time::OffsetDateTime,
+    pub total_points: i64,
+    pub rank: usize,
+    pub group_correct: i64,
+    pub group_total: i64,
+    pub knockout_correct: i64,
+    pub knockout_total: i64,
+    pub top_scorer_points: i64,
+    pub current_streak: usize,
+    pub best_streak: usize,
+}
+
+impl MemberStats {
+    pub fn group_accuracy_pct(&self) -> u32 {
+        if self.group_total == 0 {
+            return 0;
+        }
+        ((self.group_correct as f64 / self.group_total as f64) * 100.0).round() as u32
+    }
+
+    pub fn formatted_join_date(&self) -> String {
+        let fmt = time::format_description::parse("[day] [month repr:short] [year]")
+            .expect("static format is valid");
+        self.league_joined_at
+            .format(&fmt)
+            .unwrap_or_else(|_| "—".to_string())
+    }
+}
+
+/// Computes `(current_streak, best_streak)` from an ordered slice of booleans.
+///
+/// `predictions` must be ordered chronologically (oldest first). `true` means
+/// the prediction was correct. An empty slice returns `(0, 0)`.
+pub fn compute_streaks(predictions: &[bool]) -> (usize, usize) {
+    let mut current = 0usize;
+    let mut best = 0usize;
+    for &correct in predictions {
+        if correct {
+            current += 1;
+            if current > best {
+                best = current;
+            }
+        } else {
+            current = 0;
+        }
+    }
+    (current, best)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -477,6 +544,41 @@ mod tests {
         let entries = build_leaderboard(rows);
         assert_eq!(entries[0].user_id, 1, "Alice has higher ceiling, should rank first");
         assert_eq!(entries[1].user_id, 2);
+    }
+
+    // ── compute_streaks ───────────────────────────────────────────────────────
+
+    #[test]
+    fn streaks_empty_slice_returns_zero() {
+        assert_eq!(compute_streaks(&[]), (0, 0));
+    }
+
+    #[test]
+    fn streaks_all_correct() {
+        assert_eq!(compute_streaks(&[true, true, true]), (3, 3));
+    }
+
+    #[test]
+    fn streaks_all_wrong() {
+        assert_eq!(compute_streaks(&[false, false, false]), (0, 0));
+    }
+
+    #[test]
+    fn streaks_alternating_ends_on_wrong() {
+        // T F T F → current=0, best=1
+        assert_eq!(compute_streaks(&[true, false, true, false]), (0, 1));
+    }
+
+    #[test]
+    fn streaks_trailing_correct_streak() {
+        // F T T T → current=3, best=3
+        assert_eq!(compute_streaks(&[false, true, true, true]), (3, 3));
+    }
+
+    #[test]
+    fn streaks_best_is_longer_than_current() {
+        // T T T F T T → current=2, best=3
+        assert_eq!(compute_streaks(&[true, true, true, false, true, true]), (2, 3));
     }
 
     #[test]

@@ -22,4 +22,8 @@ pub fn router() -> Router<AppState> {
             get(handlers::compare_page),
         )
         .route("/leagues/{id}/fixtures", get(handlers::fixture_list))
+        .route(
+            "/leagues/{id}/members/{user_id}",
+            get(handlers::member_stats),
+        )
 }

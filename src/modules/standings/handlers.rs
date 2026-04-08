@@ -11,8 +11,9 @@ use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state:
 use super::{
     db,
     models::{
-        build_leaderboard, group_fixtures, CompareGroupRow, FixtureGroup, LeaderboardEntry,
-        LeagueMember, MatchBreakdownRow, MatchConsensus, MatchInfo, NearestMatch,
+        build_leaderboard, compute_streaks, group_fixtures, CompareGroupRow, FixtureGroup,
+        LeaderboardEntry, LeagueMember, MatchBreakdownRow, MatchConsensus, MatchInfo, MemberStats,
+        NearestMatch,
     },
 };
 
@@ -59,6 +60,15 @@ struct CompareTemplate {
     user_a: Option<LeagueMember>,
     user_b: Option<LeagueMember>,
     group_rows: Vec<CompareGroupRow>,
+    nav: NavContext,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "standings/member_stats.html")]
+struct MemberStatsTemplate {
+    league_id: i64,
+    league_name: String,
+    stats: MemberStats,
     nav: NavContext,
 }
 
@@ -278,6 +288,77 @@ pub async fn fixture_list(
         no_tournament,
         nav,
     })
+}
+
+/// GET /leagues/{id}/members/{user_id}
+pub async fn member_stats(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    Path((league_id, target_user_id)): Path<(i64, i64)>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+    require_member(&state, league_id, user.id).await?;
+
+    let (league_name_opt, member_info, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        db::get_member_info(&state.pool, league_id, target_user_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
+    let (user_name, league_joined_at) = member_info.ok_or(AppError::Forbidden)?;
+
+    let stats = match db::get_active_tournament_id(&state.pool).await? {
+        None => MemberStats {
+            user_id: target_user_id,
+            user_name,
+            league_joined_at,
+            total_points: 0,
+            rank: 0,
+            group_correct: 0,
+            group_total: 0,
+            knockout_correct: 0,
+            knockout_total: 0,
+            top_scorer_points: 0,
+            current_streak: 0,
+            best_streak: 0,
+        },
+        Some(t_id) => {
+            let (raw_leaderboard, group_preds, (knockout_correct, knockout_total), top_scorer_pts) =
+                tokio::try_join!(
+                    db::get_leaderboard(&state.pool, t_id, league_id),
+                    db::get_member_group_preds(&state.pool, t_id, target_user_id),
+                    db::get_member_knockout_stats(&state.pool, t_id, target_user_id),
+                    db::get_member_top_scorer_points(&state.pool, t_id, target_user_id),
+                )?;
+
+            let leaderboard = build_leaderboard(raw_leaderboard);
+            let lb_entry = leaderboard.iter().find(|e| e.user_id == target_user_id);
+            let total_points = lb_entry.map(|e| e.total_points).unwrap_or(0);
+            let rank = lb_entry.map(|e| e.rank).unwrap_or(leaderboard.len() + 1);
+
+            let group_total = group_preds.len() as i64;
+            let group_correct = group_preds.iter().filter(|r| r.is_correct()).count() as i64;
+            let streak_bools: Vec<bool> = group_preds.iter().map(|r| r.is_correct()).collect();
+            let (current_streak, best_streak) = compute_streaks(&streak_bools);
+
+            MemberStats {
+                user_id: target_user_id,
+                user_name,
+                league_joined_at,
+                total_points,
+                rank,
+                group_correct,
+                group_total,
+                knockout_correct,
+                knockout_total,
+                top_scorer_points: top_scorer_pts,
+                current_streak,
+                best_streak,
+            }
+        }
+    };
+
+    Ok(MemberStatsTemplate { league_id, league_name, stats, nav })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ use crate::{
 
 use super::models::{
     CompareGroupRow, FixtureRow, LeaderboardRawRow, LeagueMember, MatchBreakdownRow, MatchConsensus,
-    MatchInfo, NearestMatch,
+    MatchInfo, MemberGroupPredRow, NearestMatch,
 };
 
 // ── Access guard ──────────────────────────────────────────────────────────────
@@ -463,6 +463,111 @@ pub async fn get_all_fixtures(
             round: r.round,
         })
         .collect())
+}
+
+// ── Member stats ─────────────────────────────────────────────────────────────
+
+/// Returns the target user's display name and league join date.
+/// Returns `None` if the user is not a member of this league.
+pub async fn get_member_info(
+    pool: &PgPool,
+    league_id: i64,
+    user_id: i64,
+) -> anyhow::Result<Option<(String, time::OffsetDateTime)>> {
+    let row = sqlx::query!(
+        r#"
+        SELECT u.name, lm.joined_at
+        FROM league_members lm
+        JOIN users u ON u.id = lm.user_id
+        WHERE lm.league_id = $1 AND lm.user_id = $2
+        "#,
+        league_id,
+        user_id,
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|r| (r.name, r.joined_at)))
+}
+
+/// Returns group stage prediction rows for played matches, ordered chronologically.
+///
+/// Only includes matches that have been decided (`outcome IS NOT NULL`), so the
+/// caller can directly derive accuracy and streak from the returned slice.
+pub async fn get_member_group_preds(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<Vec<MemberGroupPredRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT gsp.predicted_outcome AS "predicted_outcome?: MatchOutcome",
+               m.outcome             AS "actual_outcome!: MatchOutcome"
+        FROM group_stage_predictions gsp
+        JOIN matches m ON m.id = gsp.match_id
+        WHERE m.tournament_id = $1
+          AND gsp.user_id = $2
+          AND m.outcome IS NOT NULL
+        ORDER BY m.scheduled_at ASC
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| MemberGroupPredRow {
+            predicted_outcome: r.predicted_outcome,
+            actual_outcome: r.actual_outcome,
+        })
+        .collect())
+}
+
+/// Returns `(correct, total)` for knockout predictions in the given tournament.
+///
+/// `total` counts predictions where `points_awarded IS NOT NULL` (match decided).
+/// `correct` counts predictions where `points_awarded > 0`.
+pub async fn get_member_knockout_stats(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<(i64, i64)> {
+    let row = sqlx::query!(
+        r#"
+        SELECT
+            COUNT(*) FILTER (WHERE points_awarded IS NOT NULL)  AS "total!: i64",
+            COUNT(*) FILTER (WHERE points_awarded > 0)          AS "correct!: i64"
+        FROM knockout_predictions
+        WHERE tournament_id = $1
+          AND user_id = $2
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok((row.correct, row.total))
+}
+
+/// Returns the sum of top scorer points awarded to the user in this tournament.
+pub async fn get_member_top_scorer_points(
+    pool: &PgPool,
+    tournament_id: i64,
+    user_id: i64,
+) -> anyhow::Result<i64> {
+    let pts = sqlx::query_scalar!(
+        r#"
+        SELECT COALESCE(SUM(points_awarded), 0)::bigint AS "pts!: i64"
+        FROM top_scorer_predictions
+        WHERE tournament_id = $1 AND user_id = $2
+        "#,
+        tournament_id,
+        user_id,
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(pts)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

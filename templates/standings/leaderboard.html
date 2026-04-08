@@ -34,7 +34,8 @@
           </td>
           <td class="px-4 py-3 font-medium
             {% if e.rank == 1 %}text-gold-300{% else %}text-ink-100{% endif %}">
-            {{ e.user_name }}
+            <a href="/leagues/{{ league_id }}/members/{{ e.user_id }}"
+               class="hover:underline">{{ e.user_name }}</a>
           </td>
           <td class="px-4 py-3 text-right font-display font-bold text-base
             {% if e.rank == 1 %}text-gold-400{% else %}text-ink-50{% endif %}">
