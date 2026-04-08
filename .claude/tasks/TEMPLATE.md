@@ -2,6 +2,7 @@
 id: 0000
 title: Short descriptive title
 status: open          # open | in-progress | done | cancelled
+phase: ~              # REQUIRED: MVP | Phase2 | Phase3 | Backlog
 type: feature         # feature | bug | chore | refactor
 adrs: []              # e.g. [0007, 0009, 0011]
 refs: []              # related task IDs, e.g. [0002, 0005]

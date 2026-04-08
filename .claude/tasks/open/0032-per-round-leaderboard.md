@@ -2,6 +2,7 @@
 id: 0032
 title: Per-round leaderboard breakdown
 status: open
+phase: Phase2
 type: feature
 adrs: [0007, 0009, 0005]
 refs: [0009, 0028]

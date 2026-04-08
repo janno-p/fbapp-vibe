@@ -2,6 +2,7 @@
 id: 0024
 title: Session table cleanup job
 status: open
+phase: MVP
 type: chore
 adrs: []
 refs: []

@@ -2,6 +2,7 @@
 id: 0018
 title: Scenario modeling — hypothetical result simulation on standings page
 status: open
+phase: Phase3
 type: feature
 adrs: [0016]
 refs: [0009]

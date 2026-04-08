@@ -2,6 +2,7 @@
 id: 0010
 title: OTLP trace export with Jaeger
 status: open
+phase: Phase3
 type: chore
 adrs: [0017]
 refs: []

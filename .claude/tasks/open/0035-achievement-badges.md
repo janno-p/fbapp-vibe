@@ -2,6 +2,7 @@
 id: 0035
 title: Achievement badges for prediction milestones
 status: open
+phase: Phase2
 type: feature
 adrs: [0005, 0007, 0016]
 refs: [0008, 0030]

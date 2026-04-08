@@ -2,6 +2,7 @@
 id: 0034
 title: Confidence multiplier on group stage predictions
 status: open
+phase: Phase2
 type: feature
 adrs: [0005, 0007, 0009, 0016]
 refs: [0007, 0008]
