@@ -519,6 +519,20 @@ mod tests {
         assert_eq!(max_achievable_points(0, 48, &pending, Some(5)), 252);
     }
 
+    #[test]
+    fn short_bracket_pending_excludes_r32() {
+        // EURO 2024 style: starts at R16, no R32 round
+        let pending = [
+            (KnockoutRound::R16, 16),   // 48
+            (KnockoutRound::Qf, 8),     // 32
+            (KnockoutRound::Sf, 4),     // 24
+            (KnockoutRound::Final, 2),  // 16
+            (KnockoutRound::Winner, 1), // 10
+        ];
+        // knockout = 130, group = 24, top scorer = 0, total = 154
+        assert_eq!(max_achievable_points(0, 24, &pending, None), 154);
+    }
+
     // ── build_leaderboard ─────────────────────────────────────────────────────
 
     #[test]

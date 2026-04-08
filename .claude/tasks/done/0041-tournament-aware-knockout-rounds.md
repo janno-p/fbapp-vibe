@@ -87,8 +87,17 @@ AND kp.round IN (
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `get_tournament_knockout_rounds()` helper to `src/modules/predictions/db.rs` that queries
+`SELECT DISTINCT round FROM matches WHERE tournament_id = $1 AND round IS NOT NULL ORDER BY round`.
+Refactored `get_knockout_predictions()` to use this instead of `KnockoutRound::all()`, so EURO 2024
+(R16 start) shows no R32 section in the predictions form.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+Fixed the `knockout_possible` CTE in `src/modules/standings/db.rs` to filter by rounds that exist
+in the tournament's matches, preventing inflated max-achievable scores for short-bracket tournaments.
+
+Added `short_bracket_pending_excludes_r32` unit test to `src/modules/standings/models.rs`.
+
+Deviations: `query_scalar!` with `"round!: KnockoutRound"` (non-null override) was needed since
+sqlx infers nullable for the `DISTINCT` column even though `WHERE round IS NOT NULL` guarantees it.
 
 Follow-up tasks: _none_

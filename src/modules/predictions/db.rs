@@ -134,6 +134,22 @@ pub async fn get_players_with_team(
     Ok(players)
 }
 
+async fn get_tournament_knockout_rounds(
+    pool: &PgPool,
+    tournament_id: i64,
+) -> anyhow::Result<Vec<KnockoutRound>> {
+    let rounds = sqlx::query_scalar!(
+        r#"SELECT DISTINCT round AS "round!: KnockoutRound"
+           FROM matches
+           WHERE tournament_id = $1 AND round IS NOT NULL
+           ORDER BY round"#,
+        tournament_id
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rounds)
+}
+
 pub async fn get_knockout_predictions(
     pool: &PgPool,
     tournament_id: i64,
@@ -161,7 +177,8 @@ pub async fn get_knockout_predictions(
             .push(r.team_id);
     }
 
-    Ok(KnockoutRound::all()
+    let available_rounds = get_tournament_knockout_rounds(pool, tournament_id).await?;
+    Ok(available_rounds
         .iter()
         .map(|round| KnockoutRoundState {
             predicted_team_ids: round_map.remove(round.slug()).unwrap_or_default(),

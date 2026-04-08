@@ -144,6 +144,10 @@ pub async fn get_leaderboard(
             WHERE kp.tournament_id = $1
               AND kp.points_awarded IS NULL
               AND kp.user_id IN (SELECT id FROM league_users)
+              AND kp.round IN (
+                  SELECT DISTINCT round FROM matches
+                  WHERE tournament_id = $1 AND round IS NOT NULL
+              )
             GROUP BY kp.user_id
         ),
         top_scorer_possible AS (
