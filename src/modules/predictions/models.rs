@@ -135,6 +135,43 @@ impl KnockoutReviewRow {
             None => "—".to_string(),
         }
     }
+
+    /// Returns `"correct"`, `"wrong"`, or `"pending"` — used by templates to pick a colour.
+    pub fn score_state(&self) -> &'static str {
+        match self.points_awarded {
+            None => "pending",
+            Some(0) => "wrong",
+            Some(_) => "correct",
+        }
+    }
+}
+
+#[cfg(test)]
+mod knockout_review_tests {
+    use super::*;
+
+    fn row(points_awarded: Option<i32>) -> KnockoutReviewRow {
+        KnockoutReviewRow {
+            round: KnockoutRound::Qf,
+            team_name: "Test FC".to_string(),
+            points_awarded,
+        }
+    }
+
+    #[test]
+    fn score_state_pending_when_no_points() {
+        assert_eq!(row(None).score_state(), "pending");
+    }
+
+    #[test]
+    fn score_state_wrong_when_zero_points() {
+        assert_eq!(row(Some(0)).score_state(), "wrong");
+    }
+
+    #[test]
+    fn score_state_correct_when_positive_points() {
+        assert_eq!(row(Some(8)).score_state(), "correct");
+    }
 }
 
 pub struct TopScorerReviewRow {

@@ -113,22 +113,38 @@
       {% else %}
 
       {% let mut current_round = "" %}
-      <div class="space-y-4">
+      <div class="space-y-2">
         {% for row in knockout_rows %}
 
+        {# Round header — shown once per round #}
         {% if row.round_label() != current_round %}
         {% let current_round = row.round_label() %}
-        <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-600 mt-2 mb-1 px-1">
+        <h3 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-600 mt-3 mb-1 px-1 first:mt-0">
           {{ row.round_label() }}
         </h3>
         {% endif %}
 
-        <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-3 flex items-center justify-between">
-          <span class="text-sm font-medium text-ink-100">{{ row.team_name }}</span>
-          <span class="font-display font-bold text-sm {% if row.points_awarded.is_some() %}text-goal-400{% else %}text-ink-600{% endif %}">
+        {# Team prediction card #}
+        <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-3 flex items-center gap-3">
+          {# Correctness indicator bar #}
+          <span class="shrink-0 w-1 h-6 rounded-full
+            {% if row.score_state() == "correct" %}bg-green-500
+            {% elif row.score_state() == "wrong" %}bg-red-500
+            {% else %}bg-pitch-600{% endif %}">
+          </span>
+          <span class="flex-1 text-sm font-medium
+            {% if row.score_state() == "correct" %}text-green-300
+            {% elif row.score_state() == "wrong" %}text-red-400
+            {% else %}text-ink-400{% endif %}">
+            {{ row.team_name }}
+          </span>
+          <span class="shrink-0 font-display font-bold text-sm
+            {% if row.score_state() == "correct" %}text-goal-400
+            {% else %}text-ink-600{% endif %}">
             {{ row.points_display() }}
           </span>
         </div>
+
         {% endfor %}
       </div>
       {% endif %}

@@ -64,8 +64,10 @@ The current template loops over `knockout_rows` one by one and emits a round hea
 
 ## Outcome
 
-> Fill this section in after implementation, before moving to `tasks/done/`.
+Added `score_state() -> &'static str` to `KnockoutReviewRow` in `models.rs` (mirrors `GroupReviewRow::score_state()`). Updated the knockout section in `templates/predictions/review.html` to show round headers (same change-detection trick as group stage) and per-team cards with a coloured left-indicator bar (green/red/muted) and text colour matching correctness state.
 
-Brief description of what was built, any deviations from the original spec, and follow-up tasks created as a result.
+Simplified approach vs spec: kept individual cards per team rather than nested containers per round, which avoids Askama loop-control complexity while still achieving the visual grouping via the round header. Template is compile-time checked by Askama — no template tests needed.
+
+3 unit tests added for `score_state()`: `None → pending`, `Some(0) → wrong`, `Some(n) → correct`. All 74 tests pass.
 
 Follow-up tasks: _none_
