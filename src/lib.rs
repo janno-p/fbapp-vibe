@@ -8,4 +8,5 @@ pub mod modules;
 pub mod nav;
 pub mod polling;
 pub mod routes;
+pub mod session_cleanup;
 pub mod state;

@@ -12,6 +12,7 @@ use fbapp_vibe::{
     football_api,
     modules::auth::AuthBackend,
     routes,
+    session_cleanup,
     state::{AppState, OAuthClient},
 };
 
@@ -54,8 +55,9 @@ async fn main() -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("failed to build football API client: {e}"))?;
 
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;
-    let state = AppState::new(pool, config, oauth_client, football_api);
+    let state = AppState::new(pool.clone(), config, oauth_client, football_api);
     tokio::spawn(fbapp_vibe::polling::run(state.clone()));
+    tokio::spawn(session_cleanup::run(pool.clone()));
     let app = routes::router(state).layer(auth_layer);
 
     tracing::info!(
