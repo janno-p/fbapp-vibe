@@ -184,6 +184,8 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                     hx-post="/predictions/knockout/{{ rs.round.slug() }}"
                     hx-target="#ko-{{ rs.round.slug() }}-status"
                     hx-swap="innerHTML"
+                    x-data="knockoutPicker({{ rs.round.expected_team_count() }})"
+                    @change="update()"
                 >
                     <div
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3"
@@ -224,7 +226,8 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                     <div class="flex items-center gap-4">
                         <button
                             type="submit"
-                            class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                            :disabled="!valid"
+                            class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Save {{ rs.round.label() }}
                         </button>
@@ -306,7 +309,8 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                 <div class="flex items-center gap-4">
                     <button
                         type="submit"
-                        class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer"
+                        :disabled="count !== 3"
+                        class="bg-goal-600 hover:bg-goal-500 text-ink-50 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         Save top scorer picks
                     </button>
@@ -338,14 +342,42 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
         };
     }
 
+    function knockoutPicker(expected) {
+        return {
+            count: 0,
+            get valid() {
+                return this.count === expected;
+            },
+            init() {
+                this.count = this.$el.querySelectorAll(
+                    'input[name="team_ids"]:checked',
+                ).length;
+            },
+            update() {
+                this.count = this.$el.querySelectorAll(
+                    'input[name="team_ids"]:checked',
+                ).length;
+            },
+        };
+    }
+
     function playerPicker() {
         return {
             query: "",
+            count: 0,
+            init() {
+                this.count = document.querySelectorAll(
+                    'input[name="player_ids"]:checked',
+                ).length;
+            },
             enforceMax3(el) {
                 const checked = document.querySelectorAll(
                     'input[name="player_ids"]:checked',
                 );
                 if (checked.length > 3) el.checked = false;
+                this.count = document.querySelectorAll(
+                    'input[name="player_ids"]:checked',
+                ).length;
             },
         };
     }

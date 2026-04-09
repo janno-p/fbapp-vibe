@@ -139,12 +139,11 @@ pub async fn save_knockout(
         .ok_or(AppError::BadRequest("invalid knockout round".to_string()))?;
 
     if form.team_ids.len() != round.expected_team_count() {
-        return Err(AppError::BadRequest(format!(
-            "{} requires exactly {} teams, got {}",
-            round.label(),
-            round.expected_team_count(),
-            form.team_ids.len()
-        )));
+        return Ok(Html(format!(
+            r#"<span class="text-signal-red">Select exactly {} teams.</span>"#,
+            round.expected_team_count()
+        ))
+        .into_response());
     }
 
     let tournament = db::get_active_tournament(&state.pool)
@@ -175,10 +174,10 @@ pub async fn save_top_scorer(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
     if form.player_ids.len() != TOP_SCORER_PICKS {
-        return Err(AppError::BadRequest(format!(
-            "top scorer requires exactly {TOP_SCORER_PICKS} players, got {}",
-            form.player_ids.len()
-        )));
+        return Ok(Html(format!(
+            r#"<span class="text-signal-red">Select exactly {TOP_SCORER_PICKS} players.</span>"#
+        ))
+        .into_response());
     }
 
     let tournament = db::get_active_tournament(&state.pool)
