@@ -61,3 +61,41 @@ pub fn router() -> Router<AppState> {
         .route("/auth/callback", get(handlers::callback))
         .route("/auth/logout", post(handlers::logout))
 }
+
+#[cfg(test)]
+mod tests {
+    use axum_login::AuthnBackend as _;
+    use sqlx::PgPool;
+
+    use super::*;
+
+    // R1.5 — get_user() loads a user from the database by id.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn get_user_returns_user_by_id(pool: PgPool) {
+        let created = db::find_or_create_user(&pool, "g-100", "test@example.com", "Test", None)
+            .await
+            .expect("create user");
+
+        let backend = AuthBackend::new(pool);
+        let found = backend.get_user(&created.id).await.expect("get_user");
+
+        assert!(found.is_some(), "get_user must return the user");
+        assert_eq!(found.unwrap().email, "test@example.com");
+    }
+
+    // R1.5 — get_user() returns None for an id that does not exist.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn get_user_returns_none_for_unknown_id(pool: PgPool) {
+        let backend = AuthBackend::new(pool);
+        let found = backend.get_user(&999_999_i64).await.expect("get_user");
+        assert!(found.is_none(), "get_user must return None for unknown id");
+    }
+
+    // R1.3 — authenticate() always returns Ok(None) for the OAuth backend.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn authenticate_always_returns_ok_none(pool: PgPool) {
+        let backend = AuthBackend::new(pool);
+        let result = backend.authenticate(models::Credentials).await.expect("authenticate");
+        assert!(result.is_none(), "OAuth backend authenticate() must return None");
+    }
+}

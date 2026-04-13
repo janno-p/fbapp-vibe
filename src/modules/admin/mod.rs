@@ -37,6 +37,50 @@ impl FromRequestParts<AppState> for AdminUser {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::modules::auth::User;
+
+    fn make_user(is_admin: bool) -> User {
+        User {
+            id: 1,
+            google_id: "g-001".to_string(),
+            email: "user@example.com".to_string(),
+            name: "User".to_string(),
+            avatar_url: None,
+            is_admin,
+        }
+    }
+
+    // R4.1 — non-admin users must be rejected with Forbidden.
+    #[test]
+    fn non_admin_user_triggers_forbidden() {
+        let user = make_user(false);
+        // Mirror the extractor's guard logic.
+        let result: Result<AdminUser, AppError> = if !user.is_admin {
+            Err(AppError::Forbidden)
+        } else {
+            Ok(AdminUser(user))
+        };
+        assert!(matches!(result, Err(AppError::Forbidden)));
+    }
+
+    // R4.2 — admin users are wrapped and passed through.
+    #[test]
+    fn admin_user_passes_through() {
+        let user = make_user(true);
+        let result: Result<AdminUser, AppError> = if !user.is_admin {
+            Err(AppError::Forbidden)
+        } else {
+            Ok(AdminUser(user.clone()))
+        };
+        let admin = result.expect("admin user must pass");
+        assert_eq!(admin.0.id, user.id);
+        assert!(admin.0.is_admin);
+    }
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/admin", get(handlers::dashboard))

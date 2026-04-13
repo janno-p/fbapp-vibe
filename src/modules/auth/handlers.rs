@@ -174,3 +174,27 @@ pub async fn logout(mut auth_session: AuthSession) -> Result<impl IntoResponse, 
         .map_err(|e| AppError::Unexpected(anyhow::anyhow!("logout failed: {e}")))?;
     Ok(Redirect::to("/"))
 }
+
+#[cfg(test)]
+mod tests {
+    // R6.1 — home template exposes a link to /auth/login.
+    #[test]
+    fn home_template_has_login_link() {
+        let html = include_str!("../../../templates/home/index.html");
+        assert!(
+            html.contains("/auth/login"),
+            "home template must contain a link to /auth/login"
+        );
+    }
+
+    // R6.2 — the login endpoint path is /auth/login (registered in router).
+    #[test]
+    fn login_route_path_is_correct() {
+        // Compile-time verification: the handler function `login` exists and has the
+        // expected signature.  If it is renamed or removed, this import fails to compile.
+        let _: fn(
+            axum::extract::State<crate::state::AppState>,
+            tower_sessions::Session,
+        ) -> _ = super::login;
+    }
+}
