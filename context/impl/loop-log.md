@@ -10,3 +10,11 @@ Build site: context/plans/build-site.md
 - T-005: Public pages — DONE. Files: auth/handlers.rs. Build P, Tests P.
 - T-006: Session cleanup — DONE. Files: session_cleanup.rs. SQL bug fixed. Build P, Tests P.
 - Commit: 39efac8
+
+### Wave 2 — 2026-04-13
+- T-007: Dashboard requires auth — DONE. Files: tests/auth_routes.rs.
+- T-008: Logout destroys session — DONE. Files: tests/auth_routes.rs.
+- T-009: Home redirects authed user — DONE. Files: tests/auth_routes.rs.
+- T-010: Admin RBAC HTTP tests — DONE. Files: tests/auth_routes.rs, admin/mod.rs (false-confidence unit tests removed).
+- T-011: Expired/invalidated session — DONE. Files: tests/auth_routes.rs.
+- Build P, Tests P (7/7). Commit: 29d5d2d

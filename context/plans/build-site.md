@@ -93,14 +93,14 @@ Every acceptance criterion from every cavekit requirement appears below.
 | cavekit-auth.md | R6 | Home page displays login link | T-005 | COVERED |
 | cavekit-auth.md | R6 | GET /dashboard redirects unauthenticated users to /auth/login | T-005 | COVERED |
 
-| cavekit-auth.md | R7 | GET /dashboard returns 401 for unauthenticated (integration test) | T-007 | OPEN |
-| cavekit-auth.md | R7 | GET / redirects authenticated user to /dashboard (integration test) | T-009 | OPEN |
-| cavekit-auth.md | R7 | POST /auth/logout destroys session; subsequent request returns 401 | T-008 | OPEN |
-| cavekit-auth.md | R7 | AdminUser rejects non-admin at HTTP level (integration test) | T-010 | OPEN |
-| cavekit-auth.md | R7 | Session invalidated when user email changes (integration test) | T-011 | OPEN |
-| cavekit-auth.md | R7 | Expired session returns 401 (integration test) | T-011 | OPEN |
+| cavekit-auth.md | R7 | GET /dashboard returns 401 for unauthenticated (integration test) | T-007 | COVERED |
+| cavekit-auth.md | R7 | GET / redirects authenticated user to /dashboard (integration test) | T-009 | COVERED |
+| cavekit-auth.md | R7 | POST /auth/logout destroys session; subsequent request returns 401 | T-008 | COVERED |
+| cavekit-auth.md | R7 | AdminUser rejects non-admin at HTTP level (integration test) | T-010 | COVERED |
+| cavekit-auth.md | R7 | Session invalidated when user email changes (integration test) | T-011 | COVERED |
+| cavekit-auth.md | R7 | Expired session returns 401 (integration test) | T-011 | COVERED |
 
-**Coverage: 27/33 criteria (82%)** (6 new R7 criteria open)
+**Coverage: 33/33 criteria (100%)**
 
 ## Dependency Graph
 
