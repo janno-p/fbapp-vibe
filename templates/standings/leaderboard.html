@@ -20,6 +20,7 @@
         <tr class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest">
           <th class="px-4 py-3 text-left w-10">#</th>
           <th class="px-4 py-3 text-left">Name</th>
+          <th class="px-4 py-3 text-center w-10"></th>
           <th class="px-4 py-3 text-right">Pts</th>
           <th class="px-4 py-3 text-right">Max</th>
           <th class="px-4 py-3 text-right">Gap</th>
@@ -39,6 +40,13 @@
                class="hover:underline">{{ e.user_name }}</a>
             {% else %}
             {{ e.user_name }}
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center text-base leading-none">
+            {% if let Some(b) = e.top_badge %}
+            <span title="{{ b.name }}: {{ b.description }}">{{ b.emoji }}</span>
+            {% else %}
+            <span class="text-ink-800 text-xs">—</span>
             {% endif %}
           </td>
           <td class="px-4 py-3 text-right font-display font-bold text-base

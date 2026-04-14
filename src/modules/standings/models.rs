@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use crate::{
+    achievements::BadgeDisplay,
     db_types::{KnockoutRound, MatchOutcome},
     polling::scorer::knockout_points_per_team,
 };
@@ -21,6 +24,8 @@ pub struct LeaderboardEntry {
     pub total_points: i64,
     pub max_achievable: i64,
     pub points_behind: i64,
+    /// Most recently awarded badge for this user, if any.
+    pub top_badge: Option<BadgeDisplay>,
 }
 
 /// Assigns ranks (1-based) and computes `points_behind` relative to the leader.
@@ -29,13 +34,19 @@ pub struct LeaderboardEntry {
 ///   1. `total_points DESC`
 ///   2. `max_achievable DESC` (tie-break: higher ceiling first)
 ///   3. `user_name ASC` (final deterministic tie-break)
-pub fn build_leaderboard(rows: Vec<LeaderboardRawRow>) -> Vec<LeaderboardEntry> {
+///
+/// `badges` maps user_id → their most recent badge (from `get_top_badge_per_user`).
+pub fn build_leaderboard(
+    rows: Vec<LeaderboardRawRow>,
+    mut badges: HashMap<i64, BadgeDisplay>,
+) -> Vec<LeaderboardEntry> {
     let leader = rows.first().map(|r| r.total_points).unwrap_or(0);
     rows.into_iter()
         .enumerate()
         .map(|(i, r)| LeaderboardEntry {
             rank: i + 1,
             points_behind: leader - r.total_points,
+            top_badge: badges.remove(&r.user_id),
             user_id: r.user_id,
             user_name: r.user_name,
             total_points: r.total_points,
@@ -103,6 +114,7 @@ pub struct MatchBreakdownRow {
     pub user_id: i64,
     pub user_name: String,
     pub predicted_outcome: Option<MatchOutcome>,
+    pub is_confident: bool,
     pub points_awarded: Option<i32>,
 }
 
@@ -325,6 +337,14 @@ fn percentage(count: i64, total: i64) -> u32 {
         return 0;
     }
     ((count as f64 / total as f64) * 100.0).round() as u32
+}
+
+// ── Group standings view ──────────────────────────────────────────────────────
+
+/// One group's standings for display, with the group name resolved.
+pub struct GroupStandingsView {
+    pub group_name: String,
+    pub standings: Vec<crate::group_standings::TeamStanding>,
 }
 
 // ── Future prospects (pure) ───────────────────────────────────────────────────
@@ -551,7 +571,7 @@ mod tests {
                 max_achievable: 25,
             },
         ];
-        let entries = build_leaderboard(rows);
+        let entries = build_leaderboard(rows, HashMap::new());
         assert_eq!(entries[0].rank, 1);
         assert_eq!(entries[0].points_behind, 0);
         assert_eq!(entries[1].rank, 2);
@@ -560,7 +580,7 @@ mod tests {
 
     #[test]
     fn build_leaderboard_empty_vec() {
-        assert!(build_leaderboard(vec![]).is_empty());
+        assert!(build_leaderboard(vec![], HashMap::new()).is_empty());
     }
 
     #[test]
@@ -579,7 +599,7 @@ mod tests {
                 max_achievable: 15,
             },
         ];
-        let entries = build_leaderboard(rows);
+        let entries = build_leaderboard(rows, HashMap::new());
         assert_eq!(
             entries[0].user_id, 1,
             "Alice has higher ceiling, should rank first"
@@ -644,7 +664,7 @@ mod tests {
                 max_achievable: 20,
             },
         ];
-        let entries = build_leaderboard(rows);
+        let entries = build_leaderboard(rows, HashMap::new());
         assert_eq!(entries[0].user_id, 2, "Alice should be rank 1");
         assert_eq!(entries[1].user_id, 1, "Zara should be rank 2");
     }

@@ -312,6 +312,7 @@ pub async fn get_group_match_breakdown(
         SELECT u.id AS user_id,
                u.name AS user_name,
                gsp.predicted_outcome AS "predicted_outcome?: MatchOutcome",
+               COALESCE(gsp.is_confident, FALSE) AS "is_confident!: bool",
                gsp.points_awarded
         FROM league_members lm
         JOIN users u ON u.id = lm.user_id
@@ -332,6 +333,7 @@ pub async fn get_group_match_breakdown(
             user_id: r.user_id,
             user_name: r.user_name,
             predicted_outcome: r.predicted_outcome,
+            is_confident: r.is_confident,
             points_awarded: r.points_awarded,
         })
         .collect())
@@ -585,6 +587,165 @@ pub async fn get_member_top_scorer_points(
     .fetch_one(pool)
     .await?;
     Ok(pts)
+}
+
+// ── Group standings data ──────────────────────────────────────────────────────
+
+/// Returns all group stage match results needed to compute standings,
+/// plus name maps for teams and groups in the active tournament.
+pub async fn get_group_standings_data(
+    pool: &PgPool,
+    tournament_id: i64,
+) -> anyhow::Result<(
+    Vec<crate::group_standings::GroupMatchResult>,
+    std::collections::HashMap<i64, String>,
+    std::collections::HashMap<i64, String>,
+)> {
+    use crate::group_standings::{GroupMatchResult, Outcome};
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            m.id,
+            m.group_id AS "group_id!: i64",
+            m.home_team_id AS "home_team_id!: i64",
+            m.away_team_id AS "away_team_id!: i64",
+            m.home_score,
+            m.away_score,
+            m.outcome AS "outcome?: MatchOutcome"
+        FROM matches m
+        WHERE m.tournament_id = $1
+          AND m.group_id IS NOT NULL
+        ORDER BY m.group_id, m.scheduled_at
+        "#,
+        tournament_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let match_results: Vec<GroupMatchResult> = rows
+        .into_iter()
+        .map(|r| GroupMatchResult {
+            group_id: r.group_id,
+            home_team_id: r.home_team_id,
+            away_team_id: r.away_team_id,
+            home_score: r.home_score,
+            away_score: r.away_score,
+            outcome: r.outcome.map(|o| match o {
+                MatchOutcome::Home => Outcome::Home,
+                MatchOutcome::Draw => Outcome::Draw,
+                MatchOutcome::Away => Outcome::Away,
+            }),
+        })
+        .collect();
+
+    let team_rows = sqlx::query!(
+        "SELECT id, name FROM teams WHERE tournament_id = $1",
+        tournament_id,
+    )
+    .fetch_all(pool)
+    .await?;
+    let team_names: std::collections::HashMap<i64, String> =
+        team_rows.into_iter().map(|r| (r.id, r.name)).collect();
+
+    let group_rows = sqlx::query!(
+        "SELECT id, name FROM groups WHERE tournament_id = $1",
+        tournament_id,
+    )
+    .fetch_all(pool)
+    .await?;
+    let group_names: std::collections::HashMap<i64, String> =
+        group_rows.into_iter().map(|r| (r.id, r.name)).collect();
+
+    Ok((match_results, team_names, group_names))
+}
+
+// ── Per-round leaderboard ─────────────────────────────────────────────────────
+
+pub struct RoundPoints {
+    pub user_id: i64,
+    pub user_name: String,
+    pub group_points: i64,
+    pub knockout_points: i64,
+    pub top_scorer_points: i64,
+}
+
+impl RoundPoints {
+    pub fn total(&self) -> i64 {
+        self.group_points + self.knockout_points + self.top_scorer_points
+    }
+}
+
+/// Returns per-user point breakdown by stage for all league members.
+pub async fn get_round_points(
+    pool: &PgPool,
+    tournament_id: i64,
+    league_id: i64,
+) -> anyhow::Result<Vec<RoundPoints>> {
+    let rows = sqlx::query!(
+        r#"
+        WITH league_users AS (
+            SELECT u.id, u.name
+            FROM league_members lm
+            JOIN users u ON u.id = lm.user_id
+            WHERE lm.league_id = $2
+        ),
+        gsp_pts AS (
+            SELECT gsp.user_id,
+                   COALESCE(SUM(gsp.points_awarded), 0)::bigint AS pts
+            FROM group_stage_predictions gsp
+            JOIN matches m ON m.id = gsp.match_id AND m.tournament_id = $1
+            WHERE gsp.user_id IN (SELECT id FROM league_users)
+              AND gsp.points_awarded IS NOT NULL
+            GROUP BY gsp.user_id
+        ),
+        kp_pts AS (
+            SELECT user_id,
+                   COALESCE(SUM(points_awarded), 0)::bigint AS pts
+            FROM knockout_predictions
+            WHERE tournament_id = $1
+              AND user_id IN (SELECT id FROM league_users)
+              AND points_awarded IS NOT NULL
+            GROUP BY user_id
+        ),
+        tsp_pts AS (
+            SELECT user_id,
+                   COALESCE(SUM(points_awarded), 0)::bigint AS pts
+            FROM top_scorer_predictions
+            WHERE tournament_id = $1
+              AND user_id IN (SELECT id FROM league_users)
+              AND points_awarded IS NOT NULL
+            GROUP BY user_id
+        )
+        SELECT
+            lu.id          AS "user_id!: i64",
+            lu.name        AS "user_name!: String",
+            COALESCE(g.pts, 0) AS "group_points!: i64",
+            COALESCE(k.pts, 0) AS "knockout_points!: i64",
+            COALESCE(t.pts, 0) AS "top_scorer_points!: i64"
+        FROM league_users lu
+        LEFT JOIN gsp_pts g ON g.user_id = lu.id
+        LEFT JOIN kp_pts  k ON k.user_id = lu.id
+        LEFT JOIN tsp_pts t ON t.user_id = lu.id
+        ORDER BY (COALESCE(g.pts, 0) + COALESCE(k.pts, 0) + COALESCE(t.pts, 0)) DESC,
+                 lu.name ASC
+        "#,
+        tournament_id,
+        league_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| RoundPoints {
+            user_id: r.user_id,
+            user_name: r.user_name,
+            group_points: r.group_points,
+            knockout_points: r.knockout_points,
+            top_scorer_points: r.top_scorer_points,
+        })
+        .collect())
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

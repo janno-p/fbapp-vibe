@@ -1,8 +1,13 @@
 {
-    "permissions": {
-        "allow": [
-            "Bash(cargo build:*)",
-            "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/setup-build.sh\" *)"
-        ]
-    }
+  "permissions": {
+    "allow": [
+      "Bash(cargo build:*)",
+      "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/setup-build.sh\" *)",
+      "Bash(cargo check:*)",
+      "Bash(make migrate:*)",
+      "Bash(cargo test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
 }

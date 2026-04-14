@@ -6,14 +6,20 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{error::AppError, modules::auth::AuthSession, nav::NavContext, state::AppState};
+use crate::{
+    achievements,
+    error::AppError,
+    modules::auth::AuthSession,
+    nav::NavContext,
+    state::AppState,
+};
 
 use super::{
     db,
     models::{
-        CompareGroupRow, FixtureGroup, LeaderboardEntry, LeagueMember, MatchBreakdownRow,
-        MatchConsensus, MatchInfo, MemberStats, NearestMatch, build_leaderboard, compute_streaks,
-        group_fixtures,
+        CompareGroupRow, FixtureGroup, GroupStandingsView, LeaderboardEntry, LeagueMember,
+        MatchBreakdownRow, MatchConsensus, MatchInfo, MemberStats, NearestMatch, build_leaderboard,
+        compute_streaks, group_fixtures,
     },
 };
 
@@ -78,6 +84,27 @@ struct MemberStatsTemplate {
     league_id: i64,
     league_name: String,
     stats: MemberStats,
+    badges: Vec<achievements::BadgeDisplay>,
+    nav: NavContext,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "standings/groups.html")]
+struct GroupStandingsTemplate {
+    league_id: i64,
+    league_name: String,
+    groups: Vec<GroupStandingsView>,
+    no_tournament: bool,
+    nav: NavContext,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "standings/rounds.html")]
+struct RoundBreakdownTemplate {
+    league_id: i64,
+    league_name: String,
+    rows: Vec<db::RoundPoints>,
+    no_tournament: bool,
     nav: NavContext,
 }
 
@@ -121,12 +148,13 @@ pub async fn standings_page(
             None => (vec![], None, false, true, false),
             Some(tournament) => {
                 let locked = tournament.is_predictions_locked();
-                let (raw, nearest, has_live) = tokio::try_join!(
+                let (raw, nearest, has_live, badges) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, tournament.id, league_id),
                     db::get_nearest_match(&state.pool, tournament.id),
                     db::has_live_matches(&state.pool, tournament.id),
+                    crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw), nearest, has_live, false, locked)
+                (build_leaderboard(raw, badges), nearest, has_live, false, locked)
             }
         };
 
@@ -156,11 +184,12 @@ pub async fn leaderboard_fragment(
             None => (vec![], false, true, false),
             Some(tournament) => {
                 let locked = tournament.is_predictions_locked();
-                let (raw, has_live) = tokio::try_join!(
+                let (raw, has_live, badges) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, tournament.id, league_id),
                     db::has_live_matches(&state.pool, tournament.id),
+                    crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw), has_live, false, locked)
+                (build_leaderboard(raw, badges), has_live, false, locked)
             }
         };
 
@@ -340,7 +369,9 @@ pub async fn member_stats(
         return Ok(NotLockedTemplate { league_name, nav }.into_response());
     }
 
-    let stats = match tournament.map(|t| t.id) {
+    let tournament_id = tournament.as_ref().map(|t| t.id);
+
+    let stats = match tournament_id {
         None => MemberStats {
             user_id: target_user_id,
             user_name,
@@ -364,7 +395,7 @@ pub async fn member_stats(
                     db::get_member_top_scorer_points(&state.pool, t_id, target_user_id),
                 )?;
 
-            let leaderboard = build_leaderboard(raw_leaderboard);
+            let leaderboard = build_leaderboard(raw_leaderboard, std::collections::HashMap::new());
             let lb_entry = leaderboard.iter().find(|e| e.user_id == target_user_id);
             let total_points = lb_entry.map(|e| e.total_points).unwrap_or(0);
             let rank = lb_entry.map(|e| e.rank).unwrap_or(leaderboard.len() + 1);
@@ -391,13 +422,103 @@ pub async fn member_stats(
         }
     };
 
+    let badges = match tournament_id {
+        Some(t_id) => {
+            achievements::get_user_badges(&state.pool, target_user_id, t_id)
+                .await
+                .unwrap_or_default()
+        }
+        None => vec![],
+    };
+
     Ok(MemberStatsTemplate {
         league_id,
         league_name,
         stats,
+        badges,
         nav,
     }
     .into_response())
+}
+
+/// GET /leagues/{id}/groups
+pub async fn groups_page(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    Path(league_id): Path<i64>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+    require_member(&state, league_id, user.id).await?;
+
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
+
+    let (groups, no_tournament) = match db::get_active_tournament_id(&state.pool).await? {
+        None => (vec![], true),
+        Some(t_id) => {
+            let (match_results, team_names, group_names) =
+                db::get_group_standings_data(&state.pool, t_id).await?;
+            let computed = crate::group_standings::compute_standings(&match_results, &team_names);
+            let mut views: Vec<GroupStandingsView> = computed
+                .into_iter()
+                .map(|gs| {
+                    let group_name = group_names
+                        .get(&gs.group_id)
+                        .cloned()
+                        .unwrap_or_else(|| gs.group_id.to_string());
+                    GroupStandingsView {
+                        group_name,
+                        standings: gs.standings,
+                    }
+                })
+                .collect();
+            views.sort_by(|a, b| a.group_name.cmp(&b.group_name));
+            (views, false)
+        }
+    };
+
+    Ok(GroupStandingsTemplate {
+        league_id,
+        league_name,
+        groups,
+        no_tournament,
+        nav,
+    })
+}
+
+/// GET /leagues/{id}/standings/rounds
+pub async fn round_breakdown(
+    auth_session: AuthSession,
+    State(state): State<AppState>,
+    Path(league_id): Path<i64>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = auth_session.user.ok_or(AppError::Unauthorized)?;
+    require_member(&state, league_id, user.id).await?;
+
+    let (league_name_opt, nav) = tokio::try_join!(
+        db::get_league_name(&state.pool, league_id),
+        crate::nav::load(&state.pool, &user, "standings"),
+    )?;
+    let league_name = league_name_opt.ok_or(AppError::NotFound)?;
+
+    let (rows, no_tournament) = match db::get_active_tournament_id(&state.pool).await? {
+        None => (vec![], true),
+        Some(t_id) => {
+            let rows = db::get_round_points(&state.pool, t_id, league_id).await?;
+            (rows, false)
+        }
+    };
+
+    Ok(RoundBreakdownTemplate {
+        league_id,
+        league_name,
+        rows,
+        no_tournament,
+        nav,
+    })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

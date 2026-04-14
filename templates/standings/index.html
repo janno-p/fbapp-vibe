@@ -60,7 +60,19 @@
 
     {# ── Actions ────────────────────────────────────────────────────────────
     #}
-    <div class="flex gap-4 text-sm">
+    <div class="flex gap-4 text-sm flex-wrap">
+        <a
+            href="/leagues/{{ league_id }}/groups"
+            class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors"
+        >
+            Group Standings →
+        </a>
+        <a
+            href="/leagues/{{ league_id }}/standings/rounds"
+            class="text-xs font-medium text-goal-500 hover:text-goal-400 transition-colors"
+        >
+            Points by Stage →
+        </a>
         {% if is_locked %}
         <a
             href="/leagues/{{ league_id }}/standings/compare"

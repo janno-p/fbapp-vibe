@@ -222,10 +222,15 @@ pub async fn process_finished_match(
     }
 
     // Score group stage predictions for this match (no-op for knockout matches).
+    // Confident + correct = 2pts; non-confident correct = 1pt; wrong = 0pts.
     sqlx::query!(
         r#"
         UPDATE group_stage_predictions
-        SET points_awarded = CASE WHEN predicted_outcome = $1 THEN 1 ELSE 0 END
+        SET points_awarded = CASE
+            WHEN predicted_outcome = $1 AND is_confident THEN 2
+            WHEN predicted_outcome = $1 THEN 1
+            ELSE 0
+        END
         WHERE match_id = (
             SELECT id FROM matches WHERE tournament_id = $2 AND external_id = $3
         )

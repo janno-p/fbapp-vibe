@@ -94,5 +94,21 @@
       </table>
     </div>
 
+    {# ── Badges ───────────────────────────────────────────────────────────── #}
+    {% if !badges.is_empty() %}
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl px-6 py-5">
+      <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-4">Badges</h2>
+      <div class="flex flex-wrap gap-3">
+        {% for badge in badges %}
+        <div class="flex items-center gap-2 bg-pitch-800 border border-pitch-700 rounded-lg px-3 py-2"
+             title="{{ badge.description }}">
+          <span class="text-lg">{{ badge.emoji }}</span>
+          <span class="text-xs font-medium text-ink-200">{{ badge.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
   </main>
 {% endblock %}

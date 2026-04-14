@@ -398,6 +398,47 @@ pub async fn get_user_badges(
     Ok(badges)
 }
 
+/// Returns the most recently awarded badge for each user, keyed by user_id.
+/// Used to show a "top badge" column on the leaderboard.
+pub async fn get_top_badge_per_user(
+    pool: &PgPool,
+    tournament_id: i64,
+) -> anyhow::Result<std::collections::HashMap<i64, BadgeDisplay>> {
+    // DISTINCT ON returns the latest badge per user (ordered by awarded_at DESC)
+    let rows = sqlx::query!(
+        r#"
+        SELECT DISTINCT ON (user_id)
+               user_id, badge_slug, awarded_at
+        FROM user_achievements
+        WHERE tournament_id = $1
+        ORDER BY user_id, awarded_at DESC
+        "#,
+        tournament_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let map = rows
+        .into_iter()
+        .filter_map(|r| {
+            BadgeSlug::from_str(&r.badge_slug).map(|slug| {
+                (
+                    r.user_id,
+                    BadgeDisplay {
+                        slug: slug.as_str().to_string(),
+                        name: slug.name(),
+                        description: slug.description(),
+                        emoji: slug.emoji(),
+                        awarded_at: r.awarded_at,
+                    },
+                )
+            })
+        })
+        .collect();
+
+    Ok(map)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

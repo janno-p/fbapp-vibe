@@ -16,6 +16,7 @@ use crate::{
 };
 
 const TOP_SCORER_PICKS: usize = 3;
+const MAX_CONFIDENT_PICKS: usize = 3;
 
 use super::{
     db,
@@ -49,6 +50,18 @@ struct PredictionsTemplate {
 impl PredictionsTemplate {
     fn is_top_scorer(&self, player_id: &i64) -> bool {
         self.top_scorer_ids.contains(player_id)
+    }
+
+    /// Returns (predicted_count, total_count) for group stage matches.
+    fn group_prediction_counts(&self) -> (usize, usize) {
+        let total: usize = self.groups.iter().map(|g| g.matches.len()).sum();
+        let predicted: usize = self
+            .groups
+            .iter()
+            .flat_map(|g| &g.matches)
+            .filter(|m| m.predicted_outcome.is_some())
+            .count();
+        (predicted, total)
     }
 }
 
@@ -112,17 +125,40 @@ pub async fn save_group(
         return Err(AppError::Forbidden);
     }
 
-    // Parse match_{id} → MatchOutcome entries
-    let predictions: Vec<(i64, MatchOutcome)> = form
-        .iter()
-        .filter_map(|(key, value)| {
-            let id: i64 = key.strip_prefix("match_")?.parse().ok()?;
-            let outcome = MatchOutcome::from_slug(value)?;
-            Some((id, outcome))
-        })
-        .collect();
+    // Parse match_{id} → MatchOutcome entries and confident_{id} → bool
+    let mut predictions: Vec<(i64, MatchOutcome)> = Vec::new();
+    let mut confident_match_ids: Vec<i64> = Vec::new();
 
-    db::save_group_stage_predictions(&state.pool, tournament.id, user.id, &predictions).await?;
+    for (key, value) in form.iter() {
+        if let Some(rest) = key.strip_prefix("match_") {
+            if let (Ok(id), Some(outcome)) = (rest.parse::<i64>(), MatchOutcome::from_slug(value)) {
+                predictions.push((id, outcome));
+            }
+        } else if let Some(rest) = key.strip_prefix("confident_") {
+            if value == "on" {
+                if let Ok(id) = rest.parse::<i64>() {
+                    confident_match_ids.push(id);
+                }
+            }
+        }
+    }
+
+    if confident_match_ids.len() > MAX_CONFIDENT_PICKS {
+        return Ok(Html(format!(
+            r#"<span class="text-signal-red">Maximum {} confident picks allowed.</span>"#,
+            MAX_CONFIDENT_PICKS
+        ))
+        .into_response());
+    }
+
+    db::save_group_stage_predictions(
+        &state.pool,
+        tournament.id,
+        user.id,
+        &predictions,
+        &confident_match_ids,
+    )
+    .await?;
 
     Ok(Html("Saved").into_response())
 }

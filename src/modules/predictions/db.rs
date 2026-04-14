@@ -46,7 +46,11 @@ pub async fn get_group_matches_with_predictions(
             ht.crest_url  AS "home_crest_url?: String",
             at.crest_url  AS "away_crest_url?: String",
             m.scheduled_at,
-            gsp.predicted_outcome AS "predicted_outcome?: MatchOutcome"
+            m.home_score,
+            m.away_score,
+            m.outcome          AS "actual_outcome?: MatchOutcome",
+            gsp.predicted_outcome AS "predicted_outcome?: MatchOutcome",
+            COALESCE(gsp.is_confident, FALSE) AS "is_confident!: bool"
         FROM matches m
         JOIN groups g ON m.group_id = g.id
         LEFT JOIN teams ht ON m.home_team_id = ht.id
@@ -79,6 +83,10 @@ pub async fn get_group_matches_with_predictions(
             away_crest_url: find_crest_url(r.away_crest_url.as_deref()),
             scheduled_at: r.scheduled_at,
             predicted_outcome: r.predicted_outcome,
+            actual_outcome: r.actual_outcome,
+            home_score: r.home_score,
+            away_score: r.away_score,
+            is_confident: r.is_confident,
         });
     }
 
@@ -344,6 +352,7 @@ pub async fn save_group_stage_predictions(
     tournament_id: i64,
     user_id: i64,
     predictions: &[(i64, MatchOutcome)],
+    confident_match_ids: &[i64],
 ) -> Result<(), AppError> {
     let mut tx = pool
         .begin()
@@ -352,16 +361,19 @@ pub async fn save_group_stage_predictions(
     assert_predictions_open(&mut tx, tournament_id).await?;
 
     for (match_id, outcome) in predictions {
+        let is_confident = confident_match_ids.contains(match_id);
         sqlx::query!(
             r#"
-            INSERT INTO group_stage_predictions (user_id, match_id, predicted_outcome)
-            VALUES ($1, $2, $3)
+            INSERT INTO group_stage_predictions (user_id, match_id, predicted_outcome, is_confident)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (user_id, match_id) DO UPDATE
-                SET predicted_outcome = EXCLUDED.predicted_outcome
+                SET predicted_outcome = EXCLUDED.predicted_outcome,
+                    is_confident = EXCLUDED.is_confident
             "#,
             user_id,
             match_id,
             outcome as &MatchOutcome,
+            is_confident,
         )
         .execute(&mut *tx)
         .await
@@ -620,7 +632,7 @@ mod tests {
         let match_id = make_group_match(&pool, t_id, home, away).await;
 
         let result =
-            save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Home)])
+            save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Home)], &[])
                 .await;
 
         assert!(
@@ -638,10 +650,10 @@ mod tests {
         let match_id = make_group_match(&pool, t_id, home, away).await;
 
         // Submit home, then change to away
-        save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Home)])
+        save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Home)], &[])
             .await
             .expect("first save");
-        save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Away)])
+        save_group_stage_predictions(&pool, t_id, u_id, &[(match_id, MatchOutcome::Away)], &[])
             .await
             .expect("second save");
 

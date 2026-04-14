@@ -1,0 +1,64 @@
+{% extends "layout/nav_base.html" %}
+
+{% block title %}Group Standings — {{ league_name }}{% endblock %}
+
+{% block main %}
+<main class="flex-1 max-w-3xl w-full mx-auto px-6 py-8 space-y-8">
+
+  <div class="flex items-center gap-3">
+    <a href="/leagues/{{ league_id }}/standings"
+       class="text-xs text-ink-500 hover:text-ink-300 transition-colors">← Standings</a>
+    <h1 class="font-display font-bold text-xl text-ink-50 tracking-tight">Group Standings</h1>
+  </div>
+
+  {% if no_tournament %}
+  <p class="text-ink-500 text-sm">No active tournament.</p>
+  {% else %}
+
+  {% for group in groups %}
+  <section>
+    <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500 mb-3">
+      Group {{ group.group_name }}
+    </h2>
+    <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest">
+            <th class="px-4 py-2.5 text-left w-6">#</th>
+            <th class="px-4 py-2.5 text-left">Team</th>
+            <th class="px-4 py-2.5 text-right">MP</th>
+            <th class="px-4 py-2.5 text-right">W</th>
+            <th class="px-4 py-2.5 text-right">D</th>
+            <th class="px-4 py-2.5 text-right">L</th>
+            <th class="px-4 py-2.5 text-right">GF</th>
+            <th class="px-4 py-2.5 text-right">GA</th>
+            <th class="px-4 py-2.5 text-right">GD</th>
+            <th class="px-4 py-2.5 text-right font-bold">Pts</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-pitch-800">
+          {% for (i, row) in group.standings.iter().enumerate() %}
+          <tr class="hover:bg-pitch-800 transition-colors">
+            <td class="px-4 py-2.5 text-ink-600 text-xs">{{ i + 1 }}</td>
+            <td class="px-4 py-2.5 text-ink-100 font-medium">{{ row.team_name }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.mp }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.w }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.d }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.l }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.gf }}</td>
+            <td class="px-4 py-2.5 text-right text-ink-400">{{ row.ga }}</td>
+            <td class="px-4 py-2.5 text-right {% if row.gd > 0 %}text-goal-500{% elif row.gd < 0 %}text-signal-red{% else %}text-ink-500{% endif %}">
+              {% if row.gd > 0 %}+{% endif %}{{ row.gd }}
+            </td>
+            <td class="px-4 py-2.5 text-right font-display font-bold text-ink-50">{{ row.pts }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endfor %}
+
+  {% endif %}
+</main>
+{% endblock %}

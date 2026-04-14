@@ -21,6 +21,11 @@ pub fn router() -> Router<AppState> {
             "/leagues/{id}/standings/compare",
             get(handlers::compare_page),
         )
+        .route(
+            "/leagues/{id}/standings/rounds",
+            get(handlers::round_breakdown),
+        )
+        .route("/leagues/{id}/groups", get(handlers::groups_page))
         .route("/leagues/{id}/fixtures", get(handlers::fixture_list))
         .route(
             "/leagues/{id}/members/{user_id}",

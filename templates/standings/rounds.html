@@ -1,0 +1,47 @@
+{% extends "layout/nav_base.html" %}
+
+{% block title %}Points by Stage — {{ league_name }}{% endblock %}
+
+{% block main %}
+<main class="flex-1 max-w-2xl w-full mx-auto px-6 py-8 space-y-6">
+
+  <div class="flex items-center gap-3">
+    <a href="/leagues/{{ league_id }}/standings"
+       class="text-xs text-ink-500 hover:text-ink-300 transition-colors">← Standings</a>
+    <h1 class="font-display font-bold text-xl text-ink-50 tracking-tight">Points by Stage</h1>
+  </div>
+
+  {% if no_tournament %}
+  <p class="text-ink-500 text-sm">No active tournament.</p>
+  {% else %}
+
+  <div class="bg-pitch-900 border border-pitch-700 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-pitch-700 text-ink-500 text-xs font-display font-semibold uppercase tracking-widest">
+          <th class="px-5 py-3 text-left w-6">#</th>
+          <th class="px-5 py-3 text-left">Player</th>
+          <th class="px-5 py-3 text-right">Group</th>
+          <th class="px-5 py-3 text-right">Knockout</th>
+          <th class="px-5 py-3 text-right">Top Scorer</th>
+          <th class="px-5 py-3 text-right font-bold">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-pitch-800">
+        {% for (i, row) in rows.iter().enumerate() %}
+        <tr class="hover:bg-pitch-800 transition-colors">
+          <td class="px-5 py-3 text-ink-600 text-xs">{{ i + 1 }}</td>
+          <td class="px-5 py-3 text-ink-100 font-medium">{{ row.user_name }}</td>
+          <td class="px-5 py-3 text-right text-ink-400">{{ row.group_points }}</td>
+          <td class="px-5 py-3 text-right text-ink-400">{{ row.knockout_points }}</td>
+          <td class="px-5 py-3 text-right text-ink-400">{{ row.top_scorer_points }}</td>
+          <td class="px-5 py-3 text-right font-display font-bold text-ink-50">{{ row.total() }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% endif %}
+</main>
+{% endblock %}

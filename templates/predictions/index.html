@@ -10,9 +10,11 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
 </div>
 {% endif %}
 
+{% let (predicted_count, total_count) = self.group_prediction_counts() %}
+
 <main
     class="flex-1 max-w-4xl w-full mx-auto px-6 py-8"
-    x-data="predictionTabs()"
+    x-data="predictionTabs({{ predicted_count }}, {{ total_count }})"
     x-init="init()"
 >
     {# Tab navigation #}
@@ -20,9 +22,14 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
         <button
             @click="show('group')"
             :class="activeTab === 'group' ? 'border-goal-500 text-goal-400' : 'border-transparent text-ink-500 hover:text-ink-100'"
-            class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors"
+            class="px-4 py-2.5 text-sm font-display font-semibold tracking-wide rounded-t border-b-2 cursor-pointer transition-colors flex items-center gap-1.5"
         >
             Group Stage
+            <span
+                class="text-xs font-normal opacity-60"
+                x-text="`(${groupCount}/${groupTotal})`"
+                >({{ predicted_count }}/{{ total_count }})</span
+            >
         </button>
         <button
             @click="show('knockout')"
@@ -62,9 +69,10 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                     <div class="space-y-2">
                         {% for m in group.matches %}
                         <div
-                            class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3"
+                            class="bg-pitch-900 border border-pitch-700 rounded-xl px-4 py-3 space-y-2"
                         >
-                            <div class="flex items-center gap-4">
+                            {# Main row: teams + select + correctness #}
+                            <div class="flex items-center gap-3">
                                 <span
                                     class="flex items-center justify-end gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium"
                                 >
@@ -78,6 +86,7 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                                 </span>
                                 <select
                                     name="match_{{ m.id }}"
+                                    @change="onSelectChange()"
                                     class="bg-pitch-800 border border-pitch-600 focus:border-goal-500 rounded-lg px-2.5 py-1.5 text-sm text-ink-100 focus:outline-none transition-colors cursor-pointer"
                                     {%
                                     if
@@ -132,12 +141,57 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                                         >{{ m.away_name() }}</span
                                     >
                                 </span>
+                                {# T-015: Correctness indicator #}
+                                {% match m.correctness() %}
+                                {% when Some with (correct) %}
+                                {% if correct %}
+                                <span class="shrink-0 text-goal-500 text-base leading-none" title="Correct">✓</span>
+                                {% else %}
+                                <span class="shrink-0 text-signal-red text-base leading-none" title="Wrong">✗</span>
+                                {% endif %}
+                                {% when None %}
+                                {% if m.predicted_outcome.is_some() %}
+                                <span class="shrink-0 text-ink-600 text-xs leading-none" title="Pending">—</span>
+                                {% endif %}
+                                {% endmatch %}
                             </div>
-                            <div
-                                class="text-xs text-ink-700 text-center mt-1.5"
-                            >
+
+                            {# T-014: Score and result row for played matches #}
+                            {% if m.is_played() %}
+                            <div class="flex items-center justify-center gap-3 text-xs">
+                                <span class="font-display font-bold text-ink-100 tracking-tight">{{ m.score_label() }}</span>
+                                <span class="text-ink-600">·</span>
+                                <span class="text-ink-500">{{ m.formatted_kickoff() }}</span>
+                            </div>
+                            {% else %}
+                            <div class="text-xs text-ink-700 text-center">
                                 {{ m.formatted_kickoff() }}
                             </div>
+                            {% endif %}
+
+                            {# T-017: Confidence checkbox #}
+                            {% if !predictions_locked %}
+                            <div class="flex items-center gap-2 pt-0.5">
+                                <input
+                                    type="checkbox"
+                                    id="confident_{{ m.id }}"
+                                    name="confident_{{ m.id }}"
+                                    value="on"
+                                    {%
+                                    if
+                                    m.is_confident
+                                    %}checked{%
+                                    endif
+                                    %}
+                                    class="w-3.5 h-3.5 accent-goal-500 cursor-pointer"
+                                />
+                                <label
+                                    for="confident_{{ m.id }}"
+                                    class="text-xs text-ink-500 cursor-pointer select-none"
+                                    >Confident pick</label
+                                >
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -327,17 +381,31 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
 </main>
 
 <script>
-    function predictionTabs() {
+    function predictionTabs(initialCount, initialTotal) {
         const TABS = ["group", "knockout", "top-scorer"];
         return {
             activeTab: "group",
+            groupCount: initialCount,
+            groupTotal: initialTotal,
             init() {
                 const hash = location.hash.replace("#", "");
                 this.activeTab = TABS.includes(hash) ? hash : "group";
+                // Recalculate from DOM in case Alpine hydrates after server render
+                this.$nextTick(() => this.recountGroup());
             },
             show(tab) {
                 this.activeTab = tab;
                 history.replaceState(null, "", "#" + tab);
+            },
+            onSelectChange() {
+                this.recountGroup();
+            },
+            recountGroup() {
+                const selects = Array.from(
+                    this.$el.querySelectorAll('select[name^="match_"]'),
+                );
+                this.groupTotal = selects.length;
+                this.groupCount = selects.filter((s) => s.value !== "").length;
             },
         };
     }

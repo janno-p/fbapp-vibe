@@ -14,6 +14,12 @@ pub struct MatchRow {
     pub away_crest_url: String,
     pub scheduled_at: time::OffsetDateTime,
     pub predicted_outcome: Option<MatchOutcome>,
+    /// Actual match result; `None` means match not yet played.
+    pub actual_outcome: Option<MatchOutcome>,
+    pub home_score: Option<i32>,
+    pub away_score: Option<i32>,
+    /// Whether the user marked this prediction as a confident pick.
+    pub is_confident: bool,
 }
 
 impl MatchRow {
@@ -39,6 +45,25 @@ impl MatchRow {
         self.scheduled_at
             .format(&fmt)
             .unwrap_or_else(|_| "TBD".to_string())
+    }
+
+    pub fn is_played(&self) -> bool {
+        self.actual_outcome.is_some()
+    }
+
+    pub fn score_label(&self) -> String {
+        match (self.home_score, self.away_score) {
+            (Some(h), Some(a)) => format!("{h} – {a}"),
+            _ => String::new(),
+        }
+    }
+
+    /// Returns prediction correctness: `Some(true)` correct, `Some(false)` wrong, `None` pending.
+    pub fn correctness(&self) -> Option<bool> {
+        match (&self.predicted_outcome, &self.actual_outcome) {
+            (Some(pred), Some(actual)) => Some(pred == actual),
+            _ => None,
+        }
     }
 }
 

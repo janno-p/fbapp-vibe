@@ -82,6 +82,9 @@ match_info.away_name }} — {{ league_name }}{% endblock %} {% block main %}
                     </td>
                     <td class="px-4 py-3 text-center text-ink-300">
                         {{ row.prediction_label() }}
+                        {% if row.is_confident %}
+                        <span class="ml-1 text-xs text-signal-amber font-display font-bold" title="Confident pick">2×</span>
+                        {% endif %}
                     </td>
                     <td class="px-4 py-3 text-center">
                         {% if let Some(pts) = row.points_awarded %} {% if
