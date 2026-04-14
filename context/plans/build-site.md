@@ -80,6 +80,16 @@ Completing 8 missing requirements across 5 kits with 26 tasks organized into 5 t
 
 ---
 
+## Tier 5 — Remediation (From Inspection)
+
+| Task | Title | Cavekit | Requirement | blockedBy | Effort |
+|------|-------|---------|-------------|-----------|--------|
+| T-027 | Scenario hypo param server-side validation and whitelist enforcement | standings | R10 | T-022, T-023 | M |
+
+**Tier 5 Summary:** 1 task, security/correctness hardening from peer review
+
+---
+
 ## Summary
 
 | Tier | Tasks | Effort |
@@ -89,7 +99,8 @@ Completing 8 missing requirements across 5 kits with 26 tasks organized into 5 t
 | **Tier 2** | 8 | 4S + 4M = 6 hrs |
 | **Tier 3** | 3 | 3M = 3 hrs |
 | **Tier 4** | 2 | 2M = 2 hrs |
-| **TOTAL** | **26 tasks** | **10S + 14M = 21 hrs** |
+| **Tier 5** | 1 | 1M = 1 hr |
+| **TOTAL** | **27 tasks** | **10S + 15M = 22 hrs** |
 
 ---
 

@@ -53,3 +53,6 @@ Build site: context/plans/build-site.md
 - T-025: Trace integration verify — DONE. Code wiring verified: TraceLayer in routes.rs, init_tracing() + shutdown_tracing() in main.rs, OTLP layer conditional on OTEL_EXPORTER_OTLP_ENDPOINT. No code changes needed.
 - T-026: Badge job E2E tests — DONE. Files: src/achievements.rs (2 sqlx::test integration tests: consistent_predictor awarded at 75% accuracy, not awarded at 0%). Build P, Tests P (107 unit + 8 db + 7 auth = all pass).
 - Commit: 11b735a. ALL TASKS COMPLETE.
+
+### Wave 4 — 2026-04-14 (build-site.md)
+- T-027: Hypo param whitelist enforcement — DONE. Files: standings/models.rs (MAX_HYPO_MATCHES, filter_hypo_by_whitelist, 9 tests), standings/handlers.rs (whitelist filtering in leaderboard_fragment), standings/db.rs (remove dead user_id field), achievements.rs (from_str→from_slug), group_standings.rs (slice fix), predictions/handlers.rs (let-chain). Build P, Tests P (117 unit). Commit: 0e034e1. ALL TASKS COMPLETE.

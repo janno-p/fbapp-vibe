@@ -1,6 +1,6 @@
 ---
 created: 2026-04-10T00:00:00Z
-last_edited: 2026-04-10T00:00:00Z
+last_edited: 2026-04-14T00:00:00Z
 ---
 
 # Cavekit: Standings & Leaderboards
@@ -194,6 +194,22 @@ R1-R6 are fully implemented. R7, R8, R9 are open tasks.
 - HTMX fragment is lightweight and repeatable for live updates
 - Standings pages check league membership before rendering (401/403)
 - Member stats are aggregated in-memory from raw prediction data
+
+### R10: Scenario Modeling — Hypo Param Validation
+**Description:** Server-side validation ensures hypothetical match IDs are valid (unplayed group-stage matches belonging to the active tournament) before computing projected standings.
+
+**Acceptance Criteria:**
+- [ ] Handler rejects hypo param keys that are not valid integers (400 Bad Request)
+- [ ] Handler silently ignores hypo match IDs that do not appear in the unplayed_matches whitelist (only IDs returned by `db::get_unplayed_group_matches` for the active tournament are accepted)
+- [ ] Handler enforces a maximum of 20 hypo params per request; excess params beyond the first 20 are dropped
+- [ ] Handler rejects hypo param values that are not one of: `home`, `draw`, `away` (invalid values silently ignored or 400 returned)
+- [ ] Knockout match IDs cannot be hypothesized (they are not in the unplayed group-stage whitelist and are filtered out)
+- [ ] Unit tests cover: valid subset accepted, invalid ID filtered out, knockout ID rejected, value=`home`/`draw`/`away` accepted, invalid value ignored, >20 params truncated
+
+**Dependencies:** R9 (Scenario Modeling), cavekit-standings R8 (unplayed_matches source)
+
+## Changes
+- 2026-04-14: Added R10 (Scenario Modeling — Hypo Param Validation) — discovered during inspection (finding F-010, F-002, F-004, F-005)
 
 ## Cross-References
 - Depends on: **cavekit-auth.md** (user context, AuthSession)
