@@ -71,7 +71,7 @@ impl BadgeSlug {
         ]
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn from_slug(s: &str) -> Option<Self> {
         match s {
             "perfect_group_round" => Some(Self::PerfectGroupRound),
             "underdog_caller" => Some(Self::UnderdogCaller),
@@ -385,7 +385,7 @@ pub async fn get_user_badges(
     let badges: Vec<BadgeDisplay> = rows
         .into_iter()
         .filter_map(|r| {
-            BadgeSlug::from_str(&r.badge_slug).map(|slug| BadgeDisplay {
+            BadgeSlug::from_slug(&r.badge_slug).map(|slug| BadgeDisplay {
                 slug: slug.as_str().to_string(),
                 name: slug.name(),
                 description: slug.description(),
@@ -421,7 +421,7 @@ pub async fn get_top_badge_per_user(
     let map = rows
         .into_iter()
         .filter_map(|r| {
-            BadgeSlug::from_str(&r.badge_slug).map(|slug| {
+            BadgeSlug::from_slug(&r.badge_slug).map(|slug| {
                 (
                     r.user_id,
                     BadgeDisplay {
@@ -452,13 +452,13 @@ mod tests {
     fn badge_roundtrip_from_str() {
         for badge in BadgeSlug::all() {
             let slug = badge.as_str();
-            assert_eq!(BadgeSlug::from_str(slug), Some(badge), "roundtrip failed for {slug}");
+            assert_eq!(BadgeSlug::from_slug(slug), Some(badge), "roundtrip failed for {slug}");
         }
     }
 
     #[test]
     fn unknown_slug_returns_none() {
-        assert_eq!(BadgeSlug::from_str("not_a_badge"), None);
+        assert_eq!(BadgeSlug::from_slug("not_a_badge"), None);
     }
 
     #[test]

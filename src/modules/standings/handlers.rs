@@ -19,7 +19,8 @@ use super::{
     models::{
         CompareGroupRow, FixtureGroup, GroupStandingsView, LeaderboardEntry, LeagueMember,
         MatchBreakdownRow, MatchConsensus, MatchInfo, MemberStats, NearestMatch, build_leaderboard,
-        compute_projected_delta, compute_streaks, group_fixtures, parse_hypo_params,
+        compute_projected_delta, compute_streaks, filter_hypo_by_whitelist, group_fixtures,
+        parse_hypo_params,
     },
 };
 
@@ -183,23 +184,31 @@ pub async fn leaderboard_fragment(
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
 
-    let hypo = parse_hypo_params(&raw_params);
+    let hypo_raw = parse_hypo_params(&raw_params);
 
     let (entries, has_live, no_tournament, is_locked) =
         match db::get_active_tournament(&state.pool).await? {
             None => (vec![], false, true, false),
             Some(tournament) => {
                 let locked = tournament.is_predictions_locked();
-                let (raw, has_live, badges) = tokio::try_join!(
+                let (raw, has_live, badges, unplayed) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, tournament.id, league_id),
                     db::has_live_matches(&state.pool, tournament.id),
                     crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
+                    db::get_unplayed_group_matches(&state.pool, tournament.id),
                 )?;
+                // Whitelist: only accept hypo IDs for valid unplayed group-stage matches.
+                // Knockout match IDs and nonexistent IDs are silently dropped here.
+                let whitelist: std::collections::HashSet<i64> =
+                    unplayed.iter().map(|m| m.id).collect();
+                let hypo = filter_hypo_by_whitelist(hypo_raw, &whitelist);
                 let deltas = if hypo.is_empty() {
                     std::collections::HashMap::new()
                 } else {
                     let match_ids: Vec<i64> = hypo.keys().copied().collect();
-                    let preds = db::get_predictions_for_matches(&state.pool, league_id, &match_ids).await?;
+                    let preds =
+                        db::get_predictions_for_matches(&state.pool, league_id, &match_ids)
+                            .await?;
                     compute_projected_delta(&preds, &hypo)
                 };
                 (build_leaderboard(raw, badges, deltas), has_live, false, locked)

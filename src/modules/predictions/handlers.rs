@@ -134,12 +134,11 @@ pub async fn save_group(
             if let (Ok(id), Some(outcome)) = (rest.parse::<i64>(), MatchOutcome::from_slug(value)) {
                 predictions.push((id, outcome));
             }
-        } else if let Some(rest) = key.strip_prefix("confident_") {
-            if value == "on" {
-                if let Ok(id) = rest.parse::<i64>() {
-                    confident_match_ids.push(id);
-                }
-            }
+        } else if let Some(rest) = key.strip_prefix("confident_")
+            && value == "on"
+            && let Ok(id) = rest.parse::<i64>()
+        {
+            confident_match_ids.push(id);
         }
     }
 

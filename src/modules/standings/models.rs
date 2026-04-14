@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     achievements::BadgeDisplay,
@@ -75,8 +75,12 @@ impl LeaderboardEntry {
 
 // ── Scenario modeling ─────────────────────────────────────────────────────────
 
+/// Maximum number of hypothetical match outcomes accepted per request.
+pub const MAX_HYPO_MATCHES: usize = 20;
+
 /// Parses raw query params (`hypo[{match_id}]=home|draw|away`) into a map.
-/// Keys not matching the pattern are silently ignored.
+/// Non-matching keys, non-integer IDs, and invalid outcome values are silently ignored.
+/// At most MAX_HYPO_MATCHES entries are returned; excess entries are dropped.
 pub fn parse_hypo_params(params: &HashMap<String, String>) -> HashMap<i64, MatchOutcome> {
     params
         .iter()
@@ -86,6 +90,19 @@ pub fn parse_hypo_params(params: &HashMap<String, String>) -> HashMap<i64, Match
             let outcome = MatchOutcome::from_slug(v)?;
             Some((match_id, outcome))
         })
+        .take(MAX_HYPO_MATCHES)
+        .collect()
+}
+
+/// Filters a parsed hypo map to only include match IDs in the given whitelist.
+/// Called by the handler with the set of valid unplayed group-stage match IDs,
+/// ensuring knockout or nonexistent match IDs are rejected.
+pub fn filter_hypo_by_whitelist(
+    hypo: HashMap<i64, MatchOutcome>,
+    whitelist: &HashSet<i64>,
+) -> HashMap<i64, MatchOutcome> {
+    hypo.into_iter()
+        .filter(|(id, _)| whitelist.contains(id))
         .collect()
 }
 
@@ -104,11 +121,9 @@ pub fn compute_projected_delta(
     let mut deltas: HashMap<i64, i64> = HashMap::new();
 
     for (match_id, pred) in predictions {
-        if let Some(hypo) = hypo_outcomes.get(match_id) {
-            if &pred.predicted_outcome == hypo {
-                let pts = if pred.is_confident { 2 } else { 1 };
-                *deltas.entry(pred.user_id).or_insert(0) += pts;
-            }
+        if let Some(hypo) = hypo_outcomes.get(match_id) && &pred.predicted_outcome == hypo {
+            let pts = if pred.is_confident { 2 } else { 1 };
+            *deltas.entry(pred.user_id).or_insert(0) += pts;
         }
     }
 
@@ -697,6 +712,100 @@ mod tests {
             compute_streaks(&[true, true, true, false, true, true]),
             (2, 3)
         );
+    }
+
+    // ── parse_hypo_params ─────────────────────────────────────────────────────
+
+    fn hypo_map(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+        pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+    }
+
+    #[test]
+    fn parse_hypo_valid_subset_accepted() {
+        let params = hypo_map(&[("hypo[1]", "home"), ("hypo[2]", "draw"), ("other", "x")]);
+        let result = parse_hypo_params(&params);
+        assert_eq!(result.get(&1), Some(&MatchOutcome::Home));
+        assert_eq!(result.get(&2), Some(&MatchOutcome::Draw));
+        assert!(!result.contains_key(&0), "non-hypo key ignored");
+    }
+
+    #[test]
+    fn parse_hypo_invalid_id_filtered_out() {
+        let params = hypo_map(&[("hypo[abc]", "home"), ("hypo[1]", "away")]);
+        let result = parse_hypo_params(&params);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(&1), Some(&MatchOutcome::Away));
+    }
+
+    #[test]
+    fn parse_hypo_invalid_value_ignored() {
+        let params = hypo_map(&[("hypo[1]", "win"), ("hypo[2]", "home")]);
+        let result = parse_hypo_params(&params);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(&2), Some(&MatchOutcome::Home));
+    }
+
+    #[test]
+    fn parse_hypo_all_valid_outcomes_accepted() {
+        let params = hypo_map(&[("hypo[1]", "home"), ("hypo[2]", "draw"), ("hypo[3]", "away")]);
+        let result = parse_hypo_params(&params);
+        assert_eq!(result.get(&1), Some(&MatchOutcome::Home));
+        assert_eq!(result.get(&2), Some(&MatchOutcome::Draw));
+        assert_eq!(result.get(&3), Some(&MatchOutcome::Away));
+    }
+
+    #[test]
+    fn parse_hypo_truncates_at_max() {
+        // Build 25 valid hypo params
+        let pairs: Vec<(String, String)> = (1i64..=25)
+            .map(|i| (format!("hypo[{i}]"), "home".to_string()))
+            .collect();
+        let params: HashMap<String, String> = pairs.into_iter().collect();
+        let result = parse_hypo_params(&params);
+        assert!(result.len() <= MAX_HYPO_MATCHES, "must not exceed {MAX_HYPO_MATCHES}");
+    }
+
+    // ── filter_hypo_by_whitelist ──────────────────────────────────────────────
+
+    #[test]
+    fn filter_hypo_valid_id_passes_through() {
+        let whitelist: HashSet<i64> = [1, 2, 3].into_iter().collect();
+        let hypo = [(1i64, MatchOutcome::Home), (2, MatchOutcome::Draw)]
+            .into_iter()
+            .collect();
+        let result = filter_hypo_by_whitelist(hypo, &whitelist);
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn filter_hypo_knockout_id_rejected() {
+        // Whitelist contains only group-stage IDs; knockout ID 99 is absent
+        let whitelist: HashSet<i64> = [1, 2, 3].into_iter().collect();
+        let hypo = [(99i64, MatchOutcome::Home), (1, MatchOutcome::Away)]
+            .into_iter()
+            .collect();
+        let result = filter_hypo_by_whitelist(hypo, &whitelist);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(&1), Some(&MatchOutcome::Away));
+        assert!(!result.contains_key(&99));
+    }
+
+    #[test]
+    fn filter_hypo_nonexistent_id_rejected() {
+        let whitelist: HashSet<i64> = [5].into_iter().collect();
+        let hypo = [(999i64, MatchOutcome::Draw)].into_iter().collect();
+        let result = filter_hypo_by_whitelist(hypo, &whitelist);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn filter_hypo_empty_whitelist_drops_all() {
+        let whitelist: HashSet<i64> = HashSet::new();
+        let hypo = [(1i64, MatchOutcome::Home), (2, MatchOutcome::Away)]
+            .into_iter()
+            .collect();
+        let result = filter_hypo_by_whitelist(hypo, &whitelist);
+        assert!(result.is_empty());
     }
 
     #[test]

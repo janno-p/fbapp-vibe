@@ -663,7 +663,6 @@ pub async fn get_group_standings_data(
 // ── Per-round leaderboard ─────────────────────────────────────────────────────
 
 pub struct RoundPoints {
-    pub user_id: i64,
     pub user_name: String,
     pub group_points: i64,
     pub knockout_points: i64,
@@ -739,7 +738,6 @@ pub async fn get_round_points(
     Ok(rows
         .into_iter()
         .map(|r| RoundPoints {
-            user_id: r.user_id,
             user_name: r.user_name,
             group_points: r.group_points,
             knockout_points: r.knockout_points,

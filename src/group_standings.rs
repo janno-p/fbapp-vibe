@@ -118,7 +118,7 @@ pub fn compute_standings(matches: &[GroupMatchResult], team_names: &std::collect
 }
 
 /// Sort standings rows by: Pts DESC → GD DESC → GF DESC → H2H → alphabetical.
-fn sort_standings(rows: &mut Vec<TeamStanding>, matches: &[GroupMatchResult], group_id: i64) {
+fn sort_standings(rows: &mut [TeamStanding], matches: &[GroupMatchResult], group_id: i64) {
     // Initial sort: Pts DESC, GD DESC, GF DESC, alphabetical
     rows.sort_by(|a, b| {
         b.pts
@@ -135,7 +135,7 @@ fn sort_standings(rows: &mut Vec<TeamStanding>, matches: &[GroupMatchResult], gr
 /// Apply head-to-head tiebreaker within contiguous runs of teams with equal
 /// Pts, GD, and GF. Only reorders teams within each tied sub-group.
 fn apply_h2h_tiebreaker(
-    rows: &mut Vec<TeamStanding>,
+    rows: &mut [TeamStanding],
     matches: &[GroupMatchResult],
     group_id: i64,
 ) {
