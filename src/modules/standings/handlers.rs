@@ -19,7 +19,7 @@ use super::{
     models::{
         CompareGroupRow, FixtureGroup, GroupStandingsView, LeaderboardEntry, LeagueMember,
         MatchBreakdownRow, MatchConsensus, MatchInfo, MemberStats, NearestMatch, build_leaderboard,
-        compute_streaks, group_fixtures,
+        compute_projected_delta, compute_streaks, group_fixtures, parse_hypo_params,
     },
 };
 
@@ -35,6 +35,7 @@ struct StandingsTemplate {
     has_live: bool,
     no_tournament: bool,
     is_locked: bool,
+    unplayed_matches: Vec<db::UnplayedGroupMatch>,
     nav: NavContext,
 }
 
@@ -143,18 +144,19 @@ pub async fn standings_page(
     )?;
     let league_name = league_name_opt.ok_or(AppError::NotFound)?;
 
-    let (entries, nearest, has_live, no_tournament, is_locked) =
+    let (entries, nearest, has_live, no_tournament, is_locked, unplayed_matches) =
         match db::get_active_tournament(&state.pool).await? {
-            None => (vec![], None, false, true, false),
+            None => (vec![], None, false, true, false, vec![]),
             Some(tournament) => {
                 let locked = tournament.is_predictions_locked();
-                let (raw, nearest, has_live, badges) = tokio::try_join!(
+                let (raw, nearest, has_live, badges, unplayed) = tokio::try_join!(
                     db::get_leaderboard(&state.pool, tournament.id, league_id),
                     db::get_nearest_match(&state.pool, tournament.id),
                     db::has_live_matches(&state.pool, tournament.id),
                     crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
+                    db::get_unplayed_group_matches(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw, badges), nearest, has_live, false, locked)
+                (build_leaderboard(raw, badges, std::collections::HashMap::new()), nearest, has_live, false, locked, unplayed)
             }
         };
 
@@ -166,18 +168,22 @@ pub async fn standings_page(
         has_live,
         no_tournament,
         is_locked,
+        unplayed_matches,
         nav,
     })
 }
 
-/// GET /leagues/{id}/standings/leaderboard  — HTMX fragment for auto-refresh
+/// GET /leagues/{id}/standings/leaderboard  — HTMX fragment for auto-refresh and scenario modeling
 pub async fn leaderboard_fragment(
     auth_session: AuthSession,
     State(state): State<AppState>,
     Path(league_id): Path<i64>,
+    Query(raw_params): Query<std::collections::HashMap<String, String>>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
     require_member(&state, league_id, user.id).await?;
+
+    let hypo = parse_hypo_params(&raw_params);
 
     let (entries, has_live, no_tournament, is_locked) =
         match db::get_active_tournament(&state.pool).await? {
@@ -189,7 +195,14 @@ pub async fn leaderboard_fragment(
                     db::has_live_matches(&state.pool, tournament.id),
                     crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw, badges), has_live, false, locked)
+                let deltas = if hypo.is_empty() {
+                    std::collections::HashMap::new()
+                } else {
+                    let match_ids: Vec<i64> = hypo.keys().copied().collect();
+                    let preds = db::get_predictions_for_matches(&state.pool, league_id, &match_ids).await?;
+                    compute_projected_delta(&preds, &hypo)
+                };
+                (build_leaderboard(raw, badges, deltas), has_live, false, locked)
             }
         };
 
@@ -395,7 +408,7 @@ pub async fn member_stats(
                     db::get_member_top_scorer_points(&state.pool, t_id, target_user_id),
                 )?;
 
-            let leaderboard = build_leaderboard(raw_leaderboard, std::collections::HashMap::new());
+            let leaderboard = build_leaderboard(raw_leaderboard, std::collections::HashMap::new(), std::collections::HashMap::new());
             let lb_entry = leaderboard.iter().find(|e| e.user_id == target_user_id);
             let total_points = lb_entry.map(|e| e.total_points).unwrap_or(0);
             let rank = lb_entry.map(|e| e.rank).unwrap_or(leaderboard.len() + 1);

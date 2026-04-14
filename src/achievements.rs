@@ -470,4 +470,180 @@ mod tests {
             assert!(!badge.as_str().is_empty(), "{:?} slug empty", badge);
         }
     }
+
+    // ── Integration tests (require TEST_DATABASE_URL) ─────────────────────────
+
+    async fn insert_tournament(pool: &PgPool, external_id: &str) -> i64 {
+        sqlx::query!(
+            "INSERT INTO tournaments (name, external_id, season, is_active)
+             VALUES ('Test Cup', $1, '2024', TRUE)
+             RETURNING id",
+            external_id
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert tournament")
+        .id
+    }
+
+    async fn insert_group(pool: &PgPool, tournament_id: i64, name: &str) -> i64 {
+        sqlx::query!(
+            "INSERT INTO groups (tournament_id, name) VALUES ($1, $2) RETURNING id",
+            tournament_id,
+            name
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert group")
+        .id
+    }
+
+    async fn insert_team(pool: &PgPool, tournament_id: i64, external_id: &str, name: &str) -> i64 {
+        sqlx::query!(
+            "INSERT INTO teams (tournament_id, external_id, name, short_name) VALUES ($1, $2, $3, $4) RETURNING id",
+            tournament_id,
+            external_id,
+            name,
+            name
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert team")
+        .id
+    }
+
+    async fn insert_user(pool: &PgPool, google_id: &str, email: &str) -> i64 {
+        sqlx::query!(
+            "INSERT INTO users (google_id, email, name) VALUES ($1, $2, 'Tester') RETURNING id",
+            google_id,
+            email
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert user")
+        .id
+    }
+
+    async fn insert_match(
+        pool: &PgPool,
+        tournament_id: i64,
+        external_id: &str,
+        home: i64,
+        away: i64,
+        group_id: i64,
+        outcome: crate::db_types::MatchOutcome,
+    ) -> i64 {
+        sqlx::query!(
+            r#"INSERT INTO matches
+               (tournament_id, external_id, home_team_id, away_team_id,
+                group_id, scheduled_at, outcome)
+               VALUES ($1, $2, $3, $4, $5, NOW() - interval '1 hour', $6)
+               RETURNING id"#,
+            tournament_id,
+            external_id,
+            home,
+            away,
+            group_id,
+            outcome as crate::db_types::MatchOutcome,
+        )
+        .fetch_one(pool)
+        .await
+        .expect("insert match")
+        .id
+    }
+
+    async fn insert_prediction(
+        pool: &PgPool,
+        user_id: i64,
+        match_id: i64,
+        outcome: crate::db_types::MatchOutcome,
+    ) {
+        sqlx::query!(
+            "INSERT INTO group_stage_predictions (user_id, match_id, predicted_outcome)
+             VALUES ($1, $2, $3)",
+            user_id,
+            match_id,
+            outcome as crate::db_types::MatchOutcome,
+        )
+        .execute(pool)
+        .await
+        .expect("insert prediction");
+    }
+
+    async fn badge_count(pool: &PgPool, user_id: i64, tournament_id: i64, slug: &str) -> i64 {
+        sqlx::query!(
+            "SELECT COUNT(*) AS cnt FROM user_achievements WHERE user_id = $1 AND tournament_id = $2 AND badge_slug = $3",
+            user_id,
+            tournament_id,
+            slug
+        )
+        .fetch_one(pool)
+        .await
+        .expect("count badges")
+        .cnt
+        .unwrap_or(0)
+    }
+
+    /// Sets up a tournament, group, teams, and matches with known outcomes, then seeds
+    /// a user's predictions and runs the badge award job. Verifies the expected badge
+    /// is written to `user_achievements` and is idempotent on a second run.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consistent_predictor_badge_awarded_and_idempotent(pool: PgPool) {
+        use crate::db_types::MatchOutcome;
+
+        let t_id = insert_tournament(&pool, "T-BADGE-1").await;
+        let g_id = insert_group(&pool, t_id, "Group A").await;
+        let home = insert_team(&pool, t_id, "TA", "Team A").await;
+        let away = insert_team(&pool, t_id, "TB", "Team B").await;
+        let user_id = insert_user(&pool, "G-BADGE", "badge@test.com").await;
+
+        // 4 matches: user predicts Home for all; 3 are correct (75% > 70%)
+        let outcomes = [MatchOutcome::Home, MatchOutcome::Home, MatchOutcome::Home, MatchOutcome::Away];
+        for (i, outcome) in outcomes.iter().enumerate() {
+            let mid = insert_match(&pool, t_id, &format!("M-B1-{i}"), home, away, g_id, outcome.clone()).await;
+            insert_prediction(&pool, user_id, mid, MatchOutcome::Home).await;
+        }
+
+        run_badge_award_job(&pool, t_id).await.expect("badge job");
+
+        assert_eq!(
+            badge_count(&pool, user_id, t_id, "consistent_predictor").await,
+            1,
+            "consistent_predictor badge not awarded"
+        );
+
+        // Idempotency: second run must not insert a duplicate
+        run_badge_award_job(&pool, t_id).await.expect("badge job second run");
+        assert_eq!(
+            badge_count(&pool, user_id, t_id, "consistent_predictor").await,
+            1,
+            "badge must not be awarded twice"
+        );
+    }
+
+    /// Users below the 70% threshold do not get consistent_predictor badge.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn consistent_predictor_not_awarded_below_threshold(pool: PgPool) {
+        use crate::db_types::MatchOutcome;
+
+        let t_id = insert_tournament(&pool, "T-BADGE-2").await;
+        let g_id = insert_group(&pool, t_id, "Group B").await;
+        let home = insert_team(&pool, t_id, "TC", "Team C").await;
+        let away = insert_team(&pool, t_id, "TD", "Team D").await;
+        let user_id = insert_user(&pool, "G-BADGE-2", "badge2@test.com").await;
+
+        // 2 matches: both outcome=Away, user predicts Home → 0/2 = 0% < 70%
+        for i in 0..2i64 {
+            let mid = insert_match(&pool, t_id, &format!("M-B2-{i}"), home, away, g_id, MatchOutcome::Away).await;
+            insert_prediction(&pool, user_id, mid, MatchOutcome::Home).await;
+        }
+
+        run_badge_award_job(&pool, t_id).await.expect("badge job");
+
+        assert_eq!(
+            badge_count(&pool, user_id, t_id, "consistent_predictor").await,
+            0,
+            "badge must not be awarded below threshold"
+        );
+    }
 }

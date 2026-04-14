@@ -30,3 +30,18 @@ Build site: context/plans/build-site.md
 - T-009: run_badge_award_job() — DONE. Files: src/achievements.rs. Build P.
 - T-016: is_confident migration — DONE. Files: migrations/0014_confidence_flag.sql. Build P.
 - Commit: 91c9536. Next: T-008, T-010, T-012, T-014, T-017, T-018, T-020
+
+### Wave 2 — 2026-04-14 (build-site.md)
+- T-008: Group standings route+template — DONE. Files: standings/handlers.rs, standings/db.rs, standings/models.rs, templates/standings/groups.html. Build P, Tests P.
+- T-010: Badge display member_stats — DONE. Files: standings/handlers.rs, templates/standings/member_stats.html, achievements.rs. Build P.
+- T-011: Badge column leaderboard — DONE. Files: standings/models.rs, standings/handlers.rs, achievements.rs, templates/standings/leaderboard.html. Build P.
+- T-012: Prediction counter logic — DONE. Files: predictions/handlers.rs, templates/predictions/index.html. Build P.
+- T-013: Live counter Alpine.js — DONE. Files: templates/predictions/index.html. Build P.
+- T-014: Match results display — DONE. Files: predictions/models.rs, predictions/db.rs, templates/predictions/index.html. Build P.
+- T-015: Correctness indicator — DONE. Files: templates/predictions/index.html. Build P.
+- T-017: Confidence checkbox — DONE. Files: predictions/handlers.rs, templates/predictions/index.html. Build P.
+- T-018: Scoring function update — DONE. Files: polling/scorer.rs, polling/db.rs. Build P, Tests P.
+- T-019: Confidence breakdown indicator — DONE. Files: standings/models.rs, standings/db.rs, templates/standings/match.html. Build P.
+- T-020: Per-round points query — DONE. Files: standings/db.rs. Build P.
+- T-021: Per-round route+template — DONE. Files: standings/handlers.rs, standings/mod.rs, templates/standings/rounds.html. Build P.
+- Commit: b3f0e13. Next: T-022, T-023, T-024 (Tier 3), T-025, T-026 (Tier 4)

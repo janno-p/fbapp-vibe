@@ -748,6 +748,98 @@ pub async fn get_round_points(
         .collect())
 }
 
+// ── Scenario modeling ─────────────────────────────────────────────────────────
+
+/// Unplayed group stage match — used to render hypothetical result pickers.
+pub struct UnplayedGroupMatch {
+    pub id: i64,
+    pub home_name: String,
+    pub away_name: String,
+}
+
+/// One prediction row for a group stage match from a league member.
+pub struct HypoPrediction {
+    pub user_id: i64,
+    pub predicted_outcome: crate::db_types::MatchOutcome,
+    pub is_confident: bool,
+}
+
+/// Returns unplayed group stage matches for the given tournament.
+pub async fn get_unplayed_group_matches(
+    pool: &PgPool,
+    tournament_id: i64,
+) -> anyhow::Result<Vec<UnplayedGroupMatch>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT m.id,
+               COALESCE(ht.name, 'TBD') AS "home_name!: String",
+               COALESCE(at.name, 'TBD') AS "away_name!: String"
+        FROM matches m
+        LEFT JOIN teams ht ON ht.id = m.home_team_id
+        LEFT JOIN teams at ON at.id = m.away_team_id
+        WHERE m.tournament_id = $1
+          AND m.group_id IS NOT NULL
+          AND m.outcome IS NULL
+        ORDER BY m.scheduled_at ASC
+        "#,
+        tournament_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| UnplayedGroupMatch {
+            id: r.id,
+            home_name: r.home_name,
+            away_name: r.away_name,
+        })
+        .collect())
+}
+
+/// Returns all group stage predictions from league members for the given match IDs.
+/// Used to compute projected point deltas for hypothetical outcomes.
+pub async fn get_predictions_for_matches(
+    pool: &PgPool,
+    league_id: i64,
+    match_ids: &[i64],
+) -> anyhow::Result<Vec<(i64, HypoPrediction)>> {
+    if match_ids.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT gsp.match_id,
+               gsp.user_id,
+               gsp.predicted_outcome AS "predicted_outcome!: MatchOutcome",
+               COALESCE(gsp.is_confident, FALSE) AS "is_confident!: bool"
+        FROM group_stage_predictions gsp
+        JOIN league_members lm ON lm.user_id = gsp.user_id AND lm.league_id = $1
+        WHERE gsp.match_id = ANY($2)
+          AND gsp.predicted_outcome IS NOT NULL
+        "#,
+        league_id,
+        match_ids,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            (
+                r.match_id,
+                HypoPrediction {
+                    user_id: r.user_id,
+                    predicted_outcome: r.predicted_outcome,
+                    is_confident: r.is_confident,
+                },
+            )
+        })
+        .collect())
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]

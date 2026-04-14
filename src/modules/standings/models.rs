@@ -26,6 +26,15 @@ pub struct LeaderboardEntry {
     pub points_behind: i64,
     /// Most recently awarded badge for this user, if any.
     pub top_badge: Option<BadgeDisplay>,
+    /// Projected additional points from hypothetical outcomes (0 = no scenario active).
+    pub projected_delta: i64,
+}
+
+impl LeaderboardEntry {
+    /// True when a scenario is active and this user has projected additional points.
+    pub fn has_projection(&self) -> bool {
+        self.projected_delta > 0
+    }
 }
 
 /// Assigns ranks (1-based) and computes `points_behind` relative to the leader.
@@ -36,9 +45,11 @@ pub struct LeaderboardEntry {
 ///   3. `user_name ASC` (final deterministic tie-break)
 ///
 /// `badges` maps user_id → their most recent badge (from `get_top_badge_per_user`).
+/// `deltas` maps user_id → projected extra points from hypothetical outcomes.
 pub fn build_leaderboard(
     rows: Vec<LeaderboardRawRow>,
     mut badges: HashMap<i64, BadgeDisplay>,
+    deltas: HashMap<i64, i64>,
 ) -> Vec<LeaderboardEntry> {
     let leader = rows.first().map(|r| r.total_points).unwrap_or(0);
     rows.into_iter()
@@ -47,6 +58,7 @@ pub fn build_leaderboard(
             rank: i + 1,
             points_behind: leader - r.total_points,
             top_badge: badges.remove(&r.user_id),
+            projected_delta: deltas.get(&r.user_id).copied().unwrap_or(0),
             user_id: r.user_id,
             user_name: r.user_name,
             total_points: r.total_points,
@@ -59,6 +71,48 @@ impl LeaderboardEntry {
     pub fn is_leader(&self) -> bool {
         self.points_behind == 0
     }
+}
+
+// ── Scenario modeling ─────────────────────────────────────────────────────────
+
+/// Parses raw query params (`hypo[{match_id}]=home|draw|away`) into a map.
+/// Keys not matching the pattern are silently ignored.
+pub fn parse_hypo_params(params: &HashMap<String, String>) -> HashMap<i64, MatchOutcome> {
+    params
+        .iter()
+        .filter_map(|(k, v)| {
+            let id_str = k.strip_prefix("hypo[")?.strip_suffix(']')?;
+            let match_id: i64 = id_str.parse().ok()?;
+            let outcome = MatchOutcome::from_slug(v)?;
+            Some((match_id, outcome))
+        })
+        .collect()
+}
+
+/// Computes projected point deltas for each user given hypothetical outcomes.
+///
+/// For each hypothetical match outcome:
+///   - +2 if user predicted correctly AND is_confident
+///   - +1 if user predicted correctly AND NOT is_confident
+///   - +0 otherwise
+///
+/// Returns `HashMap<user_id, projected_delta>` — only users with non-zero deltas are included.
+pub fn compute_projected_delta(
+    predictions: &[(i64, super::db::HypoPrediction)], // (match_id, prediction)
+    hypo_outcomes: &HashMap<i64, MatchOutcome>,
+) -> HashMap<i64, i64> {
+    let mut deltas: HashMap<i64, i64> = HashMap::new();
+
+    for (match_id, pred) in predictions {
+        if let Some(hypo) = hypo_outcomes.get(match_id) {
+            if &pred.predicted_outcome == hypo {
+                let pts = if pred.is_confident { 2 } else { 1 };
+                *deltas.entry(pred.user_id).or_insert(0) += pts;
+            }
+        }
+    }
+
+    deltas
 }
 
 // ── Match breakdown ───────────────────────────────────────────────────────────
@@ -571,7 +625,7 @@ mod tests {
                 max_achievable: 25,
             },
         ];
-        let entries = build_leaderboard(rows, HashMap::new());
+        let entries = build_leaderboard(rows, HashMap::new(), HashMap::new());
         assert_eq!(entries[0].rank, 1);
         assert_eq!(entries[0].points_behind, 0);
         assert_eq!(entries[1].rank, 2);
@@ -580,7 +634,7 @@ mod tests {
 
     #[test]
     fn build_leaderboard_empty_vec() {
-        assert!(build_leaderboard(vec![], HashMap::new()).is_empty());
+        assert!(build_leaderboard(vec![], HashMap::new(), HashMap::new()).is_empty());
     }
 
     #[test]
@@ -599,7 +653,7 @@ mod tests {
                 max_achievable: 15,
             },
         ];
-        let entries = build_leaderboard(rows, HashMap::new());
+        let entries = build_leaderboard(rows, HashMap::new(), HashMap::new());
         assert_eq!(
             entries[0].user_id, 1,
             "Alice has higher ceiling, should rank first"
@@ -664,7 +718,7 @@ mod tests {
                 max_achievable: 20,
             },
         ];
-        let entries = build_leaderboard(rows, HashMap::new());
+        let entries = build_leaderboard(rows, HashMap::new(), HashMap::new());
         assert_eq!(entries[0].user_id, 2, "Alice should be rank 1");
         assert_eq!(entries[1].user_id, 1, "Zara should be rank 2");
     }

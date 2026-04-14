@@ -58,6 +58,43 @@
         {% include "standings/leaderboard.html" %}
     </section>
 
+    {# ── Scenario modeling ─────────────────────────────────────────────────── #}
+    {% if !unplayed_matches.is_empty() %}
+    <section
+      x-data="scenarioPicker('{{ league_id }}')"
+      class="bg-pitch-900 border border-pitch-700 rounded-xl px-5 py-4 space-y-3"
+    >
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-display font-semibold tracking-widest uppercase text-ink-500">
+          What if…
+        </h2>
+        <button
+          @click="reset()"
+          class="text-xs text-ink-700 hover:text-ink-400 transition-colors"
+          x-show="hasSelections()"
+        >Reset</button>
+      </div>
+      <p class="text-xs text-ink-600">Pick hypothetical results to see projected standings.</p>
+      <div class="space-y-2">
+        {% for m in unplayed_matches %}
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-ink-300 flex-1 truncate">{{ m.home_name }} vs {{ m.away_name }}</span>
+          <select
+            name="hypo[{{ m.id }}]"
+            @change="onchange($event, {{ m.id }})"
+            class="bg-pitch-800 border border-pitch-600 text-ink-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-goal-500"
+          >
+            <option value="">—</option>
+            <option value="home">{{ m.home_name }} win</option>
+            <option value="draw">Draw</option>
+            <option value="away">{{ m.away_name }} win</option>
+          </select>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     {# ── Actions ────────────────────────────────────────────────────────────
     #}
     <div class="flex gap-4 text-sm flex-wrap">
@@ -89,4 +126,38 @@
         </a>
     </div>
 </main>
+{% endblock %}
+{% block head_scripts %}
+<script>
+function scenarioPicker(leagueId) {
+  return {
+    selections: {},
+    onchange(event, matchId) {
+      const val = event.target.value;
+      if (val) {
+        this.selections[matchId] = val;
+      } else {
+        delete this.selections[matchId];
+      }
+      this.refresh();
+    },
+    hasSelections() {
+      return Object.keys(this.selections).length > 0;
+    },
+    reset() {
+      this.selections = {};
+      document.querySelectorAll('[name^="hypo["]').forEach(el => { el.value = ''; });
+      this.refresh();
+    },
+    refresh() {
+      const params = new URLSearchParams();
+      for (const [id, val] of Object.entries(this.selections)) {
+        params.set(`hypo[${id}]`, val);
+      }
+      const url = `/leagues/${leagueId}/standings/leaderboard?${params.toString()}`;
+      htmx.ajax('GET', url, { target: '#leaderboard-wrapper', swap: 'outerHTML' });
+    }
+  };
+}
+</script>
 {% endblock %}
