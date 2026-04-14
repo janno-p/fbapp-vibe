@@ -45,3 +45,11 @@ Build site: context/plans/build-site.md
 - T-020: Per-round points query — DONE. Files: standings/db.rs. Build P.
 - T-021: Per-round route+template — DONE. Files: standings/handlers.rs, standings/mod.rs, templates/standings/rounds.html. Build P.
 - Commit: b3f0e13. Next: T-022, T-023, T-024 (Tier 3), T-025, T-026 (Tier 4)
+
+### Wave 3 — 2026-04-14 (build-site.md)
+- T-022: Scenario hypo param parsing — DONE. Files: standings/models.rs (parse_hypo_params, compute_projected_delta). Build P, Tests P.
+- T-023: Leaderboard recompute with hypo results — DONE. Files: standings/handlers.rs (leaderboard_fragment accepts Query<HashMap>), standings/db.rs (get_unplayed_group_matches, get_predictions_for_matches). Build P.
+- T-024: HTMX scenario UI + projected delta display — DONE. Files: templates/standings/index.html (scenario picker + scenarioPicker Alpine component), templates/standings/leaderboard.html (+N projected delta). Build P.
+- T-025: Trace integration verify — DONE. Code wiring verified: TraceLayer in routes.rs, init_tracing() + shutdown_tracing() in main.rs, OTLP layer conditional on OTEL_EXPORTER_OTLP_ENDPOINT. No code changes needed.
+- T-026: Badge job E2E tests — DONE. Files: src/achievements.rs (2 sqlx::test integration tests: consistent_predictor awarded at 75% accuracy, not awarded at 0%). Build P, Tests P (107 unit + 8 db + 7 auth = all pass).
+- Commit: 11b735a. ALL TASKS COMPLETE.
