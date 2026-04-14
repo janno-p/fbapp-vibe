@@ -5,7 +5,6 @@ use axum_server::tls_rustls::RustlsConfig;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 use tower_sessions::{Expiry, SessionManagerLayer, cookie::SameSite};
 use tower_sessions_sqlx_store::PostgresStore;
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use fbapp_vibe::{
     config::Config,
@@ -14,6 +13,7 @@ use fbapp_vibe::{
     routes,
     session_cleanup,
     state::{AppState, OAuthClient},
+    tracing_setup,
 };
 
 #[tokio::main]
@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
         .install_default()
         .expect("failed to install rustls crypto provider");
 
-    init_tracing();
+    let otlp_enabled = tracing_setup::init_tracing();
 
     let config = Config::load().map_err(|e| anyhow::anyhow!("failed to load config: {e}"))?;
 
@@ -77,6 +77,10 @@ async fn main() -> anyhow::Result<()> {
         axum::serve(listener, app).await?;
     }
 
+    if otlp_enabled {
+        tracing_setup::shutdown_tracing();
+    }
+
     Ok(())
 }
 
@@ -93,12 +97,3 @@ fn build_oauth_client(config: &Config) -> anyhow::Result<OAuthClient> {
     Ok(client)
 }
 
-fn init_tracing() {
-    tracing_subscriber::registry()
-        .with(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "fbapp_vibe=debug,tower_http=debug,sqlx=warn".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-}

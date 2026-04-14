@@ -30,6 +30,10 @@ async-trait = "0.1"
 time = "0.3"
 uuid = { version = "1", features = ["v4"] }
 serde_qs = "1.1.1"
+opentelemetry = { version = "0.20", features = ["trace"] }
+opentelemetry_sdk = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.13", features = ["grpc-tonic"] }
+tracing-opentelemetry = "0.21"
 
 [dev-dependencies]
 axum-test = "20"

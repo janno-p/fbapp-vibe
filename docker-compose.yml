@@ -27,5 +27,18 @@ services:
       timeout: 5s
       retries: 5
 
+  # Optional: local Jaeger instance for distributed tracing.
+  # Start with: docker compose up jaeger
+  # View traces at: http://localhost:16686
+  # Enable export by setting OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "4317:4317"   # OTLP gRPC collector
+      - "16686:16686" # Jaeger web UI
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
 volumes:
   postgres_data:
