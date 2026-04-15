@@ -24,6 +24,12 @@ pub struct LeaderboardEntry {
     pub total_points: i64,
     pub max_achievable: i64,
     pub points_behind: i64,
+    /// Remaining points this player could still earn (`max_achievable - total_points`).
+    /// Display-only value; does NOT drive band assignment.
+    pub remaining_possible: i64,
+    /// 7-tier ceiling band (1 = lowest, 7 = highest) derived from `max_achievable`.
+    /// 1 and 7 get triple chevrons, 2/6 double, 3/5 single, 4 is neutral.
+    pub ceiling_band: u8,
     /// Most recently awarded badge for this user, if any.
     pub top_badge: Option<BadgeDisplay>,
     /// Projected additional points from hypothetical outcomes (0 = no scenario active).
@@ -52,11 +58,14 @@ pub fn build_leaderboard(
     deltas: HashMap<i64, i64>,
 ) -> Vec<LeaderboardEntry> {
     let leader = rows.first().map(|r| r.total_points).unwrap_or(0);
-    rows.into_iter()
+    let mut entries: Vec<LeaderboardEntry> = rows
+        .into_iter()
         .enumerate()
         .map(|(i, r)| LeaderboardEntry {
             rank: i + 1,
             points_behind: leader - r.total_points,
+            remaining_possible: r.max_achievable - r.total_points,
+            ceiling_band: 4, // placeholder; assign_ceiling_bands overwrites below
             top_badge: badges.remove(&r.user_id),
             projected_delta: deltas.get(&r.user_id).copied().unwrap_or(0),
             user_id: r.user_id,
@@ -64,7 +73,32 @@ pub fn build_leaderboard(
             total_points: r.total_points,
             max_achievable: r.max_achievable,
         })
-        .collect()
+        .collect();
+    assign_ceiling_bands(&mut entries);
+    entries
+}
+
+/// Assigns a 7-tier `ceiling_band` to each entry based on `max_achievable`.
+///
+/// Band 7 = highest ceiling, Band 1 = lowest. If all entries share the same
+/// `max_achievable` (range = 0), all receive band 4 (middle/neutral).
+///
+/// Formula: `band = clamp(floor((value - min) * 7 / range), 0, 6) + 1`
+pub fn assign_ceiling_bands(entries: &mut [LeaderboardEntry]) {
+    if entries.is_empty() {
+        return;
+    }
+    let min_ceiling = entries.iter().map(|e| e.max_achievable).min().unwrap_or(0);
+    let max_ceiling = entries.iter().map(|e| e.max_achievable).max().unwrap_or(0);
+    let range = max_ceiling - min_ceiling;
+    for entry in entries.iter_mut() {
+        entry.ceiling_band = if range == 0 {
+            4
+        } else {
+            let band_raw = ((entry.max_achievable - min_ceiling) * 7) / range;
+            (band_raw as u8).clamp(0, 6) + 1
+        };
+    }
 }
 
 impl LeaderboardEntry {
@@ -818,6 +852,120 @@ mod tests {
             .collect();
         let result = filter_hypo_by_whitelist(hypo, &whitelist);
         assert!(result.is_empty());
+    }
+
+    // ── assign_ceiling_bands ──────────────────────────────────────────────────
+
+    fn entry_with_ceiling(max_achievable: i64) -> LeaderboardEntry {
+        LeaderboardEntry {
+            rank: 1,
+            user_id: 1,
+            user_name: "Test".to_string(),
+            total_points: 0,
+            max_achievable,
+            points_behind: 0,
+            remaining_possible: max_achievable,
+            ceiling_band: 0,
+            top_badge: None,
+            projected_delta: 0,
+        }
+    }
+
+    #[test]
+    fn ceiling_band_all_equal_returns_4() {
+        let mut entries = vec![
+            entry_with_ceiling(100),
+            entry_with_ceiling(100),
+            entry_with_ceiling(100),
+        ];
+        assign_ceiling_bands(&mut entries);
+        for e in &entries {
+            assert_eq!(e.ceiling_band, 4, "all equal → band 4");
+        }
+    }
+
+    #[test]
+    fn ceiling_band_spread_assigns_1_and_7() {
+        let mut entries = vec![entry_with_ceiling(0), entry_with_ceiling(100)];
+        assign_ceiling_bands(&mut entries);
+        assert_eq!(entries[0].ceiling_band, 1, "min ceiling → band 1");
+        assert_eq!(entries[1].ceiling_band, 7, "max ceiling → band 7");
+    }
+
+    #[test]
+    fn ceiling_band_single_entry_gets_4() {
+        let mut entries = vec![entry_with_ceiling(50)];
+        assign_ceiling_bands(&mut entries);
+        assert_eq!(entries[0].ceiling_band, 4);
+    }
+
+    #[test]
+    fn ceiling_band_values_in_1_to_7_range() {
+        let ceilings = [10i64, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        let mut entries: Vec<_> = ceilings.iter().map(|&c| entry_with_ceiling(c)).collect();
+        assign_ceiling_bands(&mut entries);
+        for e in &entries {
+            assert!(e.ceiling_band >= 1 && e.ceiling_band <= 7, "band must be 1–7");
+        }
+    }
+
+    #[test]
+    fn ceiling_band_middle_value_gets_middle_band() {
+        // Three entries: min=0, mid=50, max=100. Mid should get band 3 or 4.
+        let mut entries = vec![
+            entry_with_ceiling(0),
+            entry_with_ceiling(50),
+            entry_with_ceiling(100),
+        ];
+        assign_ceiling_bands(&mut entries);
+        let mid_band = entries[1].ceiling_band;
+        assert!(
+            mid_band >= 3 && mid_band <= 5,
+            "middle ceiling should yield mid-range band, got {mid_band}"
+        );
+    }
+
+    #[test]
+    fn remaining_possible_is_max_minus_total() {
+        let rows = vec![
+            LeaderboardRawRow {
+                user_id: 1,
+                user_name: "A".to_string(),
+                total_points: 30,
+                max_achievable: 100,
+            },
+            LeaderboardRawRow {
+                user_id: 2,
+                user_name: "B".to_string(),
+                total_points: 80,
+                max_achievable: 90,
+            },
+        ];
+        let entries = build_leaderboard(rows, HashMap::new(), HashMap::new());
+        assert_eq!(entries[0].remaining_possible, 70); // 100 - 30
+        assert_eq!(entries[1].remaining_possible, 10); // 90 - 80
+    }
+
+    #[test]
+    fn build_leaderboard_calls_assign_ceiling_bands() {
+        let rows = vec![
+            LeaderboardRawRow {
+                user_id: 1,
+                user_name: "Low".to_string(),
+                total_points: 10,
+                max_achievable: 20,
+            },
+            LeaderboardRawRow {
+                user_id: 2,
+                user_name: "High".to_string(),
+                total_points: 50,
+                max_achievable: 80,
+            },
+        ];
+        let entries = build_leaderboard(rows, HashMap::new(), HashMap::new());
+        // Low ceiling → band 1, high ceiling → band 7
+        assert_eq!(entries[0].ceiling_band, 1);
+        assert_eq!(entries[1].ceiling_band, 7);
     }
 
     #[test]
