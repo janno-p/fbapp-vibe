@@ -56,7 +56,27 @@
             <span class="text-goal-500 text-xs font-normal">(+{{ e.projected_delta }})</span>
             {% endif %}
           </td>
-          <td class="px-4 py-3 text-right text-ink-500 text-xs">{{ e.max_achievable }}</td>
+          <td class="px-4 py-3 text-right text-xs">
+            <div class="flex flex-col items-end gap-0.5">
+              <span class="text-ink-500">{{ e.max_achievable }}</span>
+              <span class="text-ink-700">+{{ e.remaining_possible }} left</span>
+              {% if e.ceiling_band == 7 %}
+              <span class="size-4 icon-[mdi--chevron-triple-up] text-goal-400" title="Top ceiling tier"></span>
+              {% elif e.ceiling_band == 6 %}
+              <span class="size-4 icon-[mdi--chevron-double-up] text-goal-500" title="High ceiling"></span>
+              {% elif e.ceiling_band == 5 %}
+              <span class="size-4 icon-[mdi--chevron-up] text-goal-300" title="Above-average ceiling"></span>
+              {% elif e.ceiling_band == 4 %}
+              <span class="size-4 icon-[mdi--minus] text-ink-500" title="Average ceiling"></span>
+              {% elif e.ceiling_band == 3 %}
+              <span class="size-4 icon-[mdi--chevron-down] text-signal-amber" title="Below-average ceiling"></span>
+              {% elif e.ceiling_band == 2 %}
+              <span class="size-4 icon-[mdi--chevron-double-down] text-signal-red" title="Low ceiling"></span>
+              {% else %}
+              <span class="size-4 icon-[mdi--chevron-triple-down] text-signal-red font-bold" title="Lowest ceiling tier"></span>
+              {% endif %}
+            </div>
+          </td>
           <td class="px-4 py-3 text-right text-ink-700 text-xs">
             {% if e.is_leader() %}—{% else %}-{{ e.points_behind }}{% endif %}
           </td>
