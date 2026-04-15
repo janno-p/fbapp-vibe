@@ -1,19 +1,24 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(cargo build:*)",
-      "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/setup-build.sh\" *)",
-      "Bash(cargo check:*)",
-      "Bash(make migrate:*)",
-      "Bash(cargo test:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh summary:*)",
-      "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" model:*)",
-      "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" caveman-active:*)",
-      "Bash(cargo clippy:*)",
-      "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" summary:*)",
-      "Bash(rustc --version)"
-    ]
-  }
+    "permissions": {
+        "allow": [
+            "Bash(cargo build:*)",
+            "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/setup-build.sh\" *)",
+            "Bash(cargo check:*)",
+            "Bash(make migrate:*)",
+            "Bash(cargo test:*)",
+            "Bash(git add:*)",
+            "Bash(git commit:*)",
+            "Bash(/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh summary:*)",
+            "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" model:*)",
+            "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" caveman-active:*)",
+            "Bash(cargo clippy:*)",
+            "Bash(\"/home/janno/.claude/plugins/cache/cavekit-local/ck/2.0.0/scripts/bp-config.sh\" summary:*)",
+            "Bash(rustc --version)",
+            "Bash(\"/home/janno/.claude/plugins/local/cavekit-marketplace/ck/scripts/bp-config.sh\" summary *)",
+            "Bash(\"/home/janno/.claude/plugins/local/cavekit-marketplace/ck/scripts/bp-config.sh\" model *)",
+            "Bash(\"/home/janno/.claude/plugins/local/cavekit-marketplace/ck/scripts/bp-config.sh\" caveman-active *)",
+            "Bash(grep -E \"\\\\.rs$|^d\")",
+            "Bash(\"/home/janno/.claude/plugins/local/cavekit-marketplace/ck/scripts/setup-build.sh\" *)"
+        ]
+    }
 }

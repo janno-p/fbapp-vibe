@@ -18,7 +18,7 @@ This document indexes all domain cavekits for fbapp-vibe, a server-rendered Rust
 | **cavekit-leagues.md** | League creation, membership, invite token management | Brownfield (complete) |
 | **cavekit-predictions.md** | Prediction forms (group, knockout, top scorer), lock enforcement, review page | Brownfield (2 gaps) |
 | **cavekit-scoring.md** | Result polling, auto-lock, prediction scoring, player goal tracking | Brownfield (1 gap) |
-| **cavekit-standings.md** | Leaderboards, match breakdown, fixtures, member stats, per-round breakdown | Brownfield (5 gaps) |
+| **cavekit-standings.md** | Leaderboards, match breakdown, fixtures, member stats, per-round breakdown | Brownfield (1 gap) |
 | **cavekit-badges.md** | Achievement badges (new domain) | Greenfield (1 task) |
 | **cavekit-observability.md** | OTLP/Jaeger trace export infrastructure (new domain) | Greenfield (1 task) |
 
@@ -31,9 +31,9 @@ This document indexes all domain cavekits for fbapp-vibe, a server-rendered Rust
 
 | Metric | Count |
 |--------|-------|
-| Total requirements (R\*) | 64 |
-| Total acceptance criteria | 160 |
-| Open implementation gaps | 10 |
+| Total requirements (R\*) | 65 |
+| Total acceptance criteria | 167 |
+| Open implementation gaps | 1 |
 | Greenfield requirements | 13 |
 
 ## Dependency Graph
@@ -76,19 +76,12 @@ Standings filters entries by league_id and league_members.user_id to isolate per
 
 ## Gap Locations
 
-**Predictions gaps (cavekit-predictions.md):**
-- Task 0047: Prediction completion counter on group stage tab
-- Task 0048: Show actual match results after kickoff on predictions page
+**Standings gap (cavekit-standings.md):**
+- R11: Potential points indicator — 7-tier Material Symbols ceiling indicator on leaderboard (T-028, T-029 in build-site.md)
 
-**Scoring gaps (cavekit-scoring.md):**
-- Task 0034: Confidence multiplier (2× points for confident picks; max 3 per tournament)
+**All other brownfield gaps closed:** Predictions R7/R8, Scoring R9, Standings R7–R10, Tournament R7 all implemented.
 
-**Standings gaps (cavekit-standings.md):**
-- Task 0032: Per-round leaderboard breakdown (points by stage)
-- Task 0040: Group stage standings table computation
-- Task 0018: Scenario modeling (hypothetical results on standings)
-- R10: Hypo param server-side validation and whitelist enforcement (added 2026-04-14)
-- R11: Potential points indicator — 7-tier Material Symbols ceiling indicator on leaderboard (added 2026-04-15)
+**Badges and Observability:** All greenfield requirements implemented (T-001–T-026).
 
 ## New Domains
 

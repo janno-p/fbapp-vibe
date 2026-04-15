@@ -1,6 +1,6 @@
 ---
 created: 2026-04-10T00:00:00Z
-last_edited: 2026-04-10T00:00:00Z
+last_edited: 2026-04-15T00:00:00Z
 ---
 
 # Cavekit: Tournament Management
@@ -30,7 +30,7 @@ Lifecycle of a tournament: registration from football-data.org competitions list
 **Acceptance Criteria:**
 - [ ] Seeding fetches all teams for the competition from football-data.org
 - [ ] Seeding fetches all matches for the competition from football-data.org
-- [ ] Teams are stored in `teams` table: id, tournament_id, external_id, name, code (3-letter), tla
+- [ ] Teams are stored in `teams` table: id, tournament_id, external_id, name, code (3-letter), tla, flag (ISO 2-letter country code, nullable)
 - [ ] Groups are created in `groups` table: id, tournament_id, name (e.g., "Group A")
 - [ ] Group memberships are created in `group_memberships` table: group_id, team_id
 - [ ] Matches are stored in `matches` table: id, tournament_id, home_team_id, away_team_id, group_id, stage, scheduled_utc, home_score, away_score, outcome
@@ -86,12 +86,26 @@ Lifecycle of a tournament: registration from football-data.org competitions list
 - [ ] Tournament struct: id, external_id, name, season, is_active, predictions_locked_at
 - [ ] `is_predictions_locked()` method returns true if predictions_locked_at is set and <= now()
 - [ ] Match struct: id, tournament_id, home_team_id, away_team_id, group_id, stage, scheduled_utc, home_score (optional), away_score (optional), outcome (optional)
-- [ ] Team struct: id, tournament_id, external_id, name, code, tla
+- [ ] Team struct: id, tournament_id, external_id, name, code, tla, flag (Option<String>)
 - [ ] Group struct: id, tournament_id, name
 - [ ] Player struct: id, team_id, name, position, number, goals_scored
 - [ ] All domain types can be queried and serialized for templates
 
 **Dependencies:** R1 (Tournament Registration)
+
+### R7: Team National Flag Display
+**Description:** Teams are displayed with their national flag using self-hosted Iconify circle-flags icons keyed on the team's ISO 2-letter country code, not external crest images.
+
+**Acceptance Criteria:**
+- [ ] `teams` table stores a `flag` column (ISO 2-letter code, e.g., `"es"` for Spain); no `crest_url` column
+- [ ] `src/national_flags.rs` provides `tla_to_flag(tla: Option<&str>) -> Option<String>` mapping TLA → ISO-2 code
+- [ ] Admin seeding populates `flag` via `tla_to_flag()` at seed time; unmapped TLAs store `NULL`
+- [ ] All templates referencing a team use `icon-[circle-flags--{flag_code}]` Tailwind class for flag display
+- [ ] A fallback (no icon rendered) is used when `flag` is NULL
+- [ ] Iconify circle-flags is self-hosted via `@iconify/tailwind4` plugin (no CDN dependency)
+- [ ] All active-tournament country flags are listed as `@source inline(...)` directives in `assets/css/input.css`
+
+**Dependencies:** R2 (Tournament Seeding), R6 (Team data model)
 
 ## Out of Scope
 
@@ -117,8 +131,11 @@ All acceptance criteria are satisfied by existing code.
 - `src/modules/admin/models.rs` — Tournament, RegisterTournamentForm types
 - `src/football_api.rs` — football-data.org HTTP client with rate limiting
 - `src/polling/mod.rs` — background polling task, auto-lock detection
+- `src/national_flags.rs` — TLA-to-ISO-2 country code mapping for Iconify circle-flags (R7)
 - `migrations/0005_tournament_core.sql` — tournaments, teams, groups, group_memberships, matches, players tables
 - `migrations/0010_add_r32_knockout_round.sql` — R32 round variant for knockout
+- `migrations/0015_remove_team_crest_url.sql` — drops `crest_url` column from teams (R7)
+- `migrations/0016_team_flag.sql` — adds `flag TEXT` column to teams (R7)
 
 ### Implementation Notes
 - Uses `sqlx::query_as!()` and `sqlx::query!()` macros for compile-time query checking
@@ -127,8 +144,11 @@ All acceptance criteria are satisfied by existing code.
 - Auto-lock is handled in the polling task; fires when first match transitions to in-progress
 - Tournament state is queried on every prediction page load to set form read-only flag
 
+## Changes
+- 2026-04-15: Added R7 (Team National Flag Display) — crest_url replaced with self-hosted Iconify circle-flags; added flag column, tla_to_flag() mapping, migrations 0015/0016; updated R2/R6 schema criteria
+
 ## Cross-References
 - Depends on: **cavekit-auth.md** (AdminUser extractor)
 - Consumed by: **cavekit-predictions.md** (tournament lock state, active tournament selection)
 - Consumed by: **cavekit-scoring.md** (tournament data for result ingestion and auto-lock)
-- Consumed by: **cavekit-standings.md** (active tournament for leaderboard calculation)
+- Consumed by: **cavekit-standings.md** (active tournament for leaderboard calculation; flag icons used in match breakdown and fixtures templates)

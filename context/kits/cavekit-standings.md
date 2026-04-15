@@ -212,8 +212,8 @@ Users can set hypothetical outcomes for unplayed matches and see projected leade
 
 ## Source Traceability
 
-### Brownfield Status: Mostly Complete (5 open gaps)
-R1-R6 are fully implemented. R7, R8, R9, R10, R11 are open tasks.
+### Brownfield Status: Mostly Complete (1 open gap)
+R1-R10 are fully implemented. R11 (Potential Points Indicator) is the only open task.
 
 ### Source Files
 - `src/modules/standings/mod.rs` — router() with standings routes
@@ -225,6 +225,7 @@ R1-R6 are fully implemented. R7, R8, R9, R10, R11 are open tasks.
 - `templates/standings/match.html` — match breakdown page
 - `templates/standings/compare.html` — member comparison page
 - `templates/standings/member_stats.html` — individual member stats
+- `src/national_flags.rs` — TLA-to-ISO-2 mapping used in match breakdown and fixtures templates (via cavekit-tournament.md R7)
 
 ### Implementation Notes
 - Leaderboard uses a single multi-table query to fetch all user predictions and sum points
@@ -244,5 +245,5 @@ R1-R6 are fully implemented. R7, R8, R9, R10, R11 are open tasks.
 - Depends on: **cavekit-leagues.md** (league membership access control)
 - Depends on: **cavekit-predictions.md** (prediction data, review page)
 - Depends on: **cavekit-scoring.md** (points_awarded, match results)
-- Depends on: **cavekit-tournament.md** (active tournament, match data)
+- Depends on: **cavekit-tournament.md** (active tournament, match data, team flags R7)
 - Related to: **cavekit-badges.md** (achievements displayed on member stats)
