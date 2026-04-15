@@ -25,3 +25,5 @@ Thumbs.db
 # JS distribution files (copied from node_modules via make js)
 /assets/js/htmx.js
 /assets/js/alpine.js
+
+**/*.local.*
