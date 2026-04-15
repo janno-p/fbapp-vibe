@@ -7,14 +7,6 @@
     display: none !important;
 }
 
-@source inline("icon-[mdi--chevron-triple-up]");
-@source inline("icon-[mdi--chevron-double-up]");
-@source inline("icon-[mdi--chevron-up]");
-@source inline("icon-[mdi--minus]");
-@source inline("icon-[mdi--chevron-down]");
-@source inline("icon-[mdi--chevron-double-down]");
-@source inline("icon-[mdi--chevron-triple-down]");
-
 @source inline("icon-[circle-flags--al]");
 @source inline("icon-[circle-flags--ar]");
 @source inline("icon-[circle-flags--at]");
