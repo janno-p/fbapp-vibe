@@ -1,40 +1,105 @@
 @import "tailwindcss";
 
+@plugin "@iconify/tailwind4";
+
 /* Hide Alpine x-cloak elements until Alpine initialises */
-[x-cloak] { display: none !important; }
+[x-cloak] {
+    display: none !important;
+}
+
+@source inline("icon-[circle-flags--al]");
+@source inline("icon-[circle-flags--ar]");
+@source inline("icon-[circle-flags--at]");
+@source inline("icon-[circle-flags--au]");
+@source inline("icon-[circle-flags--ba]");
+@source inline("icon-[circle-flags--be]");
+@source inline("icon-[circle-flags--bi]");
+@source inline("icon-[circle-flags--br]");
+@source inline("icon-[circle-flags--ca]");
+@source inline("icon-[circle-flags--cd]");
+@source inline("icon-[circle-flags--ch]");
+@source inline("icon-[circle-flags--co]");
+@source inline("icon-[circle-flags--cv]");
+@source inline("icon-[circle-flags--cw]");
+@source inline("icon-[circle-flags--cz]");
+@source inline("icon-[circle-flags--de]");
+@source inline("icon-[circle-flags--dk]");
+@source inline("icon-[circle-flags--dz]");
+@source inline("icon-[circle-flags--ec]");
+@source inline("icon-[circle-flags--eg]");
+@source inline("icon-[circle-flags--es]");
+@source inline("icon-[circle-flags--fr]");
+@source inline("icon-[circle-flags--gb-eng]");
+@source inline("icon-[circle-flags--gb-sct]");
+@source inline("icon-[circle-flags--ge]");
+@source inline("icon-[circle-flags--gh]");
+@source inline("icon-[circle-flags--hr]");
+@source inline("icon-[circle-flags--ht]");
+@source inline("icon-[circle-flags--hu]");
+@source inline("icon-[circle-flags--iq]");
+@source inline("icon-[circle-flags--ir]");
+@source inline("icon-[circle-flags--it]");
+@source inline("icon-[circle-flags--jo]");
+@source inline("icon-[circle-flags--jp]");
+@source inline("icon-[circle-flags--ko]");
+@source inline("icon-[circle-flags--ma]");
+@source inline("icon-[circle-flags--mx]");
+@source inline("icon-[circle-flags--nl]");
+@source inline("icon-[circle-flags--no]");
+@source inline("icon-[circle-flags--nz]");
+@source inline("icon-[circle-flags--pa]");
+@source inline("icon-[circle-flags--pl]");
+@source inline("icon-[circle-flags--pt]");
+@source inline("icon-[circle-flags--py]");
+@source inline("icon-[circle-flags--qa]");
+@source inline("icon-[circle-flags--ro]");
+@source inline("icon-[circle-flags--rs]");
+@source inline("icon-[circle-flags--sa]");
+@source inline("icon-[circle-flags--se]");
+@source inline("icon-[circle-flags--si]");
+@source inline("icon-[circle-flags--sk]");
+@source inline("icon-[circle-flags--sn]");
+@source inline("icon-[circle-flags--tn]");
+@source inline("icon-[circle-flags--tr]");
+@source inline("icon-[circle-flags--ua]");
+@source inline("icon-[circle-flags--us]");
+@source inline("icon-[circle-flags--uy]");
+@source inline("icon-[circle-flags--uz]");
+@source inline("icon-[circle-flags--xx]");
+@source inline("icon-[circle-flags--za]");
 
 @theme {
-  /* ── Pitch palette ──────────────────────────────────────── */
-  --color-pitch-950: #04080f;
-  --color-pitch-900: #0b1120;
-  --color-pitch-800: #111d30;
-  --color-pitch-700: #1e2f47;
-  --color-pitch-600: #2c4260;
+    /* ── Pitch palette ──────────────────────────────────────── */
+    --color-pitch-950: #04080f;
+    --color-pitch-900: #0b1120;
+    --color-pitch-800: #111d30;
+    --color-pitch-700: #1e2f47;
+    --color-pitch-600: #2c4260;
 
-  /* ── Goal green ─────────────────────────────────────────── */
-  --color-goal-300: #6ee7b7;
-  --color-goal-400: #34d399;
-  --color-goal-500: #10b981;
-  --color-goal-600: #059669;
+    /* ── Goal green ─────────────────────────────────────────── */
+    --color-goal-300: #6ee7b7;
+    --color-goal-400: #34d399;
+    --color-goal-500: #10b981;
+    --color-goal-600: #059669;
 
-  /* ── Gold (rank highlight) ──────────────────────────────── */
-  --color-gold-300: #fde68a;
-  --color-gold-400: #fbbf24;
-  --color-gold-500: #f59e0b;
+    /* ── Gold (rank highlight) ──────────────────────────────── */
+    --color-gold-300: #fde68a;
+    --color-gold-400: #fbbf24;
+    --color-gold-500: #f59e0b;
 
-  /* ── Foreground ─────────────────────────────────────────── */
-  --color-ink-50:  #f8fafc;
-  --color-ink-100: #e2e8f0;
-  --color-ink-300: #94a3b8;
-  --color-ink-500: #64748b;
-  --color-ink-700: #334155;
+    /* ── Foreground ─────────────────────────────────────────── */
+    --color-ink-50: #f8fafc;
+    --color-ink-100: #e2e8f0;
+    --color-ink-300: #94a3b8;
+    --color-ink-500: #64748b;
+    --color-ink-700: #334155;
 
-  /* ── Signal colours ─────────────────────────────────────── */
-  --color-signal-red:   #f87171;
-  --color-signal-green: #4ade80;
-  --color-signal-amber: #fbbf24;
+    /* ── Signal colours ─────────────────────────────────────── */
+    --color-signal-red: #f87171;
+    --color-signal-green: #4ade80;
+    --color-signal-amber: #fbbf24;
 
-  /* ── Typography ─────────────────────────────────────────── */
-  --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
-  --font-body:    "Inter", ui-sans-serif, system-ui, sans-serif;
+    /* ── Typography ─────────────────────────────────────────── */
+    --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 }

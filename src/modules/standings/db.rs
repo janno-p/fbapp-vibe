@@ -1,7 +1,6 @@
 use sqlx::PgPool;
 
 use crate::{
-    crests::find_crest_url,
     db_types::{KnockoutRound, MatchOutcome},
     modules::admin::models::Tournament,
 };
@@ -210,8 +209,8 @@ pub async fn get_nearest_match(
         SELECT m.id,
                COALESCE(ht.name, 'TBD') AS "home_name!: String",
                COALESCE(at.name, 'TBD') AS "away_name!: String",
-               ht.crest_url AS "home_crest_url?: String",
-               at.crest_url AS "away_crest_url?: String",
+               ht.flag AS "home_flag?: String",
+               at.flag AS "away_flag?: String",
                m.scheduled_at,
                m.outcome    AS "outcome?: MatchOutcome",
                m.home_score,
@@ -231,8 +230,8 @@ pub async fn get_nearest_match(
 
     Ok(row.map(|r| NearestMatch {
         id: r.id,
-        home_crest_url: find_crest_url(r.home_crest_url.as_deref()),
-        away_crest_url: find_crest_url(r.away_crest_url.as_deref()),
+        home_flag: r.home_flag.unwrap_or("xx".to_string()),
+        away_flag: r.away_flag.unwrap_or("xx".to_string()),
         home_name: r.home_name,
         away_name: r.away_name,
         scheduled_at: r.scheduled_at,
@@ -272,8 +271,8 @@ pub async fn get_match_info(
         SELECT m.id,
                COALESCE(ht.name, 'TBD') AS "home_name!: String",
                COALESCE(at.name, 'TBD') AS "away_name!: String",
-               ht.crest_url AS "home_crest_url?: String",
-               at.crest_url AS "away_crest_url?: String",
+               ht.flag AS "home_flag?: String",
+               at.flag AS "away_flag?: String",
                m.scheduled_at,
                m.home_score,
                m.away_score,
@@ -291,8 +290,8 @@ pub async fn get_match_info(
 
     Ok(row.map(|r| MatchInfo {
         id: r.id,
-        home_crest_url: find_crest_url(r.home_crest_url.as_deref()),
-        away_crest_url: find_crest_url(r.away_crest_url.as_deref()),
+        home_flag: r.home_flag.unwrap_or("xx".to_string()),
+        away_flag: r.away_flag.unwrap_or("xx".to_string()),
         home_name: r.home_name,
         away_name: r.away_name,
         scheduled_at: r.scheduled_at,
@@ -435,8 +434,8 @@ pub async fn get_all_fixtures(
         SELECT m.id,
                COALESCE(ht.name, 'TBD') AS "home_name!: String",
                COALESCE(at.name, 'TBD') AS "away_name!: String",
-               ht.crest_url AS "home_crest_url?: String",
-               at.crest_url AS "away_crest_url?: String",
+               ht.flag AS "home_flag?: String",
+               at.flag AS "away_flag?: String",
                m.scheduled_at,
                m.home_score,
                m.away_score,
@@ -470,8 +469,8 @@ pub async fn get_all_fixtures(
         .into_iter()
         .map(|r| FixtureRow {
             id: r.id,
-            home_crest_url: find_crest_url(r.home_crest_url.as_deref()),
-            away_crest_url: find_crest_url(r.away_crest_url.as_deref()),
+            home_flag: r.home_flag.unwrap_or("xx".to_string()),
+            away_flag: r.away_flag.unwrap_or("xx".to_string()),
             home_name: r.home_name,
             away_name: r.away_name,
             scheduled_at: r.scheduled_at,

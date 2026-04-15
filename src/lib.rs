@@ -1,12 +1,12 @@
 pub mod achievements;
 pub mod config;
-pub mod crests;
 pub mod db_types;
 pub mod error;
 pub mod extractors;
 pub mod football_api;
 pub mod group_standings;
 pub mod modules;
+pub mod national_flags;
 pub mod nav;
 pub mod polling;
 pub mod routes;

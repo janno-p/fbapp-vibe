@@ -10,8 +10,8 @@ pub struct MatchRow {
     pub group_name: String,
     pub home_team_name: Option<String>,
     pub away_team_name: Option<String>,
-    pub home_crest_url: String,
-    pub away_crest_url: String,
+    pub home_flag: String,
+    pub away_flag: String,
     pub scheduled_at: time::OffsetDateTime,
     pub predicted_outcome: Option<MatchOutcome>,
     /// Actual match result; `None` means match not yet played.
@@ -76,7 +76,7 @@ pub struct TeamInfo {
     pub id: i64,
     pub name: String,
     pub short_name: String,
-    pub crest_url: String,
+    pub flag: String,
 }
 
 pub struct PlayerInfo {

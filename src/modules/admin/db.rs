@@ -5,6 +5,7 @@ use time::format_description::well_known::Rfc3339;
 
 use crate::db_types::KnockoutRound;
 use crate::football_api::{Match as ApiMatch, Team as ApiTeam};
+use crate::national_flags::tla_to_flag;
 
 use super::models::Tournament;
 
@@ -218,13 +219,13 @@ fn api_stage_to_round(stage: &str) -> Option<KnockoutRound> {
 async fn upsert_team(pool: &PgPool, tournament_id: i64, team: &ApiTeam) -> anyhow::Result<i64> {
     let row = sqlx::query!(
         r#"
-        INSERT INTO teams (tournament_id, external_id, name, short_name, tla, crest_url)
+        INSERT INTO teams (tournament_id, external_id, name, short_name, tla, flag)
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (tournament_id, external_id) DO UPDATE
             SET name       = EXCLUDED.name,
                 short_name = EXCLUDED.short_name,
                 tla        = EXCLUDED.tla,
-                crest_url  = EXCLUDED.crest_url
+                flag       = EXCLUDED.flag
         RETURNING id
         "#,
         tournament_id,
@@ -232,7 +233,7 @@ async fn upsert_team(pool: &PgPool, tournament_id: i64, team: &ApiTeam) -> anyho
         team.name,
         team.short_name.as_deref().unwrap_or(&team.name),
         team.tla.as_deref(),
-        team.crest.as_deref()
+        tla_to_flag(team.tla.as_deref()),
     )
     .fetch_one(pool)
     .await?;

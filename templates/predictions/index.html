@@ -8,9 +8,8 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
         >Predictions are locked — no further changes can be made.</span
     >
 </div>
-{% endif %}
-
-{% let (predicted_count, total_count) = self.group_prediction_counts() %}
+{% endif %} {% let (predicted_count, total_count) =
+self.group_prediction_counts() %}
 
 <main
     class="flex-1 max-w-4xl w-full mx-auto px-6 py-8"
@@ -80,8 +79,7 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                                         >{{ m.home_name() }}</span
                                     >
                                     <span
-                                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
-                                        style="--crest-url: url('{{ m.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                                        class="shrink-0 size-6 icon-[circle-flags--{{ m.home_flag }}]"
                                     ></span>
                                 </span>
                                 <select
@@ -134,43 +132,56 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                                     class="flex items-center gap-1.5 flex-1 min-w-0 text-sm text-ink-100 font-medium"
                                 >
                                     <span
-                                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
-                                        style="--crest-url: url('{{ m.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                                        class="shrink-0 size-6 icon-[circle-flags--{{ m.away_flag }}]"
                                     ></span>
                                     <span class="truncate"
                                         >{{ m.away_name() }}</span
                                     >
                                 </span>
-                                {# T-015: Correctness indicator #}
-                                {% match m.correctness() %}
-                                {% when Some with (correct) %}
-                                {% if correct %}
-                                <span class="shrink-0 text-goal-500 text-base leading-none" title="Correct">✓</span>
+                                {# T-015: Correctness indicator #} {% match
+                                m.correctness() %} {% when Some with (correct)
+                                %} {% if correct %}
+                                <span
+                                    class="shrink-0 text-goal-500 text-base leading-none"
+                                    title="Correct"
+                                    >✓</span
+                                >
                                 {% else %}
-                                <span class="shrink-0 text-signal-red text-base leading-none" title="Wrong">✗</span>
-                                {% endif %}
-                                {% when None %}
-                                {% if m.predicted_outcome.is_some() %}
-                                <span class="shrink-0 text-ink-600 text-xs leading-none" title="Pending">—</span>
-                                {% endif %}
-                                {% endmatch %}
+                                <span
+                                    class="shrink-0 text-signal-red text-base leading-none"
+                                    title="Wrong"
+                                    >✗</span
+                                >
+                                {% endif %} {% when None %} {% if
+                                m.predicted_outcome.is_some() %}
+                                <span
+                                    class="shrink-0 text-ink-600 text-xs leading-none"
+                                    title="Pending"
+                                    >—</span
+                                >
+                                {% endif %} {% endmatch %}
                             </div>
 
                             {# T-014: Score and result row for played matches #}
                             {% if m.is_played() %}
-                            <div class="flex items-center justify-center gap-3 text-xs">
-                                <span class="font-display font-bold text-ink-100 tracking-tight">{{ m.score_label() }}</span>
+                            <div
+                                class="flex items-center justify-center gap-3 text-xs"
+                            >
+                                <span
+                                    class="font-display font-bold text-ink-100 tracking-tight"
+                                    >{{ m.score_label() }}</span
+                                >
                                 <span class="text-ink-600">·</span>
-                                <span class="text-ink-500">{{ m.formatted_kickoff() }}</span>
+                                <span class="text-ink-500"
+                                    >{{ m.formatted_kickoff() }}</span
+                                >
                             </div>
                             {% else %}
                             <div class="text-xs text-ink-700 text-center">
                                 {{ m.formatted_kickoff() }}
                             </div>
-                            {% endif %}
-
-                            {# T-017: Confidence checkbox #}
-                            {% if !predictions_locked %}
+                            {% endif %} {# T-017: Confidence checkbox #} {% if
+                            !predictions_locked %}
                             <div class="flex items-center gap-2 pt-0.5">
                                 <input
                                     type="checkbox"
@@ -266,8 +277,7 @@ tournament_name }}{% endblock %} {% block main %} {% if predictions_locked %}
                                 %}
                             />
                             <span
-                                class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
-                                style="--crest-url: url('{{ team.crest_url }}#svgView(preserveAspectRatio(none))')"
+                                class="shrink-0 size-6 icon-[circle-flags--{{ team.flag }}]"
                             ></span>
                             <span
                                 class="truncate text-ink-300 group-hover:text-ink-100 transition-colors"

@@ -47,8 +47,7 @@ block main %}
                         >{{ m.home_name }}</span
                     >
                     <span
-                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
-                        style="--crest-url: url('{{ m.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                        class="shrink-0 size-6 icon-[circle-flags--{{ m.home_flag }}]"
                     ></span>
                 </span>
 
@@ -73,8 +72,7 @@ block main %}
                 {# Away team #}
                 <span class="flex items-center gap-2 flex-1 min-w-0">
                     <span
-                        class="shrink-0 size-6 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_11px,rgba(0,0,0,0.5)_12px,transparent_12px]"
-                        style="--crest-url: url('{{ m.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                        class="shrink-0 size-6 icon-[circle-flags--{{ m.away_flag }}]"
                     ></span>
                     <span
                         class="font-medium text-ink-100 text-sm tracking-tight truncate group-hover:text-ink-50"

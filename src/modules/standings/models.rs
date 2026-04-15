@@ -121,7 +121,9 @@ pub fn compute_projected_delta(
     let mut deltas: HashMap<i64, i64> = HashMap::new();
 
     for (match_id, pred) in predictions {
-        if let Some(hypo) = hypo_outcomes.get(match_id) && &pred.predicted_outcome == hypo {
+        if let Some(hypo) = hypo_outcomes.get(match_id)
+            && &pred.predicted_outcome == hypo
+        {
             let pts = if pred.is_confident { 2 } else { 1 };
             *deltas.entry(pred.user_id).or_insert(0) += pts;
         }
@@ -136,8 +138,8 @@ pub struct MatchInfo {
     pub id: i64,
     pub home_name: String,
     pub away_name: String,
-    pub home_crest_url: String,
-    pub away_crest_url: String,
+    pub home_flag: String,
+    pub away_flag: String,
     pub scheduled_at: time::OffsetDateTime,
     pub home_score: Option<i32>,
     pub away_score: Option<i32>,
@@ -213,8 +215,8 @@ pub struct NearestMatch {
     pub id: i64,
     pub home_name: String,
     pub away_name: String,
-    pub home_crest_url: String,
-    pub away_crest_url: String,
+    pub home_flag: String,
+    pub away_flag: String,
     pub scheduled_at: time::OffsetDateTime,
     pub outcome: Option<MatchOutcome>,
     pub home_score: Option<i32>,
@@ -299,8 +301,8 @@ pub struct FixtureRow {
     pub id: i64,
     pub home_name: String,
     pub away_name: String,
-    pub home_crest_url: String,
-    pub away_crest_url: String,
+    pub home_flag: String,
+    pub away_flag: String,
     pub scheduled_at: time::OffsetDateTime,
     pub home_score: Option<i32>,
     pub away_score: Option<i32>,
@@ -717,7 +719,10 @@ mod tests {
     // ── parse_hypo_params ─────────────────────────────────────────────────────
 
     fn hypo_map(pairs: &[(&str, &str)]) -> HashMap<String, String> {
-        pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
     }
 
     #[test]
@@ -747,7 +752,11 @@ mod tests {
 
     #[test]
     fn parse_hypo_all_valid_outcomes_accepted() {
-        let params = hypo_map(&[("hypo[1]", "home"), ("hypo[2]", "draw"), ("hypo[3]", "away")]);
+        let params = hypo_map(&[
+            ("hypo[1]", "home"),
+            ("hypo[2]", "draw"),
+            ("hypo[3]", "away"),
+        ]);
         let result = parse_hypo_params(&params);
         assert_eq!(result.get(&1), Some(&MatchOutcome::Home));
         assert_eq!(result.get(&2), Some(&MatchOutcome::Draw));
@@ -762,7 +771,10 @@ mod tests {
             .collect();
         let params: HashMap<String, String> = pairs.into_iter().collect();
         let result = parse_hypo_params(&params);
-        assert!(result.len() <= MAX_HYPO_MATCHES, "must not exceed {MAX_HYPO_MATCHES}");
+        assert!(
+            result.len() <= MAX_HYPO_MATCHES,
+            "must not exceed {MAX_HYPO_MATCHES}"
+        );
     }
 
     // ── filter_hypo_by_whitelist ──────────────────────────────────────────────

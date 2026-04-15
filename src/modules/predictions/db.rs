@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use sqlx::PgPool;
 
 use crate::{
-    crests::find_crest_url,
     db_types::{KnockoutRound, MatchOutcome},
     error::AppError,
     modules::admin::models::Tournament,
@@ -43,8 +42,8 @@ pub async fn get_group_matches_with_predictions(
             g.name  AS group_name,
             ht.name AS "home_team_name?: String",
             at.name AS "away_team_name?: String",
-            ht.crest_url  AS "home_crest_url?: String",
-            at.crest_url  AS "away_crest_url?: String",
+            ht.flag  AS "home_flag?: String",
+            at.flag  AS "away_flag?: String",
             m.scheduled_at,
             m.home_score,
             m.away_score,
@@ -79,8 +78,8 @@ pub async fn get_group_matches_with_predictions(
             group_name: r.group_name,
             home_team_name: r.home_team_name,
             away_team_name: r.away_team_name,
-            home_crest_url: find_crest_url(r.home_crest_url.as_deref()),
-            away_crest_url: find_crest_url(r.away_crest_url.as_deref()),
+            home_flag: r.home_flag.unwrap_or("xx".to_string()),
+            away_flag: r.away_flag.unwrap_or("xx".to_string()),
             scheduled_at: r.scheduled_at,
             predicted_outcome: r.predicted_outcome,
             actual_outcome: r.actual_outcome,
@@ -102,7 +101,7 @@ pub async fn get_group_matches_with_predictions(
 pub async fn get_teams(pool: &PgPool, tournament_id: i64) -> anyhow::Result<Vec<TeamInfo>> {
     let rows = sqlx::query!(
         r#"
-        SELECT id, name, short_name, crest_url
+        SELECT id, name, short_name, flag
         FROM teams
         WHERE tournament_id = $1
         ORDER BY name
@@ -117,7 +116,7 @@ pub async fn get_teams(pool: &PgPool, tournament_id: i64) -> anyhow::Result<Vec<
             id: r.id,
             name: r.name,
             short_name: r.short_name,
-            crest_url: find_crest_url(r.crest_url.as_deref()),
+            flag: r.flag.unwrap_or("xx".to_string()),
         })
         .collect())
 }

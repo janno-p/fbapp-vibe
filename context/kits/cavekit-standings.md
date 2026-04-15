@@ -1,6 +1,6 @@
 ---
 created: 2026-04-10T00:00:00Z
-last_edited: 2026-04-14T00:00:00Z
+last_edited: 2026-04-15T00:00:00Z
 ---
 
 # Cavekit: Standings & Leaderboards
@@ -171,10 +171,49 @@ Users can set hypothetical outcomes for unplayed matches and see projected leade
 
 **Dependencies:** R1 (Main Leaderboard), R2 (HTMX Fragment), cavekit-scoring
 
+### [GAP] R10: Scenario Modeling — Hypo Param Validation
+**Description:** Server-side validation ensures hypothetical match IDs are valid (unplayed group-stage matches belonging to the active tournament) before computing projected standings.
+
+**Acceptance Criteria:**
+- [ ] Handler rejects hypo param keys that are not valid integers (400 Bad Request)
+- [ ] Handler silently ignores hypo match IDs that do not appear in the unplayed_matches whitelist (only IDs returned by `get_unplayed_group_matches` for the active tournament are accepted)
+- [ ] Handler enforces a maximum of 20 hypo params per request; excess params beyond the first 20 are dropped
+- [ ] Handler silently ignores hypo param values that are not one of: `home`, `draw`, `away` (the match entry is simply dropped, no error returned)
+- [ ] Knockout match IDs cannot be hypothesized (they are not in the unplayed group-stage whitelist and are filtered out)
+- [ ] Unit tests cover: valid subset accepted, invalid ID filtered out, knockout ID rejected, value=`home`/`draw`/`away` accepted, invalid value ignored, >20 params truncated
+
+**Dependencies:** R9 (Scenario Modeling), R8 (Group Stage Standings — unplayed_matches source)
+
+### [GAP] R11: Potential Points Indicator
+**Description:** A 7-tier visual indicator on the leaderboard shows each player's relative ceiling (max_achievable) compared to all other players, using self-hosted Material Symbols icons with color coding.
+
+**Acceptance Criteria:**
+- [ ] Each player's `remaining_possible = max_achievable - total_points` is computed and displayed as a secondary value inside the Max cell (e.g., "+42 pts left"), but it does NOT drive band assignment
+- [ ] Band assignment is based solely on each player's `max_achievable` absolute value (their ceiling score if all remaining predictions are correct)
+- [ ] Dynamic range is derived from `min(max_achievable)` and `max(max_achievable)` across all players in the current render
+- [ ] Range is divided into 7 equal bands; each player is assigned a band based on their `max_achievable` value
+- [ ] Edge case: if all players have the same `max_achievable` (range = 0), all players are assigned band 4 (middle)
+- [ ] Icon assignment:
+  - [ ] Band 7 (highest ceiling): triple chevron-up icon with strong green color
+  - [ ] Band 6: double chevron-up icon with green color
+  - [ ] Band 5: single chevron-up icon with muted green color
+  - [ ] Band 4 (middle): horizontal/equal icon with gray color
+  - [ ] Band 3: single chevron-down icon with muted red color
+  - [ ] Band 2: double chevron-down icon with red color
+  - [ ] Band 1 (lowest ceiling): triple chevron-down icon with strong red color
+- [ ] Icons use Material Symbols (self-hosted variable font, not CDN)
+- [ ] Indicator is displayed inside the existing Max cell in leaderboard table, stacked below the `max_achievable` number
+- [ ] No additional column is added to the leaderboard
+- [ ] Indicator applies to both the main leaderboard page (R1) and HTMX leaderboard fragment (R2)
+- [ ] On main page load, indicator displays correctly
+- [ ] On HTMX fragment update (e.g., polling), indicator recomputes and renders correctly
+
+**Dependencies:** R1 (Main Leaderboard), R2 (HTMX Leaderboard Fragment), cavekit-scoring (max_achievable, total_points)
+
 ## Source Traceability
 
-### Brownfield Status: Mostly Complete (3 gaps)
-R1-R6 are fully implemented. R7, R8, R9 are open tasks.
+### Brownfield Status: Mostly Complete (5 open gaps)
+R1-R6 are fully implemented. R7, R8, R9, R10, R11 are open tasks.
 
 ### Source Files
 - `src/modules/standings/mod.rs` — router() with standings routes
@@ -195,20 +234,9 @@ R1-R6 are fully implemented. R7, R8, R9 are open tasks.
 - Standings pages check league membership before rendering (401/403)
 - Member stats are aggregated in-memory from raw prediction data
 
-### R10: Scenario Modeling — Hypo Param Validation
-**Description:** Server-side validation ensures hypothetical match IDs are valid (unplayed group-stage matches belonging to the active tournament) before computing projected standings.
-
-**Acceptance Criteria:**
-- [ ] Handler rejects hypo param keys that are not valid integers (400 Bad Request)
-- [ ] Handler silently ignores hypo match IDs that do not appear in the unplayed_matches whitelist (only IDs returned by `db::get_unplayed_group_matches` for the active tournament are accepted)
-- [ ] Handler enforces a maximum of 20 hypo params per request; excess params beyond the first 20 are dropped
-- [ ] Handler rejects hypo param values that are not one of: `home`, `draw`, `away` (invalid values silently ignored or 400 returned)
-- [ ] Knockout match IDs cannot be hypothesized (they are not in the unplayed group-stage whitelist and are filtered out)
-- [ ] Unit tests cover: valid subset accepted, invalid ID filtered out, knockout ID rejected, value=`home`/`draw`/`away` accepted, invalid value ignored, >20 params truncated
-
-**Dependencies:** R9 (Scenario Modeling), cavekit-standings R8 (unplayed_matches source)
-
 ## Changes
+- 2026-04-15: Added R11 (Potential Points Indicator) — 7-tier visual ceiling indicator for leaderboard
+- 2026-04-15: Clarified R11 banding metric: band assignment uses `max_achievable` (absolute ceiling); `remaining_possible` is a display value only
 - 2026-04-14: Added R10 (Scenario Modeling — Hypo Param Validation) — discovered during inspection (finding F-010, F-002, F-004, F-005)
 
 ## Cross-References

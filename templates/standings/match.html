@@ -13,8 +13,7 @@ match_info.away_name }} — {{ league_name }}{% endblock %} {% block main %}
                     >{{ match_info.home_name }}</span
                 >
                 <span
-                    class="shrink-0 size-10 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_19px,rgba(0,0,0,0.5)_20px,transparent_20px]"
-                    style="--crest-url: url('{{ match_info.home_crest_url }}#svgView(preserveAspectRatio(none))')"
+                    class="shrink-0 size-10 icon-[circle-flags--{{ match_info.home_flag }}]"
                 ></span>
             </div>
             <div class="mx-4 text-center shrink-0">
@@ -42,8 +41,7 @@ match_info.away_name }} — {{ league_name }}{% endblock %} {% block main %}
             </div>
             <div class="flex items-center gap-2 flex-1 min-w-0">
                 <span
-                    class="shrink-0 size-10 bg-no-repeat bg-size-[100%_100%] bg-center bg-(image:--crest-url) mask-radial-[circle_at_center,black_19px,rgba(0,0,0,0.5)_20px,transparent_20px]"
-                    style="--crest-url: url('{{ match_info.away_crest_url }}#svgView(preserveAspectRatio(none))')"
+                    class="shrink-0 size-10 icon-[circle-flags--{{ match_info.away_flag }}]"
                 ></span>
                 <span
                     class="font-display font-semibold text-lg text-ink-100 tracking-tight truncate"
@@ -81,9 +79,12 @@ match_info.away_name }} — {{ league_name }}{% endblock %} {% block main %}
                         {{ row.user_name }}
                     </td>
                     <td class="px-4 py-3 text-center text-ink-300">
-                        {{ row.prediction_label() }}
-                        {% if row.is_confident %}
-                        <span class="ml-1 text-xs text-signal-amber font-display font-bold" title="Confident pick">2×</span>
+                        {{ row.prediction_label() }} {% if row.is_confident %}
+                        <span
+                            class="ml-1 text-xs text-signal-amber font-display font-bold"
+                            title="Confident pick"
+                            >2×</span
+                        >
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-center">
