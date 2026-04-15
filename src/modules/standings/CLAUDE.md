@@ -8,4 +8,6 @@ Implements:
 - cavekit-scoring.md R9 (Confidence indicator on match breakdown)
 - cavekit-badges.md R5 (Optional top badge column on leaderboard)
 
-Build tasks: T-006, T-007, T-008, T-010, T-011, T-019, T-020, T-021, T-022, T-023, T-024, T-027 (context/plans/build-site.md)
+- cavekit-standings.md R11 (Potential points indicator: 7-tier ceiling band with chevron icons in Max cell)
+
+Build tasks: T-006, T-007, T-008, T-010, T-011, T-019, T-020, T-021, T-022, T-023, T-024, T-027, T-028, T-029 (context/plans/build-site.md)

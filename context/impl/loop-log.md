@@ -54,5 +54,9 @@ Build site: context/plans/build-site.md
 - T-026: Badge job E2E tests — DONE. Files: src/achievements.rs (2 sqlx::test integration tests: consistent_predictor awarded at 75% accuracy, not awarded at 0%). Build P, Tests P (107 unit + 8 db + 7 auth = all pass).
 - Commit: 11b735a. ALL TASKS COMPLETE.
 
+### Wave 5 — 2026-04-15
+- T-028: Ceiling band assignment — DONE. Files: standings/models.rs (remaining_possible, ceiling_band fields, assign_ceiling_bands pure fn, 7 unit tests). Build P, Tests P (121). Commit: 2a6549b.
+- T-029: Leaderboard chevron indicator — DONE. Files: templates/standings/leaderboard.html (Max cell stacked: max_achievable, +N left, MDI chevron icon per band), assets/css/input.css (7 @source inline MDI directives). Build P, Tests P. Commit: f550004. ALL TASKS COMPLETE.
+
 ### Wave 4 — 2026-04-14 (build-site.md)
 - T-027: Hypo param whitelist enforcement — DONE. Files: standings/models.rs (MAX_HYPO_MATCHES, filter_hypo_by_whitelist, 9 tests), standings/handlers.rs (whitelist filtering in leaderboard_fragment), standings/db.rs (remove dead user_id field), achievements.rs (from_str→from_slug), group_standings.rs (slice fix), predictions/handlers.rs (let-chain). Build P, Tests P (117 unit). Commit: 0e034e1. ALL TASKS COMPLETE.
