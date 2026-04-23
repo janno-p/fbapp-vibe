@@ -1,6 +1,6 @@
 ---
-date: 2026-04-23T00:00:00+03:00
-git_commit: 41308215013035f7dcf0937ca2e1f260fada3de1
+date: 2026-04-23T16:54:56+03:00
+git_commit: 1b291c0347a5d17a36dd4e5b48d7c49ea2ef597c
 branch: main
 repository: fbapp-vibe
 topic: "Generated ticket overview and implementation order"
@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 61, open 18, in-progress 0, done 28, cancelled 1
+- Statuses: created 60, open 18, in-progress 0, done 29, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -137,7 +137,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 | ID | Type | Status | 🎯 Priority | 🧩 Domain | Summary | ⏱ Estimate | ⚙️ Complexity | Depends On | Blocks |
 |---|---|---|---|---|---|---:|---|---|---|
-| `debt_cavekit_auth_integration_tests` | debt | created | high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high | — | — |
+| `debt_cavekit_auth_integration_tests` | debt | done | high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high | — | — |
 | `feature_cavekit_google_oauth_login_flow` | feature | created | high | auth | Implement the Google OAuth login flow so users can authenticate, have their account information synchronized, and be redirected into the app with a valid session. | L | high | — | — |
 | `feature_cavekit_user_model` | feature | created | high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions. | L | high | Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | — |
 | `feature_cavekit_session_storage_restoration` | feature | created | high | auth | Ensure authenticated sessions persist in PostgreSQL and are restored on subsequent requests through the auth session extractor. | M | medium | — | — |
@@ -251,7 +251,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 A coarse order based on dependency clusters and likely build-up sequence:
 
-- auth: DEBT-007: Auth integration test coverage; FEATURE-001: Google OAuth login flow; FEATURE-002: User model for auth integration; FEATURE-003: Session storage and restoration; FEATURE-004: Admin role access control; FEATURE-LEAGUES-03: Token-based league joining (+10 more)
+- auth: FEATURE-001: Google OAuth login flow; FEATURE-002: User model for auth integration; FEATURE-003: Session storage and restoration; FEATURE-004: Admin role access control; FEATURE-LEAGUES-03: Token-based league joining; feature_cavekit_session_cleanup (+9 more)
 - tournament: BUG-PREDICTIONS-04: Enforce prediction lock on all save handlers; FEATURE-037: Persist awarded badges; FEATURE-038: Award badges after scoring completes; feature_cavekit_main_leaderboard_standings; FEATURE-CAVEKIT-TOURNAMENT-01: Tournament registration from football-data.org; FEATURE-CAVEKIT-TOURNAMENT-02: Seed tournament data from football-data.org (+30 more)
 - scoring: feature_cavekit_potential_points_indicator; FEATURE-SCORING-02: Ingest finished match results; FEATURE-SCORING-04: Score group stage predictions; FEATURE-SCORING-05: Score knockout predictions; FEATURE-SCORING-07: Sync player goal counts; FEATURE-SCORING-08: Define scoring domain models (+1 more)
 - predictions: FEATURE-PREDICTIONS-06: League prediction review page; FEATURE-PREDICTIONS-08: Show actual results on the predictions page; feature_cavekit_match_breakdown; feature_cavekit_member_comparison; feature_cavekit_member_stats_page; FEATURE-PREDICTIONS-07: Prediction completion counter (+13 more)

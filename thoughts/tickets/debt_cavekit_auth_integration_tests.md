@@ -2,7 +2,7 @@
 type: debt
 priority: high
 created: 2026-04-23T00:00:00Z
-status: created
+status: done
 tags: [auth, tests, integration]
 keywords: [integration tests, dashboard unauthorized, logout session destruction, expired session, admin route, email change invalidation]
 patterns: [HTTP-level integration testing, regression coverage, session invalidation tests]
@@ -73,8 +73,20 @@ The ticket is complete when the listed auth regressions are covered by integrati
 - [ ] Confirm tests exercise the actual HTTP stack.
 
 ## Related Information
-- Source doc: `context/kits/cavekit-auth.md`
+- Source doc: missing in repo (`context/kits/cavekit-auth.md`)
 - Requirement: `R7`
 
 ## Notes
 This is a test-coverage ticket, not a feature change ticket.
+
+## Outcome
+The requested HTTP-level auth regression coverage already exists in `tests/auth_routes.rs`.
+
+- `tests/auth_routes.rs:111-116` covers unauthenticated `/dashboard` returning `401`.
+- `tests/auth_routes.rs:118-130` covers logout destroying the session.
+- `tests/auth_routes.rs:132-144` covers authenticated `/` redirecting to `/dashboard`.
+- `tests/auth_routes.rs:146-170` covers non-admin rejection and admin access on `/admin`.
+- `tests/auth_routes.rs:172-187` covers expired-session rejection.
+- `tests/auth_routes.rs:189-206` covers email-change invalidation.
+
+The tests use the real HTTP stack via `SessionManagerLayer` and `AuthManagerLayer` (`tests/auth_routes.rs:49-89`), so this debt item is satisfied by the current codebase without additional implementation work.
