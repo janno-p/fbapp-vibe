@@ -2,7 +2,7 @@
 type: debt
 priority: high
 created: 2026-04-23
-status: implemented
+status: reviewed
 tags: [claude, opencode, thoughts, migration, agentic]
 keywords: claude.md, .claude/tasks, .claude/CLAUDE.md, thoughts/tickets, opencode /init, .opencode/agents, .opencode/commands, Cluster444 agentic plugin, migrate tasks on tickets
 patterns: instruction-file migration, task-archive migration, repo-wide reference rewrite, agentic workflow spec, markdown config deprecation
