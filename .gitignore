@@ -27,3 +27,6 @@ Thumbs.db
 /assets/js/alpine.js
 
 **/*.local.*
+
+.agents/
+.opencode/

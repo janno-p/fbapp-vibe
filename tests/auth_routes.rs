@@ -8,9 +8,9 @@ use fbapp_vibe::{
     routes,
     state::{AppState, OAuthClient},
 };
-use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
+use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 use sqlx::PgPool;
-use tower_sessions::{cookie::SameSite, Expiry, SessionManagerLayer};
+use tower_sessions::{Expiry, SessionManagerLayer, cookie::SameSite};
 use tower_sessions_sqlx_store::PostgresStore;
 
 fn test_config() -> Config {
@@ -57,7 +57,12 @@ async fn build_test_server(pool: PgPool) -> TestServer {
     let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
 
     let football_api = FootballApiClient::new("test-key".to_string()).expect("football api client");
-    let state = AppState::new(pool.clone(), test_config(), test_oauth_client(), football_api);
+    let state = AppState::new(
+        pool.clone(),
+        test_config(),
+        test_oauth_client(),
+        football_api,
+    );
 
     let login_pool = pool.clone();
     let test_login = move |mut auth_session: AuthSession, Path(user_id): Path<i64>| {
@@ -120,10 +125,7 @@ async fn logout_destroys_session(pool: PgPool) {
         .await
         .assert_status_ok();
     server.get("/dashboard").await.assert_status_ok();
-    server
-        .post("/auth/logout")
-        .await
-        .assert_status_see_other();
+    server.post("/auth/logout").await.assert_status_see_other();
     server.get("/dashboard").await.assert_status_unauthorized();
 }
 
@@ -177,12 +179,10 @@ async fn expired_session_returns_401(pool: PgPool) {
         .await
         .assert_status_ok();
     server.get("/dashboard").await.assert_status_ok();
-    sqlx::query(
-        "UPDATE tower_sessions.session SET expiry_date = NOW() - INTERVAL '1 hour'",
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
+    sqlx::query("UPDATE tower_sessions.session SET expiry_date = NOW() - INTERVAL '1 hour'")
+        .execute(&pool)
+        .await
+        .unwrap();
     server.get("/dashboard").await.assert_status_unauthorized();
 }
 
@@ -195,9 +195,12 @@ async fn email_change_invalidates_session(pool: PgPool) {
         .await
         .assert_status_ok();
     server.get("/dashboard").await.assert_status_ok();
-    sqlx::query!("UPDATE users SET email = 'changed@example.com' WHERE id = $1", user.id)
-        .execute(&pool)
-        .await
-        .unwrap();
+    sqlx::query!(
+        "UPDATE users SET email = 'changed@example.com' WHERE id = $1",
+        user.id
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
     server.get("/dashboard").await.assert_status_unauthorized();
 }

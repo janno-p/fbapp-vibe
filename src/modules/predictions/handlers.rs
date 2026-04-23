@@ -236,7 +236,7 @@ pub async fn predictions_review(
 ) -> Result<impl IntoResponse, AppError> {
     let user = auth_session.user.ok_or(AppError::Unauthorized)?;
 
-    if !crate::modules::standings::db::is_member(&state.pool, league_id, user.id).await? {
+    if !crate::modules::leagues::is_member(&state.pool, league_id, user.id).await? {
         return Err(AppError::Forbidden);
     }
 
@@ -264,4 +264,3 @@ pub async fn predictions_review(
         nav,
     })
 }
-

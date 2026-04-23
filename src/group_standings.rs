@@ -51,7 +51,10 @@ pub struct GroupStandings {
 /// Compute group standings from all finished and pending group matches.
 /// Pending matches (outcome = None) are excluded from stats.
 /// Returns one GroupStandings per group, sorted internally by rank.
-pub fn compute_standings(matches: &[GroupMatchResult], team_names: &std::collections::HashMap<i64, String>) -> Vec<GroupStandings> {
+pub fn compute_standings(
+    matches: &[GroupMatchResult],
+    team_names: &std::collections::HashMap<i64, String>,
+) -> Vec<GroupStandings> {
     use std::collections::{BTreeMap, HashMap};
 
     // group_id → team_id → accumulator
@@ -78,7 +81,9 @@ pub fn compute_standings(matches: &[GroupMatchResult], team_names: &std::collect
 
         // Only count finished matches
         let Some(outcome) = m.outcome else { continue };
-        let (Some(hs), Some(as_)) = (m.home_score, m.away_score) else { continue };
+        let (Some(hs), Some(as_)) = (m.home_score, m.away_score) else {
+            continue;
+        };
 
         let (hw, hd, hl, hp, aw, ad, al, ap) = match outcome {
             Outcome::Home => (1, 0, 0, 3, 0, 0, 1, 0),
@@ -112,7 +117,10 @@ pub fn compute_standings(matches: &[GroupMatchResult], team_names: &std::collect
         .map(|(group_id, team_map)| {
             let mut rows: Vec<TeamStanding> = team_map.into_values().collect();
             sort_standings(&mut rows, matches, group_id);
-            GroupStandings { group_id, standings: rows }
+            GroupStandings {
+                group_id,
+                standings: rows,
+            }
         })
         .collect()
 }
@@ -134,11 +142,7 @@ fn sort_standings(rows: &mut [TeamStanding], matches: &[GroupMatchResult], group
 
 /// Apply head-to-head tiebreaker within contiguous runs of teams with equal
 /// Pts, GD, and GF. Only reorders teams within each tied sub-group.
-fn apply_h2h_tiebreaker(
-    rows: &mut [TeamStanding],
-    matches: &[GroupMatchResult],
-    group_id: i64,
-) {
+fn apply_h2h_tiebreaker(rows: &mut [TeamStanding], matches: &[GroupMatchResult], group_id: i64) {
     let n = rows.len();
     let mut i = 0;
     while i < n {
@@ -171,12 +175,18 @@ fn sort_tied_by_h2h(
     let mut h2h_ga: HashMap<i64, i32> = tied_ids.iter().map(|&id| (id, 0)).collect();
 
     for m in matches {
-        if m.group_id != group_id { continue; }
+        if m.group_id != group_id {
+            continue;
+        }
         let Some(outcome) = m.outcome else { continue };
-        let (Some(hs), Some(as_)) = (m.home_score, m.away_score) else { continue };
+        let (Some(hs), Some(as_)) = (m.home_score, m.away_score) else {
+            continue;
+        };
 
         let both = tied_ids.contains(&m.home_team_id) && tied_ids.contains(&m.away_team_id);
-        if !both { continue; }
+        if !both {
+            continue;
+        }
 
         match outcome {
             Outcome::Home => *h2h_pts.entry(m.home_team_id).or_default() += 3,
@@ -200,9 +210,9 @@ fn sort_tied_by_h2h(
         let aga = h2h_ga.get(&a.team_id).copied().unwrap_or(0);
         let bga = h2h_ga.get(&b.team_id).copied().unwrap_or(0);
 
-        bp.cmp(&ap)                         // H2H pts DESC
+        bp.cmp(&ap) // H2H pts DESC
             .then((bgf - bga).cmp(&(agf - aga))) // H2H GD DESC
-            .then(bgf.cmp(&agf))            // H2H GF DESC
+            .then(bgf.cmp(&agf)) // H2H GF DESC
             .then(a.team_name.cmp(&b.team_name)) // alphabetical
     });
 }
@@ -221,8 +231,8 @@ mod tests {
     fn m(group_id: i64, home: i64, away: i64, hs: i32, as_: i32) -> GroupMatchResult {
         let outcome = match hs.cmp(&as_) {
             std::cmp::Ordering::Greater => Some(Outcome::Home),
-            std::cmp::Ordering::Equal   => Some(Outcome::Draw),
-            std::cmp::Ordering::Less    => Some(Outcome::Away),
+            std::cmp::Ordering::Equal => Some(Outcome::Draw),
+            std::cmp::Ordering::Less => Some(Outcome::Away),
         };
         GroupMatchResult {
             group_id,
@@ -319,20 +329,31 @@ mod tests {
         // T1: beat T3 1-0 (+1 GD), draw T4 0-0 → 4 pts, GD +1
         // T2: beat T3 3-0 (+3 GD), draw T4 0-0 → 4 pts, GD +3
         let ns = names(&[(1, "T1"), (2, "T2"), (3, "T3"), (4, "T4")]);
-        let groups = compute_standings(&[
-            m(1, 1, 3, 1, 0),
-            m(1, 2, 3, 3, 0),
-            m(1, 1, 4, 0, 0),
-            m(1, 2, 4, 0, 0),
-            m(1, 3, 4, 0, 0), // T3 vs T4 for completeness
-        ], &ns);
+        let groups = compute_standings(
+            &[
+                m(1, 1, 3, 1, 0),
+                m(1, 2, 3, 3, 0),
+                m(1, 1, 4, 0, 0),
+                m(1, 2, 4, 0, 0),
+                m(1, 3, 4, 0, 0), // T3 vs T4 for completeness
+            ],
+            &ns,
+        );
         let t1 = standing(&groups, 1, 1);
         let t2 = standing(&groups, 1, 2);
         assert!(t2.pts == t1.pts, "same pts");
         assert!(t2.gd > t1.gd, "T2 better GD");
         // T2 must rank above T1
-        let pos_t2 = groups[0].standings.iter().position(|r| r.team_id == 2).unwrap();
-        let pos_t1 = groups[0].standings.iter().position(|r| r.team_id == 1).unwrap();
+        let pos_t2 = groups[0]
+            .standings
+            .iter()
+            .position(|r| r.team_id == 2)
+            .unwrap();
+        let pos_t1 = groups[0]
+            .standings
+            .iter()
+            .position(|r| r.team_id == 1)
+            .unwrap();
         assert!(pos_t2 < pos_t1, "T2 ranked above T1 via GD tiebreaker");
     }
 
@@ -342,20 +363,31 @@ mod tests {
         // T1: beat T3 1-0, beat T4 1-0 → 6 pts, GD +2, GF 2
         // T2: beat T3 2-1, beat T4 2-1 → 6 pts, GD +2, GF 4
         let ns = names(&[(1, "T1"), (2, "T2"), (3, "T3"), (4, "T4")]);
-        let groups = compute_standings(&[
-            m(1, 1, 3, 1, 0),
-            m(1, 1, 4, 1, 0),
-            m(1, 2, 3, 2, 1),
-            m(1, 2, 4, 2, 1),
-            m(1, 3, 4, 0, 0),
-        ], &ns);
+        let groups = compute_standings(
+            &[
+                m(1, 1, 3, 1, 0),
+                m(1, 1, 4, 1, 0),
+                m(1, 2, 3, 2, 1),
+                m(1, 2, 4, 2, 1),
+                m(1, 3, 4, 0, 0),
+            ],
+            &ns,
+        );
         let t1 = standing(&groups, 1, 1);
         let t2 = standing(&groups, 1, 2);
         assert_eq!(t1.pts, t2.pts, "same pts");
         assert_eq!(t1.gd, t2.gd, "same GD");
         assert!(t2.gf > t1.gf, "T2 more GF");
-        let pos_t2 = groups[0].standings.iter().position(|r| r.team_id == 2).unwrap();
-        let pos_t1 = groups[0].standings.iter().position(|r| r.team_id == 1).unwrap();
+        let pos_t2 = groups[0]
+            .standings
+            .iter()
+            .position(|r| r.team_id == 2)
+            .unwrap();
+        let pos_t1 = groups[0]
+            .standings
+            .iter()
+            .position(|r| r.team_id == 1)
+            .unwrap();
         assert!(pos_t2 < pos_t1, "T2 ranked above T1 via GF tiebreaker");
     }
 
@@ -373,17 +405,25 @@ mod tests {
         // For a clean H2H test: 3-team group, all teams get same points via circular results
         // T1 beat T2 1-0 (3 pts), T2 beat T3 1-0 (3 pts), T3 beat T1 1-0 (3 pts) → all 3 pts, all GD=0, all GF=1
         let ns = names(&[(1, "T1"), (2, "T2"), (3, "T3")]);
-        let groups = compute_standings(&[
-            m(1, 1, 2, 1, 0), // T1 beat T2
-            m(1, 2, 3, 1, 0), // T2 beat T3
-            m(1, 3, 1, 1, 0), // T3 beat T1
-        ], &ns);
+        let groups = compute_standings(
+            &[
+                m(1, 1, 2, 1, 0), // T1 beat T2
+                m(1, 2, 3, 1, 0), // T2 beat T3
+                m(1, 3, 1, 1, 0), // T3 beat T1
+            ],
+            &ns,
+        );
         // All tied, H2H results: T1 beat T2, T2 beat T3, T3 beat T1
         // H2H pts among 3: T1=3 (beat T2), T2=3 (beat T3), T3=3 (beat T1) → still all tied
         // After H2H, alphabetical: T1, T2, T3
         let positions: Vec<i64> = groups[0].standings.iter().map(|r| r.team_id).collect();
         // All should be in alphabetical order (T1 < T2 < T3) as final tiebreaker
-        assert_eq!(positions, vec![1, 2, 3], "alphabetical fallback after H2H tie: {:?}", positions);
+        assert_eq!(
+            positions,
+            vec![1, 2, 3],
+            "alphabetical fallback after H2H tie: {:?}",
+            positions
+        );
     }
 
     #[test]
@@ -401,12 +441,15 @@ mod tests {
     fn partial_group_only_counts_played() {
         // 4 teams, only 2 matches played of 6 total
         let ns = names(&[(1, "T1"), (2, "T2"), (3, "T3"), (4, "T4")]);
-        let groups = compute_standings(&[
-            m(1, 1, 2, 2, 0),       // played
-            pending(1, 3, 4),        // pending
-            pending(1, 1, 3),
-            pending(1, 2, 4),
-        ], &ns);
+        let groups = compute_standings(
+            &[
+                m(1, 1, 2, 2, 0), // played
+                pending(1, 3, 4), // pending
+                pending(1, 1, 3),
+                pending(1, 2, 4),
+            ],
+            &ns,
+        );
         let t1 = standing(&groups, 1, 1);
         assert_eq!(t1.mp, 1);
         assert_eq!(t1.pts, 3);

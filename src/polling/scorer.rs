@@ -5,7 +5,11 @@ use crate::db_types::{KnockoutRound, MatchOutcome};
 /// - Correct + confident: 2 pts
 /// - Correct + not confident: 1 pt
 /// - Wrong (regardless of confidence): 0 pts
-pub fn group_stage_points(predicted: &MatchOutcome, actual: &MatchOutcome, is_confident: bool) -> i32 {
+pub fn group_stage_points(
+    predicted: &MatchOutcome,
+    actual: &MatchOutcome,
+    is_confident: bool,
+) -> i32 {
     if predicted == actual {
         if is_confident { 2 } else { 1 }
     } else {
@@ -41,35 +45,71 @@ mod tests {
 
     #[test]
     fn group_stage_correct_not_confident_scores_one() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, false), 1);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw, false), 1);
-        assert_eq!(group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away, false), 1);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, false),
+            1
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw, false),
+            1
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away, false),
+            1
+        );
     }
 
     #[test]
     fn group_stage_correct_confident_scores_two() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, true), 2);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw, true), 2);
-        assert_eq!(group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away, true), 2);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, true),
+            2
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Draw, true),
+            2
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Away, &MatchOutcome::Away, true),
+            2
+        );
     }
 
     #[test]
     fn group_stage_wrong_prediction_scores_zero() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away, false), 0);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home, false), 0);
-        assert_eq!(group_stage_points(&MatchOutcome::Away, &MatchOutcome::Draw, false), 0);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away, false),
+            0
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home, false),
+            0
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Away, &MatchOutcome::Draw, false),
+            0
+        );
     }
 
     #[test]
     fn group_stage_wrong_confident_still_scores_zero() {
-        assert_eq!(group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away, true), 0);
-        assert_eq!(group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home, true), 0);
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Away, true),
+            0
+        );
+        assert_eq!(
+            group_stage_points(&MatchOutcome::Draw, &MatchOutcome::Home, true),
+            0
+        );
     }
 
     #[test]
     fn group_stage_scorer_is_idempotent() {
         let score = group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, false);
-        assert_eq!(score, group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, false));
+        assert_eq!(
+            score,
+            group_stage_points(&MatchOutcome::Home, &MatchOutcome::Home, false)
+        );
     }
 
     // ── Knockout ──────────────────────────────────────────────────────────────

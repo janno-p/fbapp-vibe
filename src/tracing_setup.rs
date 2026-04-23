@@ -39,9 +39,9 @@ pub fn init_tracing() -> bool {
 }
 
 fn build_otlp_layer(endpoint: &str) -> anyhow::Result<BoxedLayer> {
+    use opentelemetry::KeyValue;
     use opentelemetry::sdk::Resource;
     use opentelemetry::sdk::trace::config;
-    use opentelemetry::KeyValue;
     use opentelemetry_otlp::WithExportConfig;
 
     let tracer = opentelemetry_otlp::new_pipeline()
@@ -61,8 +61,7 @@ fn build_otlp_layer(endpoint: &str) -> anyhow::Result<BoxedLayer> {
         )
         .install_batch(opentelemetry::runtime::Tokio)?;
 
-    let layer: BoxedLayer =
-        Box::new(tracing_opentelemetry::layer().with_tracer(tracer));
+    let layer: BoxedLayer = Box::new(tracing_opentelemetry::layer().with_tracer(tracer));
     Ok(layer)
 }
 

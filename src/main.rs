@@ -10,8 +10,7 @@ use fbapp_vibe::{
     config::Config,
     football_api,
     modules::auth::AuthBackend,
-    routes,
-    session_cleanup,
+    routes, session_cleanup,
     state::{AppState, OAuthClient},
     tracing_setup,
 };
@@ -96,4 +95,3 @@ fn build_oauth_client(config: &Config) -> anyhow::Result<OAuthClient> {
         .set_redirect_uri(RedirectUrl::new(config.google_redirect_url.clone())?);
     Ok(client)
 }
-

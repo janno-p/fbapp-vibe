@@ -9,7 +9,7 @@ mod db;
 mod handlers;
 pub mod models;
 
-pub use db::list_user_leagues;
+pub use db::{is_member, list_user_leagues};
 
 pub fn router() -> Router<AppState> {
     Router::new()

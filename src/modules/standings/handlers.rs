@@ -7,10 +7,7 @@ use axum::{
 use serde::Deserialize;
 
 use crate::{
-    achievements,
-    error::AppError,
-    modules::auth::AuthSession,
-    nav::NavContext,
+    achievements, error::AppError, modules::auth::AuthSession, modules::leagues, nav::NavContext,
     state::AppState,
 };
 
@@ -157,7 +154,14 @@ pub async fn standings_page(
                     crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
                     db::get_unplayed_group_matches(&state.pool, tournament.id),
                 )?;
-                (build_leaderboard(raw, badges, std::collections::HashMap::new()), nearest, has_live, false, locked, unplayed)
+                (
+                    build_leaderboard(raw, badges, std::collections::HashMap::new()),
+                    nearest,
+                    has_live,
+                    false,
+                    locked,
+                    unplayed,
+                )
             }
         };
 
@@ -186,34 +190,38 @@ pub async fn leaderboard_fragment(
 
     let hypo_raw = parse_hypo_params(&raw_params);
 
-    let (entries, has_live, no_tournament, is_locked) =
-        match db::get_active_tournament(&state.pool).await? {
-            None => (vec![], false, true, false),
-            Some(tournament) => {
-                let locked = tournament.is_predictions_locked();
-                let (raw, has_live, badges, unplayed) = tokio::try_join!(
-                    db::get_leaderboard(&state.pool, tournament.id, league_id),
-                    db::has_live_matches(&state.pool, tournament.id),
-                    crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
-                    db::get_unplayed_group_matches(&state.pool, tournament.id),
-                )?;
-                // Whitelist: only accept hypo IDs for valid unplayed group-stage matches.
-                // Knockout match IDs and nonexistent IDs are silently dropped here.
-                let whitelist: std::collections::HashSet<i64> =
-                    unplayed.iter().map(|m| m.id).collect();
-                let hypo = filter_hypo_by_whitelist(hypo_raw, &whitelist);
-                let deltas = if hypo.is_empty() {
-                    std::collections::HashMap::new()
-                } else {
-                    let match_ids: Vec<i64> = hypo.keys().copied().collect();
-                    let preds =
-                        db::get_predictions_for_matches(&state.pool, league_id, &match_ids)
-                            .await?;
-                    compute_projected_delta(&preds, &hypo)
-                };
-                (build_leaderboard(raw, badges, deltas), has_live, false, locked)
-            }
-        };
+    let (entries, has_live, no_tournament, is_locked) = match db::get_active_tournament(&state.pool)
+        .await?
+    {
+        None => (vec![], false, true, false),
+        Some(tournament) => {
+            let locked = tournament.is_predictions_locked();
+            let (raw, has_live, badges, unplayed) = tokio::try_join!(
+                db::get_leaderboard(&state.pool, tournament.id, league_id),
+                db::has_live_matches(&state.pool, tournament.id),
+                crate::achievements::get_top_badge_per_user(&state.pool, tournament.id),
+                db::get_unplayed_group_matches(&state.pool, tournament.id),
+            )?;
+            // Whitelist: only accept hypo IDs for valid unplayed group-stage matches.
+            // Knockout match IDs and nonexistent IDs are silently dropped here.
+            let whitelist: std::collections::HashSet<i64> = unplayed.iter().map(|m| m.id).collect();
+            let hypo = filter_hypo_by_whitelist(hypo_raw, &whitelist);
+            let deltas = if hypo.is_empty() {
+                std::collections::HashMap::new()
+            } else {
+                let match_ids: Vec<i64> = hypo.keys().copied().collect();
+                let preds =
+                    db::get_predictions_for_matches(&state.pool, league_id, &match_ids).await?;
+                compute_projected_delta(&preds, &hypo)
+            };
+            (
+                build_leaderboard(raw, badges, deltas),
+                has_live,
+                false,
+                locked,
+            )
+        }
+    };
 
     Ok(LeaderboardFragment {
         league_id,
@@ -417,7 +425,11 @@ pub async fn member_stats(
                     db::get_member_top_scorer_points(&state.pool, t_id, target_user_id),
                 )?;
 
-            let leaderboard = build_leaderboard(raw_leaderboard, std::collections::HashMap::new(), std::collections::HashMap::new());
+            let leaderboard = build_leaderboard(
+                raw_leaderboard,
+                std::collections::HashMap::new(),
+                std::collections::HashMap::new(),
+            );
             let lb_entry = leaderboard.iter().find(|e| e.user_id == target_user_id);
             let total_points = lb_entry.map(|e| e.total_points).unwrap_or(0);
             let rank = lb_entry.map(|e| e.rank).unwrap_or(leaderboard.len() + 1);
@@ -445,11 +457,9 @@ pub async fn member_stats(
     };
 
     let badges = match tournament_id {
-        Some(t_id) => {
-            achievements::get_user_badges(&state.pool, target_user_id, t_id)
-                .await
-                .unwrap_or_default()
-        }
+        Some(t_id) => achievements::get_user_badges(&state.pool, target_user_id, t_id)
+            .await
+            .unwrap_or_default(),
         None => vec![],
     };
 
@@ -546,7 +556,7 @@ pub async fn round_breakdown(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async fn require_member(state: &AppState, league_id: i64, user_id: i64) -> Result<(), AppError> {
-    if !db::is_member(&state.pool, league_id, user_id).await? {
+    if !leagues::is_member(&state.pool, league_id, user_id).await? {
         return Err(AppError::Forbidden);
     }
     Ok(())

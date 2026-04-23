@@ -95,7 +95,13 @@ mod tests {
     #[sqlx::test(migrations = "./migrations")]
     async fn authenticate_always_returns_ok_none(pool: PgPool) {
         let backend = AuthBackend::new(pool);
-        let result = backend.authenticate(models::Credentials).await.expect("authenticate");
-        assert!(result.is_none(), "OAuth backend authenticate() must return None");
+        let result = backend
+            .authenticate(models::Credentials)
+            .await
+            .expect("authenticate");
+        assert!(
+            result.is_none(),
+            "OAuth backend authenticate() must return None"
+        );
     }
 }

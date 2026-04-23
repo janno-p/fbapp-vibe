@@ -192,9 +192,7 @@ mod tests {
     fn login_route_path_is_correct() {
         // Compile-time verification: the handler function `login` exists and has the
         // expected signature.  If it is renamed or removed, this import fails to compile.
-        let _: fn(
-            axum::extract::State<crate::state::AppState>,
-            tower_sessions::Session,
-        ) -> _ = super::login;
+        let _: fn(axum::extract::State<crate::state::AppState>, tower_sessions::Session) -> _ =
+            super::login;
     }
 }

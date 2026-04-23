@@ -622,7 +622,10 @@ mod tests {
         make_match_at(&pool, t_id, future).await;
 
         let locked = auto_lock_if_started(&pool, t_id).await.expect("auto_lock");
-        assert!(!locked, "should not lock when all matches are in the future");
+        assert!(
+            !locked,
+            "should not lock when all matches are in the future"
+        );
     }
 
     #[sqlx::test(migrations = "./migrations")]
@@ -669,7 +672,9 @@ mod tests {
         let first = auto_lock_if_started(&pool, t_id).await.expect("first call");
         assert!(first, "first call should lock");
 
-        let second = auto_lock_if_started(&pool, t_id).await.expect("second call");
+        let second = auto_lock_if_started(&pool, t_id)
+            .await
+            .expect("second call");
         assert!(!second, "second call should be a no-op");
     }
 }

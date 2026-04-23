@@ -61,7 +61,10 @@ mod tests {
         assert_eq!(u.google_id, "google-abc");
         assert_eq!(u.email, "alice@example.com");
         assert_eq!(u.name, "Alice");
-        assert_eq!(u.avatar_url, Some("https://example.com/avatar.jpg".to_string()));
+        assert_eq!(
+            u.avatar_url,
+            Some("https://example.com/avatar.jpg".to_string())
+        );
         assert!(!u.is_admin);
     }
 
@@ -108,7 +111,10 @@ mod tests {
         assert_eq!(info.id, "123");
         assert_eq!(info.email, "bob@example.com");
         assert_eq!(info.name, "Bob");
-        assert_eq!(info.picture, Some("https://p.example.com/b.jpg".to_string()));
+        assert_eq!(
+            info.picture,
+            Some("https://p.example.com/b.jpg".to_string())
+        );
     }
 
     // R1.7 — GoogleUserInfo picture field is optional.

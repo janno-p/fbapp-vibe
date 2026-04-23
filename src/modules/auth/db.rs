@@ -39,16 +39,24 @@ mod tests {
     // R2.1, R1.4 — creates a new user row from Google profile data.
     #[sqlx::test(migrations = "./migrations")]
     async fn creates_new_user(pool: PgPool) {
-        let user =
-            find_or_create_user(&pool, "g-001", "alice@example.com", "Alice", Some("https://a.example.com/pic.jpg"))
-                .await
-                .expect("create user");
+        let user = find_or_create_user(
+            &pool,
+            "g-001",
+            "alice@example.com",
+            "Alice",
+            Some("https://a.example.com/pic.jpg"),
+        )
+        .await
+        .expect("create user");
 
         assert!(user.id > 0);
         assert_eq!(user.google_id, "g-001");
         assert_eq!(user.email, "alice@example.com");
         assert_eq!(user.name, "Alice");
-        assert_eq!(user.avatar_url, Some("https://a.example.com/pic.jpg".to_string()));
+        assert_eq!(
+            user.avatar_url,
+            Some("https://a.example.com/pic.jpg".to_string())
+        );
         assert!(!user.is_admin);
     }
 
@@ -68,14 +76,22 @@ mod tests {
             .await
             .expect("initial insert");
 
-        let updated =
-            find_or_create_user(&pool, "g-003", "new@example.com", "New Name", Some("https://n.example.com/pic.jpg"))
-                .await
-                .expect("upsert");
+        let updated = find_or_create_user(
+            &pool,
+            "g-003",
+            "new@example.com",
+            "New Name",
+            Some("https://n.example.com/pic.jpg"),
+        )
+        .await
+        .expect("upsert");
 
         assert_eq!(updated.email, "new@example.com");
         assert_eq!(updated.name, "New Name");
-        assert_eq!(updated.avatar_url, Some("https://n.example.com/pic.jpg".to_string()));
+        assert_eq!(
+            updated.avatar_url,
+            Some("https://n.example.com/pic.jpg".to_string())
+        );
     }
 
     // R1.4 — upsert must not reset is_admin to false.

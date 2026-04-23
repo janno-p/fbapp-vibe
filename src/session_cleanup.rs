@@ -17,10 +17,9 @@ pub async fn run(pool: PgPool) {
 }
 
 async fn delete_expired(pool: &PgPool) -> sqlx::Result<u64> {
-    let result =
-        sqlx::query("DELETE FROM tower_sessions.session WHERE expiry_date <= NOW()")
-            .execute(pool)
-            .await?;
+    let result = sqlx::query("DELETE FROM tower_sessions.session WHERE expiry_date <= NOW()")
+        .execute(pool)
+        .await?;
     Ok(result.rows_affected())
 }
 

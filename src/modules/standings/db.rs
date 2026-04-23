@@ -10,20 +10,6 @@ use super::models::{
     MatchConsensus, MatchInfo, MemberGroupPredRow, NearestMatch,
 };
 
-// ── Access guard ──────────────────────────────────────────────────────────────
-
-pub async fn is_member(pool: &PgPool, league_id: i64, user_id: i64) -> anyhow::Result<bool> {
-    let member = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM league_members WHERE league_id = $1 AND user_id = $2)",
-        league_id,
-        user_id,
-    )
-    .fetch_one(pool)
-    .await?
-    .unwrap_or(false);
-    Ok(member)
-}
-
 // ── League meta ───────────────────────────────────────────────────────────────
 
 pub async fn get_active_tournament_id(pool: &PgPool) -> anyhow::Result<Option<i64>> {
@@ -1048,8 +1034,16 @@ mod tests {
         let league = make_league(&pool, u1).await;
         add_member(&pool, league, u1).await;
 
-        assert!(is_member(&pool, league, u1).await.expect("check u1"));
-        assert!(!is_member(&pool, league, u2).await.expect("check u2"));
+        assert!(
+            crate::modules::leagues::is_member(&pool, league, u1)
+                .await
+                .expect("check u1")
+        );
+        assert!(
+            !crate::modules::leagues::is_member(&pool, league, u2)
+                .await
+                .expect("check u2")
+        );
     }
 
     #[sqlx::test(migrations = "./migrations")]

@@ -37,16 +37,10 @@ impl BadgeSlug {
 
     pub fn description(&self) -> &'static str {
         match self {
-            Self::PerfectGroupRound => {
-                "Predicted all matches in a group stage day correctly"
-            }
-            Self::UnderdogCaller => {
-                "Correctly predicted 3 or more away wins"
-            }
+            Self::PerfectGroupRound => "Predicted all matches in a group stage day correctly",
+            Self::UnderdogCaller => "Correctly predicted 3 or more away wins",
             Self::TopScorer => "Finished #1 on the leaderboard at tournament end",
-            Self::ConsistentPredictor => {
-                "Achieved over 70% accuracy in group stage predictions"
-            }
+            Self::ConsistentPredictor => "Achieved over 70% accuracy in group stage predictions",
             Self::Oracle => "Correctly predicted the tournament winner",
         }
     }
@@ -115,8 +109,7 @@ pub async fn run_badge_award_job(pool: &PgPool, tournament_id: i64) -> anyhow::R
         if let Err(e) = evaluate_and_award(pool, &ctx, badge).await {
             error!(
                 badge = badge.as_str(),
-                tournament_id,
-                "Badge evaluation failed: {e:#}"
+                tournament_id, "Badge evaluation failed: {e:#}"
             );
         }
     }
@@ -149,14 +142,10 @@ async fn evaluate_and_award(
     badge: BadgeSlug,
 ) -> anyhow::Result<()> {
     let eligible = match badge {
-        BadgeSlug::PerfectGroupRound => {
-            evaluate_perfect_group_round(pool, ctx).await?
-        }
+        BadgeSlug::PerfectGroupRound => evaluate_perfect_group_round(pool, ctx).await?,
         BadgeSlug::UnderdogCaller => evaluate_underdog_caller(pool, ctx).await?,
         BadgeSlug::TopScorer => evaluate_top_scorer(pool, ctx).await?,
-        BadgeSlug::ConsistentPredictor => {
-            evaluate_consistent_predictor(pool, ctx).await?
-        }
+        BadgeSlug::ConsistentPredictor => evaluate_consistent_predictor(pool, ctx).await?,
         BadgeSlug::Oracle => evaluate_oracle(pool, ctx).await?,
     };
 
@@ -219,10 +208,7 @@ async fn evaluate_perfect_group_round(
 }
 
 /// Users with >= 3 correct away-win predictions in group stage.
-async fn evaluate_underdog_caller(
-    pool: &PgPool,
-    ctx: &AwardContext,
-) -> anyhow::Result<Vec<i64>> {
+async fn evaluate_underdog_caller(pool: &PgPool, ctx: &AwardContext) -> anyhow::Result<Vec<i64>> {
     let rows = sqlx::query_scalar!(
         r#"
         SELECT gsp.user_id
@@ -246,10 +232,7 @@ async fn evaluate_underdog_caller(
 }
 
 /// User ranked #1 on the final leaderboard (all matches finished).
-async fn evaluate_top_scorer(
-    pool: &PgPool,
-    ctx: &AwardContext,
-) -> anyhow::Result<Vec<i64>> {
+async fn evaluate_top_scorer(pool: &PgPool, ctx: &AwardContext) -> anyhow::Result<Vec<i64>> {
     // Only award after all matches in the tournament are finished (outcome set)
     let unfinished: i64 = sqlx::query_scalar!(
         "SELECT COUNT(*) FROM matches WHERE tournament_id = $1 AND outcome IS NULL",
@@ -316,10 +299,7 @@ async fn evaluate_consistent_predictor(
 }
 
 /// Users who predicted the tournament winner in the knockout round.
-async fn evaluate_oracle(
-    pool: &PgPool,
-    ctx: &AwardContext,
-) -> anyhow::Result<Vec<i64>> {
+async fn evaluate_oracle(pool: &PgPool, ctx: &AwardContext) -> anyhow::Result<Vec<i64>> {
     // Find the winning team (team that won the FINAL match as home or away winner)
     let winner_team_id: Option<i64> = sqlx::query_scalar!(
         r#"
@@ -452,7 +432,11 @@ mod tests {
     fn badge_roundtrip_from_str() {
         for badge in BadgeSlug::all() {
             let slug = badge.as_str();
-            assert_eq!(BadgeSlug::from_slug(slug), Some(badge), "roundtrip failed for {slug}");
+            assert_eq!(
+                BadgeSlug::from_slug(slug),
+                Some(badge),
+                "roundtrip failed for {slug}"
+            );
         }
     }
 
@@ -465,7 +449,11 @@ mod tests {
     fn all_badges_have_non_empty_metadata() {
         for badge in BadgeSlug::all() {
             assert!(!badge.name().is_empty(), "{:?} name empty", badge);
-            assert!(!badge.description().is_empty(), "{:?} description empty", badge);
+            assert!(
+                !badge.description().is_empty(),
+                "{:?} description empty",
+                badge
+            );
             assert!(badge.emoji() != '\0', "{:?} emoji empty", badge);
             assert!(!badge.as_str().is_empty(), "{:?} slug empty", badge);
         }
@@ -598,9 +586,23 @@ mod tests {
         let user_id = insert_user(&pool, "G-BADGE", "badge@test.com").await;
 
         // 4 matches: user predicts Home for all; 3 are correct (75% > 70%)
-        let outcomes = [MatchOutcome::Home, MatchOutcome::Home, MatchOutcome::Home, MatchOutcome::Away];
+        let outcomes = [
+            MatchOutcome::Home,
+            MatchOutcome::Home,
+            MatchOutcome::Home,
+            MatchOutcome::Away,
+        ];
         for (i, outcome) in outcomes.iter().enumerate() {
-            let mid = insert_match(&pool, t_id, &format!("M-B1-{i}"), home, away, g_id, outcome.clone()).await;
+            let mid = insert_match(
+                &pool,
+                t_id,
+                &format!("M-B1-{i}"),
+                home,
+                away,
+                g_id,
+                outcome.clone(),
+            )
+            .await;
             insert_prediction(&pool, user_id, mid, MatchOutcome::Home).await;
         }
 
@@ -613,7 +615,9 @@ mod tests {
         );
 
         // Idempotency: second run must not insert a duplicate
-        run_badge_award_job(&pool, t_id).await.expect("badge job second run");
+        run_badge_award_job(&pool, t_id)
+            .await
+            .expect("badge job second run");
         assert_eq!(
             badge_count(&pool, user_id, t_id, "consistent_predictor").await,
             1,
@@ -634,7 +638,16 @@ mod tests {
 
         // 2 matches: both outcome=Away, user predicts Home → 0/2 = 0% < 70%
         for i in 0..2i64 {
-            let mid = insert_match(&pool, t_id, &format!("M-B2-{i}"), home, away, g_id, MatchOutcome::Away).await;
+            let mid = insert_match(
+                &pool,
+                t_id,
+                &format!("M-B2-{i}"),
+                home,
+                away,
+                g_id,
+                MatchOutcome::Away,
+            )
+            .await;
             insert_prediction(&pool, user_id, mid, MatchOutcome::Home).await;
         }
 

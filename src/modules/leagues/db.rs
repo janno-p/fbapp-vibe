@@ -211,6 +211,39 @@ mod tests {
     }
 
     #[sqlx::test(migrations = "./migrations")]
+    async fn is_member_checks_membership(pool: PgPool) {
+        let member_id = make_user(&pool).await;
+        let other_id = sqlx::query_scalar!(
+            r#"
+            INSERT INTO users (google_id, email, name)
+            VALUES ('other-google-id', 'other@example.com', 'Other User')
+            RETURNING id
+            "#
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("insert other user");
+        let league = create_league(&pool, "Test League", "tok-member", member_id)
+            .await
+            .expect("create league");
+
+        join_league(&pool, league.id, member_id)
+            .await
+            .expect("join league");
+
+        assert!(
+            is_member(&pool, league.id, member_id)
+                .await
+                .expect("member check")
+        );
+        assert!(
+            !is_member(&pool, league.id, other_id)
+                .await
+                .expect("non-member check")
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
     async fn join_is_idempotent(pool: PgPool) {
         let user_id = make_user(&pool).await;
         let league = create_league(&pool, "Test League", "tok-idem", user_id)

@@ -905,7 +905,10 @@ mod tests {
         let mut entries: Vec<_> = ceilings.iter().map(|&c| entry_with_ceiling(c)).collect();
         assign_ceiling_bands(&mut entries);
         for e in &entries {
-            assert!(e.ceiling_band >= 1 && e.ceiling_band <= 7, "band must be 1–7");
+            assert!(
+                e.ceiling_band >= 1 && e.ceiling_band <= 7,
+                "band must be 1–7"
+            );
         }
     }
 
