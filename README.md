@@ -188,7 +188,9 @@ fbapp-vibe/
 │       ├── leagues/     # League creation, invite links, membership
 │       └── predictions/ # Tournament predictions (group, knockout, top scorer)
 ├── docs/adr/            # Architecture Decision Records
-└── .claude/tasks/       # Task files for AI-assisted development
+└── thoughts/
+    ├── plans/           # Implementation plans
+    └── tickets/         # Task tickets for agentic development
 ```
 
 ## Architecture Decisions

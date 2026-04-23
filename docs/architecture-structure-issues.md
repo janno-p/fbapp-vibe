@@ -17,7 +17,7 @@ The codebase is a single-crate modular monolith built around Axum, Askama, HTMX,
 ## Detailed Findings
 
 ### Architecture Layout
-- The repo is explicitly organized as a modular monolith in ADR-0007 (`docs/adr/0007-project-structure-modular-monolith.md:26-31`), with route modules under `src/modules/` and shared/non-route code under `src/` (`src/CLAUDE.md:1-39`).
+- The repo is explicitly organized as a modular monolith in ADR-0007 (`docs/adr/0007-project-structure-modular-monolith.md:26-31`), with route modules under `src/modules/` and shared/non-route code under `src/` (`README.md:166-191`).
 - `src/routes.rs:6-16` assembles the top-level router by merging module routers and serving static assets.
 - `src/modules/mod.rs:1-8` is a thin registry of feature modules only.
 - `main.rs` wires the runtime stack: config, migrations, TLS, auth/session layers, app state, background jobs, and the server (`src/main.rs:19-84`).
@@ -48,7 +48,7 @@ The codebase is a single-crate modular monolith built around Axum, Askama, HTMX,
 - That design is consistent with the ADR, but it means polling throughput is intentionally low and globally serialized.
 
 ## Code References
-- `src/CLAUDE.md:1-39` - repo-level architecture guidance for route vs non-route modules.
+- `README.md:166-193` - current project structure and thoughts workflow references.
 - `docs/adr/0007-project-structure-modular-monolith.md:26-31, 67-106` - modular monolith decision and boundary rules.
 - `src/main.rs:19-84` - startup wiring, migrations, auth/session layers, background tasks.
 - `src/routes.rs:6-16` - top-level router assembly.
@@ -75,7 +75,7 @@ The codebase is a single-crate modular monolith built around Axum, Askama, HTMX,
 - `docs/adr/0010-observability-with-tracing.md` explains the tracing setup used by `main.rs` and `routes.rs`.
 - `docs/adr/0011-authentication-strategy.md` is superseded, but it documents the session-based auth pattern that is still reflected in the runtime wiring.
 - `docs/adr/0018-football-api.md` explains the single external data source and the rate-limit-driven polling design.
-- No `thoughts/` directory exists in this repo, so there was no separate historical notes tree to mine.
+- The repo now has a `thoughts/` tree for plans and tickets, so the historical note above is stale in that respect.
 
 ## Related Research
 - `docs/adr/0007-project-structure-modular-monolith.md`
