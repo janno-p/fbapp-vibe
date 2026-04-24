@@ -94,6 +94,19 @@ mod tests {
         );
     }
 
+    // R2.1 — email uniqueness is enforced at the database level.
+    #[sqlx::test(migrations = "./migrations")]
+    async fn rejects_duplicate_email_for_different_google_id(pool: PgPool) {
+        find_or_create_user(&pool, "g-email-1", "same@example.com", "First", None)
+            .await
+            .expect("create first user");
+
+        let result =
+            find_or_create_user(&pool, "g-email-2", "same@example.com", "Second", None).await;
+
+        assert!(result.is_err(), "duplicate email must be rejected");
+    }
+
     // R1.4 — upsert must not reset is_admin to false.
     #[sqlx::test(migrations = "./migrations")]
     async fn preserves_is_admin_flag_on_conflict(pool: PgPool) {
