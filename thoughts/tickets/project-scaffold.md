@@ -4,7 +4,7 @@ source: .claude/tasks/done/0001-project-scaffold.md
 source_id: 0001
 source_status: done
 source_title: Project scaffold
-status: done
+status: implemented
 type: chore
 adrs: [0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0010, 0012]
 refs: []
@@ -163,5 +163,13 @@ Full project skeleton created and all acceptance criteria met. All files match t
 - `sqlx::migrate!()` runs automatically at startup before the server binds
 - `Cargo.lock` is gitignored (application binary — include it if preferred for reproducible builds)
 - `.sqlx/` is also gitignored with a comment explaining how to opt in for offline CI builds
+
+Closeout update (2026-04-24): Docker and documentation drift from the original scaffold has been closed out.
+
+- Added root Docker packaging with a multi-stage build, non-root runtime image, static asset generation, templates, migrations, and runtime-only app artifacts.
+- Added `.dockerignore` exclusions for local build outputs, secrets, certs, git metadata, and agent workspaces while preserving lockfiles for reproducible builds.
+- Updated Compose so the app reads application secrets from `.env`, keeps container networking overrides in Compose, and mounts local TLS certs at runtime instead of baking them into the image.
+- Updated README, `.env.example`, and ADRs to match current config keys, Tailwind v4 CSS-first setup, vendored HTMX/Alpine assets, current modules, and Docker behavior.
+- Verification passed: `make lint`, `make test`, `make css`, `make js`, `docker compose config`, `docker compose build app`, full `docker compose up --build` smoke, `/health`, and containerized CSS/JS asset checks.
 
 Follow-up tasks: _none_

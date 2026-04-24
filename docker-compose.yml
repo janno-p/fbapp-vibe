@@ -1,8 +1,12 @@
 services:
   app:
     build: .
+    env_file:
+      - .env
     ports:
       - "3000:3000"
+    volumes:
+      - ./certs:/app/certs:ro
     environment:
       DATABASE_URL: postgres://fbapp:fbapp@db:5432/fbapp
       HOST: 0.0.0.0

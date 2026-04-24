@@ -47,27 +47,36 @@ WORKDIR /app
 # Install system dependencies for SQLx and TLS
 RUN apt-get update && apt-get install -y \
     pkg-config \
+    postgresql \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Cache dependencies separately from application code
 COPY Cargo.toml Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
-RUN rm src/main.rs
+COPY migrations ./migrations
+COPY src ./src
+COPY templates ./templates
 
-# Build application
-COPY . .
-RUN cargo build --release
+# If SQLx offline metadata is not committed, provide a build-time database and
+# run migrations before compiling so query macros can validate SQL.
+RUN pg_ctlcluster 15 main start \
+    && su postgres -c "psql -v ON_ERROR_STOP=1 -c \"CREATE USER fbapp WITH PASSWORD 'fbapp';\"" \
+    && su postgres -c "createdb -O fbapp fbapp_build" \
+    && for migration in migrations/*.sql; do psql "postgres://fbapp:fbapp@localhost:5432/fbapp_build" -v ON_ERROR_STOP=1 -f "$migration"; done \
+    && DATABASE_URL="postgres://fbapp:fbapp@localhost:5432/fbapp_build" cargo build --release
 
-# ── Stage 2: Tailwind CSS build ───────────────────────────────────────────────
-FROM node:20-slim AS css-builder
+# ── Stage 2: Static asset build ───────────────────────────────────────────────
+FROM node:20-slim AS assets
 
 WORKDIR /app
-COPY tailwind.config.js ./
+COPY package.json package-lock.json ./
 COPY templates/ ./templates/
+COPY src/ ./src/
 COPY assets/ ./assets/
-RUN npx --yes tailwindcss -i ./assets/css/input.css -o ./assets/css/main.css --minify
+RUN npm ci
+RUN cp node_modules/htmx.org/dist/htmx.min.js assets/js/htmx.js \
+    && cp node_modules/alpinejs/dist/cdn.min.js assets/js/alpine.js \
+    && npx @tailwindcss/cli -i assets/css/input.css -o assets/css/main.css --minify
 
 # ── Stage 3: Runtime ──────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS runtime
@@ -84,7 +93,7 @@ RUN useradd -ms /bin/bash appuser
 USER appuser
 
 COPY --from=builder /app/target/release/fbapp-vibe ./fbapp-vibe
-COPY --from=css-builder /app/assets ./assets
+COPY --from=assets /app/assets ./assets
 COPY templates/ ./templates/
 COPY migrations/ ./migrations/
 
@@ -99,8 +108,12 @@ CMD ["./fbapp-vibe"]
 services:
   app:
     build: .
+    env_file:
+      - .env
     ports:
       - "3000:3000"
+    volumes:
+      - ./certs:/app/certs:ro
     environment:
       DATABASE_URL: postgres://fbapp:fbapp@db:5432/fbapp
       HOST: 0.0.0.0
@@ -133,7 +146,7 @@ volumes:
 
 1. 🏗️ **Multi-stage build keeps the image lean**: The Rust toolchain (~1.5GB) is used only in the builder stage and is discarded in the final image. The production image contains only the compiled binary, static assets, templates, and runtime libraries.
 
-2. 📦 **Dependency caching layer**: Copying `Cargo.toml` and `Cargo.lock` and building a stub `main.rs` before copying application source allows Docker's layer cache to skip the dependency compilation step when only application code changes — significantly reducing build times.
+2. 📦 **Reproducible dependency inputs**: `Cargo.lock` and `package-lock.json` are copied into build stages so Rust and npm dependencies resolve reproducibly.
 
 3. 🔒 **Non-root user**: The application runs as a non-root `appuser` in the container, reducing the blast radius of any security vulnerability.
 
@@ -146,14 +159,27 @@ volumes:
 ## Trade-offs and Risks ⚠️
 
 - 🐌 **Initial build time**: Rust compilation is slow; the first Docker build without cache can take several minutes. Layer caching in CI (via `cache-from`) mitigates this after the first run.
-- 🔧 **Two build stages require coordination**: The Tailwind CLI runs in a separate stage. If the Tailwind binary distribution changes, the CSS build stage must be updated.
+- 🔧 **Build stages require coordination**: The Rust binary and static assets are built separately. Tailwind v4 CSS and vendored JS must both be produced before assembling the runtime image.
 - 📦 **Templates and migrations are copied into the image**: These are baked into the image at build time. Runtime changes to templates require a new image build and deployment.
 
 ## Consequences
 
-- 🐳 A `Dockerfile` at the project root defines the three-stage build (builder, css-builder, runtime).
+- 🐳 A `Dockerfile` at the project root defines the multi-stage build (Rust builder, asset builder, runtime).
 - 🔧 A `docker-compose.yml` at the project root provides the local development stack.
 - 🗄️ The application runs `sqlx migrate run` at startup before accepting HTTP traffic.
 - 🔒 The container runs as a non-root user in all environments.
 - 🌍 All configuration is injected via environment variables (ADR-0008); no config files are baked into the image.
 - 📋 A `.dockerignore` file excludes `target/`, `.env`, `.git/`, and `node_modules/` from the build context.
+
+## Amendment: Tailwind v4 and Vendored JS
+
+Date: 2026-04-24
+
+The current Docker implementation uses Tailwind v4 CSS-first configuration and npm lockfile-based asset builds.
+
+- CSS is built with `npx @tailwindcss/cli -i assets/css/input.css -o assets/css/main.css --minify`.
+- JavaScript assets are vendored from `node_modules` into `assets/js/` for HTMX and Alpine.
+- `package-lock.json` is used for npm reproducibility.
+- The Compose app service reads `.env` for application secrets while overriding `DATABASE_URL`, `HOST`, and `PORT` for container networking.
+- Local TLS certificates may be mounted from `./certs` at runtime, but they are excluded from image build context and not baked into images.
+- Secrets are not copied into the image or committed to the repository.

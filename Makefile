@@ -1,4 +1,4 @@
-.PHONY: dev build lint test migrate css
+.PHONY: dev build lint test migrate css js
 
 ## Start app and CSS watcher concurrently
 dev:

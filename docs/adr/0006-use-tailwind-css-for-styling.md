@@ -64,3 +64,15 @@ We will use **Tailwind CSS** 🎨 for styling.
 - 🖥️ The compiled CSS output is written to `assets/css/main.css` and served as a static file by Axum.
 - 🔧 Development uses two concurrent watchers: `cargo watch` for Rust/templates and `tailwindcss --watch` for CSS — coordinated via a `Makefile` or `cargo-make` task.
 - 🚀 The CI pipeline runs the Tailwind CLI build step before `cargo build` to ensure the CSS asset is present during compilation and testing.
+
+## Amendment: Tailwind v4 CSS-First Setup
+
+Date: 2026-04-24
+
+The accepted styling decision remains Tailwind CSS, but the implementation has moved from the original Tailwind v3-style root config file to Tailwind v4 CSS-first configuration.
+
+- Design tokens now live in `assets/css/input.css` under `@theme`.
+- The project uses `@tailwindcss/cli` from npm, pinned by `package-lock.json`.
+- A root `tailwind.config.js` is no longer required for the current setup.
+- `assets/css/main.css` remains compiled output and is still served by Axum from `/assets/css/main.css`.
+- This amendment supersedes the original consequence that required maintaining `tailwind.config.js`; that line is retained above as historical context for the initial decision.

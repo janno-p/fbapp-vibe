@@ -49,7 +49,7 @@ cd fbapp-vibe
 cp .env.example .env
 ```
 
-Open `.env` and fill in the values:
+Open `.env` and fill in the required values:
 
 ```bash
 DATABASE_URL=postgres://fbapp:fbapp@localhost:5432/fbapp
@@ -60,34 +60,38 @@ PORT=3000
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URL=http://localhost:3000/auth/callback
-SESSION_SECRET=<generate-a-random-value-see-below>
+FOOTBALL_API_KEY=your-api-key
 ```
 
 `TEST_DATABASE_URL` must point to a separate database on the same host. `cargo test` uses `sqlx::test` which creates and tears down an isolated database per test.
 
-To generate a secure `SESSION_SECRET`:
+Optional settings are documented in `.env.example`: `TLS_CERT_PATH`, `TLS_KEY_PATH`, `SESSION_DURATION_HOURS`, `POLL_INTERVAL_SECS`, `POLL_INTERVAL_LIVE_SECS`, and `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
-```bash
-openssl rand -base64 64
-```
+### 4. Choose a development workflow
 
-### 4. Start PostgreSQL
+For database-only local development, run PostgreSQL in Docker and run the app on your host:
 
 ```bash
 docker compose up db -d
+npm install
+make js
+make css
+cargo run
 ```
 
-This starts a PostgreSQL instance on port `5432` with the credentials from `docker-compose.yml`.
+This starts PostgreSQL on port `5432`, vendors HTMX/Alpine into `assets/js/`, compiles Tailwind CSS, and starts the Rust application. `cargo run` applies SQLx migrations automatically at startup.
 
-### 5. Run database migrations
+For a full Docker Compose startup, populate `.env` and run:
 
 ```bash
-make migrate
+cp .env.example .env
+# fill in Google OAuth and football API values
+docker compose up --build
 ```
 
-This runs all pending migrations, creating the full schema (users, sessions, tournaments, teams, groups, matches, players, leagues, predictions).
+The app service reads application secrets from `.env`, while Compose overrides `DATABASE_URL`, `HOST`, and `PORT` so the container binds correctly and talks to the Compose PostgreSQL service.
 
-### 6. Enable HTTPS (optional but recommended)
+### 5. Enable HTTPS (optional but recommended)
 
 Install [`mkcert`](https://github.com/FiloSottile/mkcert) and generate a locally-trusted certificate:
 
@@ -109,29 +113,9 @@ TLS_CERT_PATH=certs/localhost.pem
 TLS_KEY_PATH=certs/localhost-key.pem
 ```
 
-When both variables are set, the server starts on `https://localhost:3000`. If they are unset, it falls back to plain HTTP.
+When both variables are set, the server starts on `https://localhost:3000`. If they are unset, it falls back to plain HTTP. Docker Compose mounts local `./certs` into the app container at `/app/certs`, so the same `certs/...` paths work for full Compose startup without baking certificates into the image.
 
-### 7. Install Node dependencies
-
-```bash
-npm install
-```
-
-### 8. Build Tailwind CSS
-
-```bash
-make css
-```
-
-This compiles `assets/css/input.css` → `assets/css/main.css`.
-
-### 9. Start the application
-
-```bash
-cargo run
-```
-
-The application starts at [http://localhost:3000](http://localhost:3000).
+The application starts at [http://localhost:3000](http://localhost:3000) or [https://localhost:3000](https://localhost:3000) when TLS is configured.
 
 - `GET /` — public landing page with Google sign-in
 - `GET /dashboard` — authenticated landing page
@@ -162,6 +146,7 @@ This starts `cargo watch` (recompiles on file changes) and `tailwindcss --watch`
 | `make test` | Run test suite |
 | `make migrate` | Run pending database migrations |
 | `make css` | Compile Tailwind CSS once |
+| `make js` | Vendor HTMX and Alpine from `node_modules/` into `assets/js/` |
 
 ## Project Structure
 
@@ -171,22 +156,30 @@ fbapp-vibe/
 ├── templates/           # Askama HTML templates
 │   ├── layout/          # Base layout
 │   └── {module}/        # Per-feature templates
-├── assets/css/          # Tailwind CSS
+├── Dockerfile           # Multi-stage app image build
+├── .dockerignore        # Docker build-context exclusions
+├── assets/css/          # Tailwind v4 CSS-first source and compiled output
+├── assets/js/           # Vendored HTMX/Alpine and local JavaScript assets
 ├── tests/               # Integration tests (HTTP-level, use axum-test)
 ├── src/
 │   ├── main.rs          # Entry point — startup, server bind, layer wiring
 │   ├── lib.rs           # Crate root — re-exports modules for integration tests
 │   ├── config.rs        # Configuration loaded from environment variables
+│   ├── football_api.rs  # football-data.org client and rate limiting
 │   ├── error.rs         # Global AppError type
 │   ├── state.rs         # Shared AppState (database pool, config, OAuth client)
 │   ├── routes.rs        # Top-level router assembly
 │   ├── db_types.rs      # Shared database enums (MatchOutcome, KnockoutRound)
 │   ├── extractors.rs    # Custom Axum extractors (QsForm)
+│   ├── polling/         # Background football API polling jobs
+│   ├── session_cleanup.rs # Expired session cleanup task
+│   ├── tracing_setup.rs # Tracing and optional OTLP setup
 │   └── modules/         # Feature modules (each exposes a single router())
 │       ├── auth/        # Google OAuth, session management, landing pages
 │       ├── admin/       # Tournament management, seeding, league admin
 │       ├── leagues/     # League creation, invite links, membership
-│       └── predictions/ # Tournament predictions (group, knockout, top scorer)
+│       ├── predictions/ # Tournament predictions (group, knockout, top scorer)
+│       └── standings/   # League standings, live match views, comparisons
 ├── docs/adr/            # Architecture Decision Records
 └── thoughts/
     ├── plans/           # Implementation plans

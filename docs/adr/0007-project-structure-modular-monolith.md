@@ -40,8 +40,9 @@ fbapp-vibe/
 │   └── {module}/             # One subdirectory per domain module
 │       └── *.html
 ├── assets/
-│   └── css/
-│       └── main.css          # Tailwind CSS compiled output
+│   ├── css/
+│   │   └── main.css          # Tailwind CSS compiled output
+│   └── js/                   # Vendored HTMX/Alpine and local JS assets
 ├── tests/                    # HTTP-level integration tests (axum-test)
 ├── src/
 │   ├── main.rs               # Entry point: config loading, server binding, startup
@@ -59,7 +60,6 @@ fbapp-vibe/
 │           ├── handlers.rs   # Axum handlers (private to module)
 │           ├── db.rs         # SQLx queries (private to module)
 │           └── models.rs     # Domain structs and types (selectively pub)
-├── tailwind.config.js        # Tailwind config — scans templates/ and src/
 ├── Cargo.toml
 └── Makefile                  # Dev tasks: watch, build, migrate, lint
 ```
@@ -104,3 +104,11 @@ These rules define the modular monolith contract and must be followed by all mod
 - 🗂️ Askama templates for a module live in `templates/{module}/`.
 - 🗄️ SQLx migrations live in `migrations/` at the project root, named sequentially (`0001_create_users.sql`, etc.).
 - 📋 If a module grows large enough to warrant a separate compilation unit or team ownership, it is extracted into a Cargo workspace crate in a future ADR.
+
+## Amendment: Current Layout Notes
+
+Date: 2026-04-24
+
+The modular-monolith structure remains accepted. The live application has grown from the initial scaffold and currently includes these registered feature modules in `src/modules/mod.rs`: `auth`, `admin`, `leagues`, `predictions`, and `standings`.
+
+Current shared application code also includes `src/football_api.rs`, `src/polling/`, `src/session_cleanup.rs`, and `src/tracing_setup.rs`. Static assets now include `assets/js/` for vendored HTMX and Alpine files in addition to Tailwind CSS assets. Tailwind v4 CSS-first configuration means the current layout no longer requires a root `tailwind.config.js`; see ADR-0006 and ADR-0020 for the styling and JavaScript asset details.
