@@ -4,7 +4,7 @@ source: .claude/tasks/done/0037-rust-2024-edition-docs.md
 source_id: 0037
 source_status: done
 source_title: Update docs to reflect Rust 2024 edition
-status: implemented
+status: reviewed
 phase: MVP
 type: chore
 adrs: [0001, 0021]

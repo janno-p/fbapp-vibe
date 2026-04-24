@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 57, open 16, in-progress 0, done 27, reviewed 8, cancelled 1
+- Statuses: created 57, open 16, in-progress 0, done 26, reviewed 9, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -242,7 +242,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 | `otlp-jaeger-observability` | 🧰 chore | 🔓 open | ⚪ tbd | observability | Wire up OpenTelemetry OTLP trace export so that all existing `tracing` instrumentation (HTTP middleware, handler spans, SQLx queries) is automatically visible in a local Jaeger UI. The change must be fully opt-in — the app must continue to work identically without any environment changes for developers not running Jaeger. | S | low |
 | `debt_claude_to_opencode_thoughts` | 🧹 debt | 👍 reviewed | 🔴 high | debt/docs | Remove repo-local Claude-specific guidance files and migrate task tracking into `thoughts/` using an agentic workflow model. The end state should rely on opencode-native conventions where they are needed, with obsolete Claude markdown removed once replacements are in place or confirmed unnecessary. | L | high |
 | `crest-docs-and-fallback-asset` | 🧰 chore | ✅ done | ⚪ tbd | debt/docs | Task 0036 was implemented using crest images from the Football Data API instead of the originally planned SVG flag assets or Unicode emoji. ADR-0019 (which documents the emoji approach) is now stale and misleading. Additionally, `src/crests.rs` already references `/assets/default.svg` as the fallback for teams without a crest URL, but that file does not yet exist. This task brings the docs and assets in sync with the actual implementation.<br><br>**Depends on:** refs: [0036] | S | low |
-| `rust-2024-edition-docs` | 🧰 chore | ✅ done | ⚪ tbd | debt/docs | The project was migrated from Rust edition 2021 to 2024 (commit `1692d98`) but no documentation reflects this change. Update the existing Rust ADR and write a new ADR recording the upgrade decision so the docs accurately describe the current state of the project. | S | low |
+| `rust-2024-edition-docs` | 🧰 chore | 👍 reviewed | ⚪ tbd | debt/docs | The project was migrated from Rust edition 2021 to 2024 (commit `1692d98`) but no documentation reflects this change. Update the existing Rust ADR and write a new ADR recording the upgrade decision so the docs accurately describe the current state of the project. | S | low |
 | `knockout-topscore-count-ux` | 🐞 bug | 👍 reviewed | ⚪ tbd | misc | Closeout validated: wrong-count knockout/top-scorer submissions now return friendly inline HTMX messages, with route and DB regression coverage added for count, auth, and lock boundaries. | M | medium |
 | `project-scaffold` | 🧰 chore | 👍 reviewed | ⚪ tbd | misc | Bootstrap the project from an empty repository into a compiling, runnable Rust application that implements the full structural skeleton defined in the ADRs. No business logic or features are included — the outcome is a working foundation that every subsequent task builds upon. | S | low |
 | `qsform-body-limit` | 🐞 bug | 👍 reviewed | ⚪ tbd | misc | The `QsForm<T>` extractor body read is capped at a named 16 KiB limit, oversized bodies return 413 Payload Too Large, and serde_qs parse errors remain 400 Bad Request. | M | medium |
@@ -259,7 +259,7 @@ A coarse order based on dependency clusters and likely build-up sequence:
 - standings: feature_cavekit_htmx_leaderboard_fragment; feature_cavekit_hypo_param_validation; feature_cavekit_scenario_modeling; FEATURE-040: Optionally show a badge on the leaderboard; scenario-modeling
 - badges: FEATURE-036: Define achievement badge types; FEATURE-041: Define badge metadata for display
 - observability: CHORE-OBS-01: OTLP/Jaeger dependency setup; CHORE-OBS-02: Conditional OTLP trace export; CHORE-OBS-03: Tracer provider initialization; CHORE-OBS-08: Preserve existing behavior; CHORE-OBS-04: Graceful tracer shutdown; CHORE-OBS-05: Jaeger docker compose support (+3 more)
-- debt/docs: crest-docs-and-fallback-asset; rust-2024-edition-docs
+- debt/docs: crest-docs-and-fallback-asset
 - misc: no pending items
 
 ## ⚠️ Blockers and Risks
