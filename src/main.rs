@@ -7,7 +7,7 @@ use tower_sessions::{Expiry, SessionManagerLayer, cookie::SameSite};
 use tower_sessions_sqlx_store::PostgresStore;
 
 use fbapp_vibe::{
-    config::Config,
+    config::{Config, OAuthEndpoints},
     football_api,
     modules::auth::AuthBackend,
     routes, session_cleanup,
@@ -47,14 +47,21 @@ async fn main() -> anyhow::Result<()> {
     let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
 
     // OAuth client
-    let oauth_client = build_oauth_client(&config)?;
+    let oauth_endpoints = config.google_oauth_endpoints();
+    let oauth_client = build_oauth_client(&config, &oauth_endpoints)?;
 
     // Football API client
     let football_api = football_api::FootballApiClient::new(config.football_api_key.clone())
         .map_err(|e| anyhow::anyhow!("failed to build football API client: {e}"))?;
 
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;
-    let state = AppState::new(pool.clone(), config, oauth_client, football_api);
+    let state = AppState::new(
+        pool.clone(),
+        config,
+        oauth_client,
+        oauth_endpoints,
+        football_api,
+    );
     tokio::spawn(fbapp_vibe::polling::run(state.clone()));
     tokio::spawn(session_cleanup::run(pool.clone()));
     let app = routes::router(state).layer(auth_layer);
@@ -83,15 +90,14 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn build_oauth_client(config: &Config) -> anyhow::Result<OAuthClient> {
+fn build_oauth_client(
+    config: &Config,
+    oauth_endpoints: &OAuthEndpoints,
+) -> anyhow::Result<OAuthClient> {
     let client = BasicClient::new(ClientId::new(config.google_client_id.clone()))
         .set_client_secret(ClientSecret::new(config.google_client_secret.clone()))
-        .set_auth_uri(AuthUrl::new(
-            "https://accounts.google.com/o/oauth2/v2/auth".to_string(),
-        )?)
-        .set_token_uri(TokenUrl::new(
-            "https://oauth2.googleapis.com/token".to_string(),
-        )?)
+        .set_auth_uri(AuthUrl::new(oauth_endpoints.auth_url.clone())?)
+        .set_token_uri(TokenUrl::new(oauth_endpoints.token_url.clone())?)
         .set_redirect_uri(RedirectUrl::new(config.google_redirect_url.clone())?);
     Ok(client)
 }

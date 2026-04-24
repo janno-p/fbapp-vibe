@@ -1,7 +1,7 @@
 use axum_login::AuthManagerLayerBuilder;
 use axum_test::TestServer;
 use fbapp_vibe::{
-    config::Config,
+    config::{Config, OAuthEndpoints},
     football_api::FootballApiClient,
     modules::auth::AuthBackend,
     routes,
@@ -45,6 +45,14 @@ fn test_oauth_client() -> OAuthClient {
         )
 }
 
+fn test_oauth_endpoints() -> OAuthEndpoints {
+    OAuthEndpoints {
+        auth_url: "https://accounts.google.com/o/oauth2/v2/auth".to_string(),
+        token_url: "https://oauth2.googleapis.com/token".to_string(),
+        userinfo_url: "https://www.googleapis.com/oauth2/v2/userinfo".to_string(),
+    }
+}
+
 async fn build_test_server(pool: PgPool) -> TestServer {
     let session_store = PostgresStore::new(pool.clone());
     let session_layer = SessionManagerLayer::new(session_store)
@@ -56,7 +64,13 @@ async fn build_test_server(pool: PgPool) -> TestServer {
     let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
 
     let football_api = FootballApiClient::new("test-key".to_string()).expect("football api client");
-    let state = AppState::new(pool, test_config(), test_oauth_client(), football_api);
+    let state = AppState::new(
+        pool,
+        test_config(),
+        test_oauth_client(),
+        test_oauth_endpoints(),
+        football_api,
+    );
     let app = routes::router(state).layer(auth_layer);
 
     TestServer::new(app)

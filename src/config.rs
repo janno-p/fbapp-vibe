@@ -1,5 +1,12 @@
 use serde::Deserialize;
 
+#[derive(Debug, Clone)]
+pub struct OAuthEndpoints {
+    pub auth_url: String,
+    pub token_url: String,
+    pub userinfo_url: String,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub database_url: String,
@@ -48,5 +55,13 @@ impl Config {
     pub fn load() -> Result<Self, envy::Error> {
         dotenvy::dotenv().ok();
         envy::from_env::<Config>()
+    }
+
+    pub fn google_oauth_endpoints(&self) -> OAuthEndpoints {
+        OAuthEndpoints {
+            auth_url: "https://accounts.google.com/o/oauth2/v2/auth".to_string(),
+            token_url: "https://oauth2.googleapis.com/token".to_string(),
+            userinfo_url: "https://www.googleapis.com/oauth2/v2/userinfo".to_string(),
+        }
     }
 }

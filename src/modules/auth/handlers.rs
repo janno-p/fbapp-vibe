@@ -100,7 +100,7 @@ pub async fn callback(
 ) -> Result<impl IntoResponse, AppError> {
     // Verify CSRF state
     let stored_state: String = session
-        .get("csrf_state")
+        .remove("csrf_state")
         .await
         .map_err(|e| AppError::Unexpected(e.into()))?
         .ok_or_else(|| AppError::BadRequest("missing csrf state".to_string()))?;
@@ -110,7 +110,7 @@ pub async fn callback(
     }
 
     let pkce_verifier: String = session
-        .get("pkce_verifier")
+        .remove("pkce_verifier")
         .await
         .map_err(|e| AppError::Unexpected(e.into()))?
         .ok_or_else(|| AppError::BadRequest("missing pkce verifier".to_string()))?;
@@ -132,7 +132,7 @@ pub async fn callback(
 
     // Fetch user profile from Google
     let user_info: GoogleUserInfo = reqwest::Client::new()
-        .get("https://www.googleapis.com/oauth2/v2/userinfo")
+        .get(&state.oauth_endpoints.userinfo_url)
         .bearer_auth(token.access_token().secret())
         .send()
         .await
