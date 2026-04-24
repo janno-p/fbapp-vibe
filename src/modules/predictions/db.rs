@@ -719,4 +719,75 @@ mod tests {
             "expected BadRequest for players from wrong tournament, got {result:?}"
         );
     }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn locked_tournament_rejects_knockout_prediction(pool: PgPool) {
+        let t_id = make_tournament(&pool, true).await;
+        let u_id = make_user(&pool).await;
+        let team_id = make_team(&pool, t_id, "LockedKO").await;
+
+        let result =
+            save_knockout_round_predictions(&pool, t_id, u_id, &KnockoutRound::Winner, &[team_id])
+                .await;
+
+        assert!(
+            matches!(result, Err(AppError::Forbidden)),
+            "expected Forbidden for locked tournament, got {result:?}"
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn locked_tournament_rejects_top_scorer_prediction(pool: PgPool) {
+        let t_id = make_tournament(&pool, true).await;
+        let u_id = make_user(&pool).await;
+        let team_id = make_team(&pool, t_id, "LockedTS").await;
+        let p1 = make_player(&pool, t_id, team_id, "LockedP1").await;
+        let p2 = make_player(&pool, t_id, team_id, "LockedP2").await;
+        let p3 = make_player(&pool, t_id, team_id, "LockedP3").await;
+
+        let result = save_top_scorer_predictions(&pool, t_id, u_id, &[p1, p2, p3]).await;
+
+        assert!(
+            matches!(result, Err(AppError::Forbidden)),
+            "expected Forbidden for locked tournament, got {result:?}"
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn knockout_rejects_duplicate_team_ids(pool: PgPool) {
+        let t_id = make_tournament(&pool, false).await;
+        let u_id = make_user(&pool).await;
+        let team_id = make_team(&pool, t_id, "DupKO").await;
+
+        let result = save_knockout_round_predictions(
+            &pool,
+            t_id,
+            u_id,
+            &KnockoutRound::Final,
+            &[team_id, team_id],
+        )
+        .await;
+
+        assert!(
+            matches!(result, Err(AppError::BadRequest(_))),
+            "expected BadRequest for duplicate team IDs, got {result:?}"
+        );
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn top_scorer_rejects_duplicate_player_ids(pool: PgPool) {
+        let t_id = make_tournament(&pool, false).await;
+        let u_id = make_user(&pool).await;
+        let team_id = make_team(&pool, t_id, "DupTS").await;
+        let player_id = make_player(&pool, t_id, team_id, "DupPlayer").await;
+
+        let result =
+            save_top_scorer_predictions(&pool, t_id, u_id, &[player_id, player_id, player_id])
+                .await;
+
+        assert!(
+            matches!(result, Err(AppError::BadRequest(_))),
+            "expected BadRequest for duplicate player IDs, got {result:?}"
+        );
+    }
 }
