@@ -4,11 +4,12 @@ source: .claude/tasks/done/0046-knockout-topscore-count-ux.md
 source_id: 0046
 source_status: open
 source_title: Friendly inline error for wrong knockout/top-scorer selection count
-status: open
+status: implemented
 phase: MVP
 type: bug
 adrs: []
-refs: []
+refs:
+  - thoughts/plans/knockout_topscore_count_ux_closeout.md
 created: 2026-04-09
 started: ~
 completed: ~
@@ -68,3 +69,8 @@ The top-scorer Alpine `playerPicker()` already enforces max-3 selection at the U
 - Client (top scorer): Extended `playerPicker()` with `count` property tracked in `init()` and updated inside `enforceMax3()`. Submit button is `:disabled="count !== 3"` with same disabled styling.
 
 Follow-up tasks: _none_
+
+## Closeout Notes
+
+- Canonical rule for this code path remains **exactly 3** top-scorer picks.
+- Cavekit wording that says "up to three" is tracked as wording drift and should be aligned separately from this closeout.

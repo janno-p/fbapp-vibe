@@ -97,3 +97,5 @@ The ticket is complete when users can save, reload, and validate top scorer pick
 ## Notes
 
 Do not add prediction statistics, export, or historical tracking here.
+
+Wording drift note: current production predictions flow enforces exactly 3 top-scorer picks; the "up to three" phrasing in this cavekit ticket should be treated as follow-up copy alignment, not an immediate behavior change.
