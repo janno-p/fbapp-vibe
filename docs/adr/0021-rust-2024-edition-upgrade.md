@@ -50,7 +50,7 @@ The upgrade was carried out mechanically via `cargo fix --edition` followed by m
 
 4. **`[lints]` table stability** 📦
    - The `[lints]` table in `Cargo.toml` became stable and is the recommended way to configure `rustc` and `clippy` lints in edition 2024.
-   - This project already uses `[lints.clippy]` and `[lints.rust]` in `Cargo.toml`, so this change is already in effect.
+   - Current repo state: `Cargo.toml` defines `[lints.clippy]`, which is the active lint-table configuration in this project.
 
 5. **Improved `async` ergonomics** 🔄
    - Edition 2024 refines how `async fn` in traits and async closures interact with lifetime capture (see point 2).
@@ -69,7 +69,7 @@ The upgrade required only compiler-driven changes (`cargo fix --edition`). No ma
 |-----------|-----------|
 | 🔑 **`gen` keyword reservation** | No identifier named `gen` exists in the codebase. Future contributors cannot use `gen` as a name. |
 | ⏳ **Stricter lifetime capture may break dependencies** | Only affects this crate's own code; dependency crates choose their own edition. All existing code compiled cleanly. |
-| 🔁 **Edition 2024 requires Rust 1.85+** | `rust-toolchain.toml` (or CI) must pin to ≥ 1.85. This is a well-supported release. |
+| 🔁 **Edition 2024 requires Rust 1.85+** | Edition 2024 semantics require a compiler version that supports them (Rust 1.85+). Repository-level pinning is a separate operational choice. |
 | 🔮 **Unknown future changes** | Rust's stability guarantees mean edition 2024 code will continue to compile as the toolchain evolves. No known breaking changes on the horizon. |
 
 ## Consequences

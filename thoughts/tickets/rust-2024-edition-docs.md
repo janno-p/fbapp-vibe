@@ -4,11 +4,12 @@ source: .claude/tasks/done/0037-rust-2024-edition-docs.md
 source_id: 0037
 source_status: done
 source_title: Update docs to reflect Rust 2024 edition
-status: done
+status: implemented
 phase: MVP
 type: chore
 adrs: [0001, 0021]
-refs: []
+refs:
+  - thoughts/plans/rust_2024_edition_docs_consistency_closeout.md
 created: 2026-04-08
 started: 2026-04-09
 completed: 2026-04-09
