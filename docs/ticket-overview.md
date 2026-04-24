@@ -259,7 +259,7 @@ A coarse order based on dependency clusters and likely build-up sequence:
 - standings: feature_cavekit_htmx_leaderboard_fragment; feature_cavekit_hypo_param_validation; feature_cavekit_scenario_modeling; FEATURE-040: Optionally show a badge on the leaderboard; scenario-modeling
 - badges: FEATURE-036: Define achievement badge types; FEATURE-041: Define badge metadata for display
 - observability: CHORE-OBS-01: OTLP/Jaeger dependency setup; CHORE-OBS-02: Conditional OTLP trace export; CHORE-OBS-03: Tracer provider initialization; CHORE-OBS-08: Preserve existing behavior; CHORE-OBS-04: Graceful tracer shutdown; CHORE-OBS-05: Jaeger docker compose support (+3 more)
-- debt/docs: DEBT-001: Migrate Claude-specific repo guidance and task archive to thoughts/opencode conventions; crest-docs-and-fallback-asset; rust-2024-edition-docs
+- debt/docs: crest-docs-and-fallback-asset; rust-2024-edition-docs
 - misc: knockout-topscore-count-ux
 
 ## ⚠️ Blockers and Risks
