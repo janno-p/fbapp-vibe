@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 59, open 17, in-progress 0, done 28, reviewed 4, cancelled 1
+- Statuses: created 58, open 17, in-progress 0, done 28, reviewed 5, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -139,7 +139,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 |---|---|---|---|---|---|---:|---|---|---|
 | `debt_cavekit_auth_integration_tests` | debt | done | high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high | — | — |
 | `feature_cavekit_google_oauth_login_flow` | feature | reviewed | high | auth | Implement the Google OAuth login flow so users can authenticate, have their account information synchronized, and be redirected into the app with a valid session. | L | high | — | — |
-| `feature_cavekit_user_model` | feature | created | high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions. | L | high | Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | — |
+| `feature_cavekit_user_model` | feature | reviewed | high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions. | L | high | Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | — |
 | `feature_cavekit_session_storage_restoration` | feature | created | high | auth | Ensure authenticated sessions persist in PostgreSQL and are restored on subsequent requests through the auth session extractor. | M | medium | — | — |
 | `feature_cavekit_admin_role_access_control` | feature | created | high | auth | Add binary admin authorization so only users with `is_admin = true` can reach admin-only routes and management actions. | M | medium | — | — |
 | `feature_cavekit_league_join_by_token` | feature | created | high | auth | Allow authenticated users to join a league by visiting a shareable invite link. | M | medium | This is the user-facing entry point for membership and depends on a valid invite token. | — |
@@ -251,7 +251,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 A coarse order based on dependency clusters and likely build-up sequence:
 
-- auth: FEATURE-002: User model for auth integration; FEATURE-003: Session storage and restoration; FEATURE-004: Admin role access control; FEATURE-LEAGUES-03: Token-based league joining; feature_cavekit_session_cleanup; feature_cavekit_public_pages (+8 more)
+- auth: FEATURE-003: Session storage and restoration; FEATURE-004: Admin role access control; FEATURE-LEAGUES-03: Token-based league joining; feature_cavekit_session_cleanup; feature_cavekit_public_pages (+8 more)
 - tournament: BUG-PREDICTIONS-04: Enforce prediction lock on all save handlers; FEATURE-037: Persist awarded badges; FEATURE-038: Award badges after scoring completes; feature_cavekit_main_leaderboard_standings; FEATURE-CAVEKIT-TOURNAMENT-01: Tournament registration from football-data.org; FEATURE-CAVEKIT-TOURNAMENT-02: Seed tournament data from football-data.org (+30 more)
 - scoring: feature_cavekit_potential_points_indicator; FEATURE-SCORING-02: Ingest finished match results; FEATURE-SCORING-04: Score group stage predictions; FEATURE-SCORING-05: Score knockout predictions; FEATURE-SCORING-07: Sync player goal counts; FEATURE-SCORING-08: Define scoring domain models (+1 more)
 - predictions: FEATURE-PREDICTIONS-06: League prediction review page; FEATURE-PREDICTIONS-08: Show actual results on the predictions page; feature_cavekit_match_breakdown; feature_cavekit_member_comparison; feature_cavekit_member_stats_page; FEATURE-PREDICTIONS-07: Prediction completion counter (+13 more)

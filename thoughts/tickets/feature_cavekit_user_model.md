@@ -2,7 +2,7 @@
 type: feature
 priority: high
 created: 2026-04-23T00:00:00Z
-status: created
+status: reviewed
 tags: [auth, user-model, database]
 keywords: [user record, google_id, email unique, is_admin, AuthUser, AuthBackend.get_user]
 patterns: [database entity modeling, auth user trait integration, user lookup by id]
@@ -73,3 +73,9 @@ The ticket is complete when the model matches the required fields and auth integ
 
 ## Notes
 Do not expand this into account linking or profile editing.
+
+## Outcome
+
+The auth user model was already implemented in `src/modules/auth/models.rs` with the required fields and `AuthUser` integration. `AuthBackend::get_user()` already restores users by id, and the database schema already enforced unique `email`.
+
+This ticket closed by adding `rejects_duplicate_email_for_different_google_id` in `src/modules/auth/db.rs`, which proves a second Google identity cannot reuse an existing user's email. Verification passed with SQLx test databases available via the configured test database environment: `cargo test modules::auth::db::tests -- --nocapture`, `make test`, and `make lint`.
