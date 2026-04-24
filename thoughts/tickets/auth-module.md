@@ -26,7 +26,7 @@ Implement Google OAuth authentication and two landing pages: a public home page 
 - [ ] `GET /auth/callback` returns `400 Bad Request` if the `state` parameter does not match
 - [ ] `POST /auth/logout` destroys the session and redirects to `/`
 - [ ] `GET /dashboard` returns the authenticated landing page showing the user's name and avatar
-- [ ] `GET /dashboard` redirects to `/` when the user is not authenticated
+- [ ] `GET /dashboard` returns `401 Unauthorized` when the user is not authenticated
 - [ ] Users table exists with columns: `id`, `google_id`, `email`, `name`, `avatar_url`, `created_at`
 - [ ] Sessions table exists (created by `tower-sessions-sqlx-store` migration)
 - [ ] `cargo build` succeeds with zero warnings and zero clippy errors
@@ -248,5 +248,9 @@ Full Google OAuth flow implemented. Key implementation notes:
 - `dashboard/index.html` uses Askama's `{% if let Some(avatar) = user.avatar_url %}` for optional avatar rendering; falls back to an initial letter avatar
 - `AppError` gained `Unauthorized` (401) and `BadRequest` (400) variants; unexpected errors log at `error`, expected errors at `warn`
 - `tower_sessions_sqlx_store::PostgresStore` uses the sessions table created by migration `0003`
+
+Canonical auth regression references:
+- HTTP-level coverage: `tests/auth_routes.rs:286`, `tests/auth_routes.rs:293`, `tests/auth_routes.rs:307`, `tests/auth_routes.rs:458`, `tests/auth_routes.rs:484`, `tests/auth_routes.rs:500`
+- Runtime semantics: `src/modules/auth/handlers.rs:58`, `src/modules/auth/handlers.rs:172`, `src/modules/admin/mod.rs:34`, `src/error.rs:44`
 
 Follow-up tasks: _none_

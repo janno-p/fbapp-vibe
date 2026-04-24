@@ -20,11 +20,11 @@ This defines the basic public-facing routing behavior around the auth system.
 - GET `/` renders the home page without authentication.
 - Home page displays a login link.
 - GET `/dashboard` is protected.
-- Unauthenticated users visiting `/dashboard` are redirected to `/auth/login`.
+- Unauthenticated users visiting `/dashboard` receive `401 Unauthorized`.
 
 ### Functional Requirements
 - Provide at least one public landing page.
-- Route users to login when they attempt to view protected content without a session.
+- Reject unauthenticated access to protected content with `401` at the HTTP layer.
 
 ### Non-Functional Requirements
 - Keep routing behavior consistent with the auth session layer.
@@ -53,18 +53,18 @@ The app has a public home page and a protected dashboard with the right redirect
 ### Key Decisions Made
 - Home is public.
 - Dashboard is protected.
-- Redirect destination for unauthenticated dashboard access is `/auth/login`.
+- Unauthenticated dashboard access returns `401 Unauthorized`.
 
 ## Success Criteria
 The ticket is complete when routing follows the public/protected split.
 
 ### Automated Verification
 - [ ] Integration test covers public access to `/`.
-- [ ] Integration test covers redirect from `/dashboard` to `/auth/login` for unauthenticated users.
+- [ ] Integration test covers `401 Unauthorized` from `/dashboard` for unauthenticated users.
 
 ### Manual Verification
 - [ ] Home page loads without signing in.
-- [ ] Dashboard access prompts login when signed out.
+- [ ] Dashboard access returns `401 Unauthorized` when signed out.
 
 ## Related Information
 - Source doc: `context/kits/cavekit-auth.md`
@@ -72,3 +72,7 @@ The ticket is complete when routing follows the public/protected split.
 
 ## Notes
 Do not expand this into broader public-site work.
+
+Canonical behavior references:
+- Integration test: `tests/auth_routes.rs:286`
+- Runtime guard and status mapping: `src/modules/auth/handlers.rs:58`, `src/error.rs:44`

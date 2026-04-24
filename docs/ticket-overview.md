@@ -1,6 +1,6 @@
 ---
-date: 2026-04-24T08:52:13+03:00
-git_commit: 9eae645
+date: 2026-04-24T13:50:37+03:00
+git_commit: 9b0aa06
 branch: main
 repository: fbapp-vibe
 topic: "Generated ticket overview and implementation order"
@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 58, open 17, in-progress 0, done 28, reviewed 5, cancelled 1
+- Statuses: created 58, open 17, in-progress 0, implemented 1, done 27, reviewed 5, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -137,7 +137,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 | ID | Type | Status | Priority | Domain | Summary | Estimate | Complexity |
 |---|---|---|---|---|---|---:|---|
-| `debt_cavekit_auth_integration_tests` | 🧹 debt | ✅ done | 🔴 high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high |
+| `debt_cavekit_auth_integration_tests` | 🧹 debt | ✅ implemented | 🔴 high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high |
 | `feature_cavekit_google_oauth_login_flow` | ✨ feature | 👀 reviewed | 🔴 high | auth | Implement the Google OAuth login flow so users can authenticate, have their account information synchronized, and be redirected into the app with a valid session. | L | high |
 | `feature_cavekit_user_model` | ✨ feature | 👀 reviewed | 🔴 high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions.<br><br>**Depends on:** Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | L | high |
 | `feature_cavekit_session_storage_restoration` | ✨ feature | 🆕 created | 🔴 high | auth | Ensure authenticated sessions persist in PostgreSQL and are restored on subsequent requests through the auth session extractor. | M | medium |

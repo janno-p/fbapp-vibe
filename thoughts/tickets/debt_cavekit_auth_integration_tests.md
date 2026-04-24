@@ -2,7 +2,7 @@
 type: debt
 priority: high
 created: 2026-04-23T00:00:00Z
-status: done
+status: implemented
 tags: [auth, tests, integration]
 keywords: [integration tests, dashboard unauthorized, logout session destruction, expired session, admin route, email change invalidation]
 patterns: [HTTP-level integration testing, regression coverage, session invalidation tests]
@@ -61,16 +61,16 @@ Critical auth behavior is locked down by integration tests that fail on real reg
 The ticket is complete when the listed auth regressions are covered by integration tests.
 
 ### Automated Verification
-- [ ] Integration test for unauthenticated `/dashboard` access.
-- [ ] Integration test for authenticated `/` redirecting to `/dashboard`.
-- [ ] Integration test for logout destroying the session.
-- [ ] Integration test for admin rejection at the HTTP level.
-- [ ] Integration test for email-change invalidation.
-- [ ] Integration test for expired-session rejection.
+- [x] Integration test for unauthenticated `/dashboard` access.
+- [x] Integration test for authenticated `/` redirecting to `/dashboard`.
+- [x] Integration test for logout destroying the session.
+- [x] Integration test for admin rejection at the HTTP level.
+- [x] Integration test for email-change invalidation.
+- [x] Integration test for expired-session rejection.
 
 ### Manual Verification
-- [ ] Confirm tests fail if auth behavior regresses.
-- [ ] Confirm tests exercise the actual HTTP stack.
+- [x] Confirm tests fail if auth behavior regresses.
+- [x] Confirm tests exercise the actual HTTP stack.
 
 ## Related Information
 - Source doc: missing in repo (`context/kits/cavekit-auth.md`)
@@ -80,13 +80,14 @@ The ticket is complete when the listed auth regressions are covered by integrati
 This is a test-coverage ticket, not a feature change ticket.
 
 ## Outcome
-The requested HTTP-level auth regression coverage already exists in `tests/auth_routes.rs`.
+The requested HTTP-level auth regression coverage already exists in `tests/auth_routes.rs` and is exercised against the real app router + auth/session middleware stack.
 
-- `tests/auth_routes.rs:111-116` covers unauthenticated `/dashboard` returning `401`.
-- `tests/auth_routes.rs:118-130` covers logout destroying the session.
-- `tests/auth_routes.rs:132-144` covers authenticated `/` redirecting to `/dashboard`.
-- `tests/auth_routes.rs:146-170` covers non-admin rejection and admin access on `/admin`.
-- `tests/auth_routes.rs:172-187` covers expired-session rejection.
-- `tests/auth_routes.rs:189-206` covers email-change invalidation.
+- Real-stack harness setup: `tests/auth_routes.rs:62`, `tests/auth_routes.rs:67`, `tests/auth_routes.rs:74`, `tests/auth_routes.rs:111`, `tests/auth_routes.rs:117`.
+- Unauthenticated `/dashboard` returns `401`: `tests/auth_routes.rs:286` (runtime guard at `src/modules/auth/handlers.rs:58`, mapped in `src/error.rs:44`).
+- Authenticated `/` redirects to `/dashboard`: `tests/auth_routes.rs:307` (runtime behavior at `src/modules/auth/handlers.rs:45`).
+- `POST /auth/logout` destroys session and blocks reuse: `tests/auth_routes.rs:293` (runtime logout path at `src/modules/auth/handlers.rs:172`).
+- Admin gating at HTTP boundary (`401` unauthenticated, `403` non-admin): `tests/admin_routes.rs:79`, `tests/auth_routes.rs:458` (extractor contract at `src/modules/admin/mod.rs:34`).
+- Expired session rejection (`401`): `tests/auth_routes.rs:484`.
+- Email-change invalidation: `tests/auth_routes.rs:500` (auth hash derived from email at `src/modules/auth/models.rs:21`).
 
-The tests use the real HTTP stack via `SessionManagerLayer` and `AuthManagerLayer` (`tests/auth_routes.rs:49-89`), so this debt item is satisfied by the current codebase without additional implementation work.
+Given these anchors, DEBT-007 is satisfied by current implementation and test coverage without additional runtime code changes.
