@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 59, open 17, in-progress 0, done 29, reviewed 3, cancelled 1
+- Statuses: created 59, open 17, in-progress 0, done 28, reviewed 4, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -244,7 +244,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 | `crest-docs-and-fallback-asset` | chore | done | tbd | debt/docs | Task 0036 was implemented using crest images from the Football Data API instead of the originally planned SVG flag assets or Unicode emoji. ADR-0019 (which documents the emoji approach) is now stale and misleading. Additionally, `src/crests.rs` already references `/assets/default.svg` as the fallback for teams without a crest URL, but that file does not yet exist. This task brings the docs and assets in sync with the actual implementation. | S | low | refs: [0036] | — |
 | `rust-2024-edition-docs` | chore | done | tbd | debt/docs | The project was migrated from Rust edition 2021 to 2024 (commit `1692d98`) but no documentation reflects this change. Update the existing Rust ADR and write a new ADR recording the upgrade decision so the docs accurately describe the current state of the project. | S | low | refs: [] | — |
 | `knockout-topscore-count-ux` | bug | open | tbd | misc | When a user submits a knockout round form with the wrong number of teams (or top-scorer with fewer than 3 players), the server returns `AppError::BadRequest`, which renders a generic error page. The UI shows "Select X teams" as a hint but provides no client-side guard. Users who accidentally submit early get a hard error page instead of a friendly inline message. | M | medium | refs: [] | — |
-| `project-scaffold` | chore | done | tbd | misc | Bootstrap the project from an empty repository into a compiling, runnable Rust application that implements the full structural skeleton defined in the ADRs. No business logic or features are included — the outcome is a working foundation that every subsequent task builds upon. | S | low | refs: [] | — |
+| `project-scaffold` | chore | reviewed | tbd | misc | Bootstrap the project from an empty repository into a compiling, runnable Rust application that implements the full structural skeleton defined in the ADRs. No business logic or features are included — the outcome is a working foundation that every subsequent task builds upon. | S | low | refs: [] | — |
 | `qsform-body-limit` | bug | reviewed | tbd | misc | The `QsForm<T>` extractor body read is capped at a named 16 KiB limit, oversized bodies return 413 Payload Too Large, and serde_qs parse errors remain 400 Bad Request. | M | medium | refs: [] | — |
 
 ## ✅ Suggested Implementation Order
@@ -260,7 +260,7 @@ A coarse order based on dependency clusters and likely build-up sequence:
 - badges: FEATURE-036: Define achievement badge types; FEATURE-041: Define badge metadata for display
 - observability: CHORE-OBS-01: OTLP/Jaeger dependency setup; CHORE-OBS-02: Conditional OTLP trace export; CHORE-OBS-03: Tracer provider initialization; CHORE-OBS-08: Preserve existing behavior; CHORE-OBS-04: Graceful tracer shutdown; CHORE-OBS-05: Jaeger docker compose support (+3 more)
 - debt/docs: DEBT-001: Migrate Claude-specific repo guidance and task archive to thoughts/opencode conventions; crest-docs-and-fallback-asset; rust-2024-edition-docs
-- misc: knockout-topscore-count-ux; project-scaffold
+- misc: knockout-topscore-count-ux
 
 ## ⚠️ Blockers and Risks
 

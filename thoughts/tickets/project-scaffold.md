@@ -4,7 +4,7 @@ source: .claude/tasks/done/0001-project-scaffold.md
 source_id: 0001
 source_status: done
 source_title: Project scaffold
-status: implemented
+status: reviewed
 type: chore
 adrs: [0001, 0002, 0003, 0004, 0005, 0006, 0007, 0008, 0009, 0010, 0012]
 refs: []
