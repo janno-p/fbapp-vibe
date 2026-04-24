@@ -2,7 +2,7 @@
 type: feature
 priority: high
 created: 2026-04-23T00:00:00Z
-status: implemented
+status: reviewed
 tags: [auth, sessions, postgres]
 keywords: [tower_sessions, AuthSession, expiry_date, logout, session invalidation, email change]
 patterns: [session persistence, session restoration, logout invalidation]
