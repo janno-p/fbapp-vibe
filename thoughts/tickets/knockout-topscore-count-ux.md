@@ -4,7 +4,7 @@ source: .claude/tasks/done/0046-knockout-topscore-count-ux.md
 source_id: 0046
 source_status: open
 source_title: Friendly inline error for wrong knockout/top-scorer selection count
-status: implemented
+status: reviewed
 phase: MVP
 type: bug
 adrs: []
