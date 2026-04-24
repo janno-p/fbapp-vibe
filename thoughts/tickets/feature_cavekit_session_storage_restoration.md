@@ -2,7 +2,7 @@
 type: feature
 priority: high
 created: 2026-04-23T00:00:00Z
-status: created
+status: implemented
 tags: [auth, sessions, postgres]
 keywords: [tower_sessions, AuthSession, expiry_date, logout, session invalidation, email change]
 patterns: [session persistence, session restoration, logout invalidation]
@@ -17,11 +17,17 @@ Ensure authenticated sessions persist in PostgreSQL and are restored on subseque
 This ticket covers the core session lifecycle: persistence, restoration, expiration handling, and logout destruction.
 
 ## Requirements
-- Sessions are stored in PostgreSQL `tower_sessions`.
+- Sessions are stored in PostgreSQL `tower_sessions.session`.
 - Session auth hash is derived from user email.
 - `AuthSession` is available in handlers.
 - Expired sessions return `401 Unauthorized`.
-- `POST `/auth/logout` destroys the session and redirects to homepage.
+- `POST /auth/logout` destroys the session and redirects to homepage.
+
+### Requirement Evidence
+- Session restoration across requests is covered by OAuth callback + subsequent protected-route access in `tests/auth_routes.rs:371` and `tests/auth_routes.rs:386`, with backend restoration via `src/modules/auth/mod.rs:42`.
+- Logout invalidation is covered in `tests/auth_routes.rs:293` and `tests/auth_routes.rs:302`, implemented in `src/modules/auth/handlers.rs:170`.
+- Expired-session rejection is covered in `tests/auth_routes.rs:484` and `tests/auth_routes.rs:496`, with unauthorized mapping in `src/error.rs:44`.
+- Email-change invalidation is covered in `tests/auth_routes.rs:500` and `tests/auth_routes.rs:515`, driven by the email-backed session hash in `src/modules/auth/models.rs:21`.
 
 ### Functional Requirements
 - Persist sessions across requests.
@@ -33,7 +39,7 @@ This ticket covers the core session lifecycle: persistence, restoration, expirat
 - Handle email changes as a session invalidation signal.
 
 ## Current State
-The source spec defines the required behavior; this ticket isolates the session lifecycle work.
+Session lifecycle behavior is implemented in runtime code and covered by integration tests; this ticket now captures evidence-backed close-out.
 
 ## Desired State
 Users remain signed in across requests until logout, expiration, or identity invalidation.
@@ -61,16 +67,25 @@ Users remain signed in across requests until logout, expiration, or identity inv
 The ticket is complete when sessions survive normal request flow and fail correctly after expiration or logout.
 
 ### Automated Verification
-- [ ] Integration test covers session restoration on subsequent requests.
-- [ ] Integration test covers logout destroying the session.
-- [ ] Integration test covers expired-session rejection.
+- [x] Integration test covers session restoration on subsequent requests (`tests/auth_routes.rs:371`, `tests/auth_routes.rs:386`).
+- [x] Integration test covers logout destroying the session (`tests/auth_routes.rs:293`, `tests/auth_routes.rs:302`).
+- [x] Integration test covers expired-session rejection (`tests/auth_routes.rs:484`, `tests/auth_routes.rs:496`).
+- [x] Integration test covers email-change invalidation (`tests/auth_routes.rs:500`, `tests/auth_routes.rs:515`).
 
 ### Manual Verification
-- [ ] User remains authenticated across page loads.
-- [ ] Logout removes access immediately.
+- [x] User remains authenticated across page loads.
+- [x] Logout removes access immediately.
+
+## Outcome
+
+FEATURE-003 lifecycle behavior is implemented and covered by integration tests.
+- Runtime stack: `src/main.rs:37`, `src/main.rs:47`, `src/main.rs:67`
+- Logout path: `src/modules/auth/handlers.rs:170`
+- Unauthorized mapping: `src/error.rs:44`
+- Regression coverage: `tests/auth_routes.rs:293`, `tests/auth_routes.rs:371`, `tests/auth_routes.rs:484`, `tests/auth_routes.rs:500`
 
 ## Related Information
-- Source doc: `context/kits/cavekit-auth.md`
+- Source doc: `context/kits/cavekit-auth.md` (missing in repository as of 2026-04-24)
 - Requirement: `R3`
 
 ## Notes
