@@ -1,6 +1,6 @@
 ---
-date: 2026-04-24T13:50:37+03:00
-git_commit: 9b0aa06
+date: 2026-04-24T13:57:21+03:00
+git_commit: a0623f2
 branch: main
 repository: fbapp-vibe
 topic: "Generated ticket overview and implementation order"
@@ -24,7 +24,7 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 - Tickets: 109
 - Types: feature 80, bug 8, chore 19, debt/refactor 2
-- Statuses: created 58, open 17, in-progress 0, implemented 1, done 27, reviewed 5, cancelled 1
+- Statuses: created 58, open 17, in-progress 0, done 27, reviewed 6, cancelled 1
 - Priority mix: high 22, medium 37, low 2
 
 ## 🧠 Ordering Rules
@@ -137,9 +137,9 @@ Single source of truth for all tickets. Use this file to understand what exists,
 
 | ID | Type | Status | Priority | Domain | Summary | Estimate | Complexity |
 |---|---|---|---|---|---|---:|---|
-| `debt_cavekit_auth_integration_tests` | 🧹 debt | ✅ implemented | 🔴 high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high |
-| `feature_cavekit_google_oauth_login_flow` | ✨ feature | 👀 reviewed | 🔴 high | auth | Implement the Google OAuth login flow so users can authenticate, have their account information synchronized, and be redirected into the app with a valid session. | L | high |
-| `feature_cavekit_user_model` | ✨ feature | 👀 reviewed | 🔴 high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions.<br><br>**Depends on:** Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | L | high |
+| `debt_cavekit_auth_integration_tests` | 🧹 debt | 👍 reviewed | 🔴 high | auth | Add real HTTP integration coverage for the critical auth flows so session, authorization, and invalidation behavior is verified against the actual stack. | L | high |
+| `feature_cavekit_google_oauth_login_flow` | ✨ feature | 👍 reviewed | 🔴 high | auth | Implement the Google OAuth login flow so users can authenticate, have their account information synchronized, and be redirected into the app with a valid session. | L | high |
+| `feature_cavekit_user_model` | ✨ feature | 👍 reviewed | 🔴 high | auth | Define the user account model used by auth so identity, contact data, and role state are stored consistently and can be loaded for sessions.<br><br>**Depends on:** Auth depends on a stable user representation that can be upserted from Google profile data and loaded by ID during session restoration. | L | high |
 | `feature_cavekit_session_storage_restoration` | ✨ feature | 🆕 created | 🔴 high | auth | Ensure authenticated sessions persist in PostgreSQL and are restored on subsequent requests through the auth session extractor. | M | medium |
 | `feature_cavekit_admin_role_access_control` | ✨ feature | 🆕 created | 🔴 high | auth | Add binary admin authorization so only users with `is_admin = true` can reach admin-only routes and management actions. | M | medium |
 | `feature_cavekit_league_join_by_token` | ✨ feature | 🆕 created | 🔴 high | auth | Allow authenticated users to join a league by visiting a shareable invite link.<br><br>**Depends on:** This is the user-facing entry point for membership and depends on a valid invite token. | M | medium |
@@ -240,12 +240,12 @@ Single source of truth for all tickets. Use this file to understand what exists,
 | `chore_cavekit_otel_env_configuration` | 🧰 chore | 🆕 created | 🟠 medium | observability | Document the optional environment configuration needed to enable OTLP trace export. | S | low |
 | `chore_cavekit_trace_integration` | 🧰 chore | 🆕 created | 🟠 medium | observability | Connect the existing tracing instrumentation so HTTP, database, and background spans are exported to Jaeger when OTLP is enabled. | S | low |
 | `otlp-jaeger-observability` | 🧰 chore | 🔓 open | ⚪ tbd | observability | Wire up OpenTelemetry OTLP trace export so that all existing `tracing` instrumentation (HTTP middleware, handler spans, SQLx queries) is automatically visible in a local Jaeger UI. The change must be fully opt-in — the app must continue to work identically without any environment changes for developers not running Jaeger. | S | low |
-| `debt_claude_to_opencode_thoughts` | 🧹 debt | 👀 reviewed | 🔴 high | debt/docs | Remove repo-local Claude-specific guidance files and migrate task tracking into `thoughts/` using an agentic workflow model. The end state should rely on opencode-native conventions where they are needed, with obsolete Claude markdown removed once replacements are in place or confirmed unnecessary. | L | high |
+| `debt_claude_to_opencode_thoughts` | 🧹 debt | 👍 reviewed | 🔴 high | debt/docs | Remove repo-local Claude-specific guidance files and migrate task tracking into `thoughts/` using an agentic workflow model. The end state should rely on opencode-native conventions where they are needed, with obsolete Claude markdown removed once replacements are in place or confirmed unnecessary. | L | high |
 | `crest-docs-and-fallback-asset` | 🧰 chore | ✅ done | ⚪ tbd | debt/docs | Task 0036 was implemented using crest images from the Football Data API instead of the originally planned SVG flag assets or Unicode emoji. ADR-0019 (which documents the emoji approach) is now stale and misleading. Additionally, `src/crests.rs` already references `/assets/default.svg` as the fallback for teams without a crest URL, but that file does not yet exist. This task brings the docs and assets in sync with the actual implementation.<br><br>**Depends on:** refs: [0036] | S | low |
 | `rust-2024-edition-docs` | 🧰 chore | ✅ done | ⚪ tbd | debt/docs | The project was migrated from Rust edition 2021 to 2024 (commit `1692d98`) but no documentation reflects this change. Update the existing Rust ADR and write a new ADR recording the upgrade decision so the docs accurately describe the current state of the project. | S | low |
 | `knockout-topscore-count-ux` | 🐞 bug | 🔓 open | ⚪ tbd | misc | When a user submits a knockout round form with the wrong number of teams (or top-scorer with fewer than 3 players), the server returns `AppError::BadRequest`, which renders a generic error page. The UI shows "Select X teams" as a hint but provides no client-side guard. Users who accidentally submit early get a hard error page instead of a friendly inline message. | M | medium |
-| `project-scaffold` | 🧰 chore | 👀 reviewed | ⚪ tbd | misc | Bootstrap the project from an empty repository into a compiling, runnable Rust application that implements the full structural skeleton defined in the ADRs. No business logic or features are included — the outcome is a working foundation that every subsequent task builds upon. | S | low |
-| `qsform-body-limit` | 🐞 bug | 👀 reviewed | ⚪ tbd | misc | The `QsForm<T>` extractor body read is capped at a named 16 KiB limit, oversized bodies return 413 Payload Too Large, and serde_qs parse errors remain 400 Bad Request. | M | medium |
+| `project-scaffold` | 🧰 chore | 👍 reviewed | ⚪ tbd | misc | Bootstrap the project from an empty repository into a compiling, runnable Rust application that implements the full structural skeleton defined in the ADRs. No business logic or features are included — the outcome is a working foundation that every subsequent task builds upon. | S | low |
+| `qsform-body-limit` | 🐞 bug | 👍 reviewed | ⚪ tbd | misc | The `QsForm<T>` extractor body read is capped at a named 16 KiB limit, oversized bodies return 413 Payload Too Large, and serde_qs parse errors remain 400 Bad Request. | M | medium |
 
 ## ✅ Suggested Implementation Order
 

@@ -2,7 +2,7 @@
 type: debt
 priority: high
 created: 2026-04-23T00:00:00Z
-status: implemented
+status: reviewed
 tags: [auth, tests, integration]
 keywords: [integration tests, dashboard unauthorized, logout session destruction, expired session, admin route, email change invalidation]
 patterns: [HTTP-level integration testing, regression coverage, session invalidation tests]
