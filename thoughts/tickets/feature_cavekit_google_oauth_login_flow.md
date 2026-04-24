@@ -2,7 +2,7 @@
 type: feature
 priority: high
 created: 2026-04-23T00:00:00Z
-status: created
+status: implemented
 tags: [auth, google-oauth, sessions]
 keywords: [google oauth, auth/login, auth/callback, access token, user info, tower_sessions]
 patterns: [oauth authorization code flow, session creation after login, protected route authorization]
@@ -21,7 +21,7 @@ This is the foundational auth capability for Cavekit. Other modules depend on a 
 - GET `/auth/callback` accepts an authorization code and exchanges it for tokens.
 - Callback fetches Google user info and stores or updates the user record.
 - A PostgreSQL-backed session is created after successful login.
-- Successful login redirects to `/dashboard`.
+- Successful login redirects to a safe stored continuation target when present, otherwise `/dashboard`.
 - Unauthenticated access to protected routes returns `401 Unauthorized`.
 
 ### Functional Requirements
@@ -56,7 +56,7 @@ A complete Google OAuth login implementation with redirect, callback, user sync,
 ### Key Decisions Made
 - Google is the only OAuth provider in scope.
 - Session state should be stored in PostgreSQL.
-- Post-login redirect target is `/dashboard`.
+- Post-login redirect target is a safe stored continuation target when present, otherwise `/dashboard`.
 
 ## Success Criteria
 The ticket is complete when the login flow works end-to-end and protected routes reject unauthenticated access.
@@ -68,7 +68,7 @@ The ticket is complete when the login flow works end-to-end and protected routes
 
 ### Manual Verification
 - [ ] Login completes with a Google account.
-- [ ] User lands on `/dashboard` after login.
+- [ ] User lands on the safe continuation target when one exists, otherwise `/dashboard`.
 - [ ] Session persists across requests.
 
 ## Related Information
