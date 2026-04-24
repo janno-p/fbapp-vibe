@@ -2,26 +2,26 @@
 title: Cap request body size in QsForm extractor
 source: .claude/tasks/done/0012-qsform-body-limit.md
 source_id: 0012
-source_status: open
+source_status: done
 source_title: Cap request body size in QsForm extractor
-status: open
+status: reviewed
 type: bug
 adrs: []
 refs: []
 created: 2026-04-07
 started: ~
-completed: ~
+completed: 2026-04-24
 ---
 
 ## Summary
 
-The `QsForm<T>` extractor currently reads the entire request body into memory without any size cap (`usize::MAX`). An attacker can send an arbitrarily large POST body and exhaust server memory. This must be bounded.
+The `QsForm<T>` extractor previously read the entire request body into memory without any size cap (`usize::MAX`). The implemented fix bounds form bodies to prevent arbitrarily large POST bodies from exhausting server memory.
 
 ## Acceptance Criteria
 
-- [ ] `QsForm` rejects bodies larger than a reasonable limit (16 KiB is sufficient for any form in this app)
-- [ ] Rejection returns 413 Payload Too Large, not 400
-- [ ] Limit is defined as a named constant in `extractors.rs`, not a magic number
+- [x] `QsForm` rejects bodies larger than a reasonable limit (16 KiB is sufficient for any form in this app)
+- [x] Rejection returns 413 Payload Too Large, not 400
+- [x] Limit is defined as a named constant in `extractors.rs`, not a magic number
 
 ## Implementation Context
 
