@@ -2,7 +2,7 @@
 type: feature
 priority: high
 created: 2026-04-23T00:00:00Z
-status: implemented
+status: reviewed
 tags: [auth, google-oauth, sessions]
 keywords: [google oauth, auth/login, auth/callback, access token, user info, tower_sessions]
 patterns: [oauth authorization code flow, session creation after login, protected route authorization]
